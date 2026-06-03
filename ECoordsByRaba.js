@@ -549,8 +549,8 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
 
     var coordList  = mode === 'shuffle' ? shuffle(coords) : coords.slice();
     var storageKey = 'ecFake_' + groupLabel;
-    var coordsJSON = JSON.stringify(coordList);
-    var modeStr    = mode === 'rand' ? 'rand' : 'seq';
+    var coordsStr  = coordList.join(' ');
+    var modeStr    = mode === 'rand' ? 'rand' : (mode === 'shuffle' ? 'shuffle' : 'seq');
 
     var base =
         'var b=document;' +
@@ -586,7 +586,7 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
         unitLogic += 'if(avail("catapult")>0){ins(el("catapult"),1);sent=true;}else if(avail("ram")>0){ins(el("ram"),1);sent=true;}';
     }
     // Espía independiente (no afecta al flag sent — es bonus)
-    if (fakeSpy) unitLogic += 'if(avail("spy")>0)ins(el("spy"),1);';
+    unitLogic += 'if(spy&&avail("spy")>0)ins(el("spy"),1);';
     // Aviso si no hay tropas — no avanzar índice
     unitLogic +=
         'if(!sent){' +
@@ -608,16 +608,16 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
             '}' +
         '}';
 
-    return 'javascript:(function(){' +
+    return 'javascript:var coords="' + coordsStr + '";var spy=' + (fakeSpy ? 'true' : 'false') + ';(function(){' +
         'if(typeof game_data==="undefined"||game_data.screen!=="place"){' +
             'if(typeof game_data!=="undefined")' +
                 'window.location.href=game_data.link_base_pure+"place";' +
             'return;}' +
-        'var coords=' + coordsJSON + ';' +
+        'var coordList=coords.trim().split(/\\s+/);' +
         'var mode="' + modeStr + '";' +
         'var key="' + storageKey + '";' +
         base +
-        'var sig=coords.length+"_"+coords[0];' +
+        'var sig=coordList.length+"_"+coordList[0];' +
         'var _saved=JSON.parse(localStorage.getItem(key)||"null");' +
         'var validSig=_saved&&_saved.s===sig;' +
         'var idx=validSig?_saved.i:0;' +
@@ -625,10 +625,10 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
         'var t;' +
         'var nextIdx=null;' +
         'if(mode==="rand"){' +
-            't=coords[Math.floor(Math.random()*coords.length)];' +
+            't=coordList[Math.floor(Math.random()*coordList.length)];' +
         '}else{' +
-            't=coords[idx%coords.length];' +
-            'nextIdx=(idx+1)%coords.length;' +
+            't=coordList[idx%coordList.length];' +
+            'nextIdx=(idx+1)%coordList.length;' +
         '}' +
         unitLogic +
         'var tPts=t.split("|");' +
@@ -638,26 +638,67 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
         // Inyectar panel de info en la página
         '(function(){' +
             'var old=b.getElementById("ecFakeInfoBar");if(old)old.parentNode.removeChild(old);' +
-            'var displayIdx=mode==="rand"?"—":(idx+1)+"/"+coords.length;' +
             'var isNewCycle=nextIdx===0&&nextIdx!==null;' +
             'var newCycles=isNewCycle?cycles+1:cycles;' +
-            'var cycleStr=isNewCycle?newCycles+" ✅":""+newCycles;' +
+            'var total=coordList.length;' +
+            'var current=mode==="rand"?null:(idx+1);' +
+            // Barra de progreso CSS
+            'var barPct=mode==="rand"?0:Math.round((current/total)*100);' +
+            'var progressBar="<div style=\\"background:#333;border-radius:3px;width:70px;height:5px;overflow:hidden;margin-bottom:2px;\\">"' +
+                '+"<div style=\\"background:#f5a623;height:100%;width:"+barPct+"%;transition:width 0.3s;\\"></div></div>";' +
+            'var progressStr=mode==="rand"?"<span style=\\"color:#f5a623;font-weight:900;\\">✦ Aleatorio</span>":progressBar+"<span style=\\"font-size:11px;font-weight:700;color:#e0e0e0;\\">"+current+"/"+total+"</span>";' +
+            // Modo label
+            'var modeLabel=mode==="rand"?"🎲 Aleatorio":mode==="shuffle"?"🔀 Mezclado":"▶ Secuencial";' +
+            // Ciclo
+            'var cycleStr=isNewCycle?"<span style=\\"color:#43a047;font-weight:900;\\">"+(newCycles)+" ✅</span>":"<span>"+newCycles+"</span>";' +
+            // Coordenada link
             'var tParts=t.split("|");' +
             'var tLink=game_data.link_base_pure+"map&x="+tParts[0]+"&y="+tParts[1];' +
-            'var tHtml="<a href=\\""+tLink+"\\" style=\\"color:#7b1fa2;font-weight:700;text-decoration:underline;\\">"+t+"</a>";' +
-            'var bar=b.createElement("table");' +
+            'var tHtml="<a href=\\""+tLink+"\\" style=\\"color:#f5a623;font-weight:900;font-size:13px;text-decoration:none;letter-spacing:0.5px;\\">📍 "+t+"</a>";' +
+            // Contenedor — compacto en móvil
+            'var isMobile=window.innerWidth<600;' +
+            'var p=isMobile?"5px 8px":"8px 16px";' +
+            'var bar=b.createElement("div");' +
             'bar.id="ecFakeInfoBar";' +
-            'bar.className="vis";' +
-            'bar.style.cssText="width:auto;margin:6px 0 10px;font-size:12px;border-collapse:collapse;";' +
+            'bar.style.cssText=' +
+                '"display:flex;width:fit-content;max-width:100%;align-items:stretch;margin:8px 0 12px;border-radius:8px;overflow:hidden;' +
+                'box-shadow:0 4px 16px rgba(0,0,0,0.35);font-family:Segoe UI,Tahoma,sans-serif;' +
+                'clear:both;opacity:0;transition:opacity 0.3s;";' +
             'bar.innerHTML=' +
-                '"<tbody><tr>"' +
-                '+"<th style=\\"padding:5px 12px;background:#3d3d29;color:#fff;font-size:11px;letter-spacing:0.5px;white-space:nowrap;\\">⚔️ Script Fakes</th>"' +
-                '+"<td style=\\"padding:5px 14px;white-space:nowrap;\\"><span style=\\"color:#888;font-size:10px;\\">OBJETIVO</span><br><strong>"+tHtml+"</strong></td>"' +
-                '+"<td style=\\"padding:5px 14px;white-space:nowrap;\\"><span style=\\"color:#888;font-size:10px;\\">PROGRESO</span><br><strong>"+displayIdx+"</strong></td>"' +
-                '+"<td style=\\"padding:5px 14px;white-space:nowrap;\\"><span style=\\"color:#888;font-size:10px;\\">CICLO</span><br><strong>"+cycleStr+"</strong></td>"' +
-                '+"</tr></tbody>";' +
+                // Badge izquierdo
+                '"<div style=\\"background:linear-gradient(135deg,#b71c1c,#7f0000);padding:"+p+";display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;"+(isMobile?"min-width:44px":"min-width:70px")+";\\">"' +
+                '+"<span style=\\"font-size:"+(isMobile?"14px":"18px")+";line-height:1;\\">⚔️</span>"' +
+                '+"<span style=\\"font-size:8px;font-weight:900;color:#ffcdd2;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;\\">FAKES</span>"' +
+                '+"</div>"' +
+                // Celda objetivo
+                '+"<div style=\\"background:#1a1a2e;padding:"+p+";display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid #2d2d44;\\">"' +
+                '+"<span style=\\"font-size:9px;font-weight:700;color:#8888aa;letter-spacing:1px;text-transform:uppercase;\\">OBJETIVO</span>"' +
+                '+"<span>"+tHtml+"</span>"' +
+                '+"</div>"' +
+                // Celda progreso
+                '+"<div style=\\"background:#1a1a2e;padding:"+p+";display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid #2d2d44;\\">"' +
+                '+"<span style=\\"font-size:9px;font-weight:700;color:#8888aa;letter-spacing:1px;text-transform:uppercase;\\">PROGRESO</span>"' +
+                '+"<span style=\\"font-family:monospace;font-size:11px;font-weight:700;color:#e0e0e0;letter-spacing:1px;\\">"+progressStr+"</span>"' +
+                '+"</div>"' +
+                // Celda modo — oculta en móvil
+                '+(isMobile?"":' +
+                '"<div style=\\"background:#1a1a2e;padding:"+p+";display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid #2d2d44;\\">"' +
+                '+"<span style=\\"font-size:9px;font-weight:700;color:#8888aa;letter-spacing:1px;text-transform:uppercase;\\">MODO</span>"' +
+                '+"<span style=\\"font-size:11px;font-weight:700;color:#e0e0e0;\\">"+modeLabel+"</span>"' +
+                '+"</div>")' +
+                // Celda ciclo
+                '+"<div style=\\"background:#1a1a2e;padding:"+p+";display:flex;flex-direction:column;justify-content:center;gap:2px;\\">"' +
+                '+"<span style=\\"font-size:9px;font-weight:700;color:#8888aa;letter-spacing:1px;text-transform:uppercase;\\">CICLO</span>"' +
+                '+"<span style=\\"font-size:12px;font-weight:700;color:#e0e0e0;\\">"+cycleStr+"</span>"' +
+                '+"</div>"' +
+                // Author — oculto en móvil
+                '+(isMobile?"":' +
+                '"<div style=\\"background:#1a1a2e;padding:8px 10px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;border-left:1px solid #2d2d44;\\">"' +
+                '+"<span style=\\"font-size:8px;color:#8888aa;letter-spacing:0.5px;white-space:nowrap;\\">by rabagalan73</span>"' +
+                '+"</div>");' +
             'var anchor=b.getElementById("command-form-warning");' +
-            'if(anchor)anchor.parentNode.insertBefore(bar,anchor.nextSibling);' +
+            'if(anchor){anchor.parentNode.insertBefore(bar,anchor);' +
+            'setTimeout(function(){bar.style.opacity="1";},30);}' +
         '})();' +
         'var btn=b.getElementById("target_attack");if(btn)btn.focus();' +
         '})();';
