@@ -414,71 +414,76 @@ window.FarmGod.Main = (function (Library, Translation) {
         $.when(buildOptions()).then((html) => {
           Dialog.show('FarmGod', html);
 
-          $(document)
-            .off('change.fgGroup')
-            .on('change.fgGroup', '.optionGroup', () => {
-              let saved = JSON.parse(localStorage.getItem('farmGod_options')) || {};
-              saved.optionGroup = parseInt($('.optionGroup').val());
-              localStorage.setItem('farmGod_options', JSON.stringify(saved));
-            });
+          // El Dialog de TW inserta en iframe — acceder al documento correcto
+          const fgDoc = () => {
+            const iframe = document.getElementById('popup_box_FarmGod') &&
+              document.getElementById('popup_box_FarmGod').querySelector('iframe');
+            return iframe ? (iframe.contentDocument || iframe.contentWindow.document) : document;
+          };
+          const fgEl = (sel) => $(fgDoc()).find(sel);
 
-          $(document)
-            .off('click.fgButton')
-            .on('click.fgButton', '.optionButton', () => {
-              let optionGroup = parseInt($('.optionGroup').val());
-              let optionDistance = parseFloat(
-                $('.optionDistance').val()
-              );
-              let optionTime = parseFloat($('.optionTime').val());
-              let optionLosses =
-                $('.optionLosses').prop('checked');
-              let optionMaxloot =
-                $('.optionMaxloot').prop('checked');
-              let optionNewbarbs =
-                $('.optionNewbarbs').prop('checked') || false;
-
-              localStorage.setItem(
-                'farmGod_options',
-                JSON.stringify({
-                  optionGroup: optionGroup,
-                  optionDistance: optionDistance,
-                  optionTime: optionTime,
-                  optionLosses: optionLosses,
-                  optionMaxloot: optionMaxloot,
-                  optionNewbarbs: optionNewbarbs,
-                })
-              );
-
-              $('.optionsContent').html(`
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:14px;">
-                  <div style="width:36px;height:36px;border:3px solid #2c2f3c;border-top:3px solid #f5a623;border-radius:50%;animation:fgSpin .8s linear infinite;"></div>
-                  <span style="color:#8892a4;font-size:12px;">Recopilando datos...</span>
-                </div>
-                <style>@keyframes fgSpin{to{transform:rotate(360deg)}}</style>
-              `);
-              getData(
-                optionGroup,
-                optionNewbarbs,
-                optionLosses
-              ).then((data) => {
-                Dialog.close();
-
-                let plan = createPlanning(
-                  optionDistance,
-                  optionTime,
-                  optionMaxloot,
-                  data
-                );
-                $('.fgRabaContent').remove();
-                $('#am_widget_Farm')
-                  .first()
-                  .before(buildTable(plan.farms));
-
-                bindEventHandlers();
+          setTimeout(() => {
+            fgEl('.optionGroup')
+              .off('change.fgGroup')
+              .on('change.fgGroup', () => {
+                let saved = JSON.parse(localStorage.getItem('farmGod_options')) || {};
+                saved.optionGroup = String(fgEl('.optionGroup').val());
+                localStorage.setItem('farmGod_options', JSON.stringify(saved));
               });
-            });
 
-          document.querySelector('.optionButton').focus();
+            fgEl('.optionButton')
+              .off('click.fgButton')
+              .on('click.fgButton', () => {
+                let optionGroup = String(fgEl('.optionGroup').val());
+                let optionDistance = parseFloat(fgEl('.optionDistance').val());
+                let optionTime = parseFloat(fgEl('.optionTime').val());
+                let optionLosses = fgEl('.optionLosses').prop('checked');
+                let optionMaxloot = fgEl('.optionMaxloot').prop('checked');
+                let optionNewbarbs = fgEl('.optionNewbarbs').prop('checked') || false;
+
+                localStorage.setItem(
+                  'farmGod_options',
+                  JSON.stringify({
+                    optionGroup: optionGroup,
+                    optionDistance: optionDistance,
+                    optionTime: optionTime,
+                    optionLosses: optionLosses,
+                    optionMaxloot: optionMaxloot,
+                    optionNewbarbs: optionNewbarbs,
+                  })
+                );
+
+                fgEl('.optionsContent').html(`
+                  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:14px;">
+                    <div style="width:36px;height:36px;border:3px solid #2c2f3c;border-top:3px solid #f5a623;border-radius:50%;animation:fgSpin .8s linear infinite;"></div>
+                    <span style="color:#8892a4;font-size:12px;">Recopilando datos...</span>
+                  </div>
+                  <style>@keyframes fgSpin{to{transform:rotate(360deg)}}</style>
+                `);
+                getData(
+                  optionGroup,
+                  optionNewbarbs,
+                  optionLosses
+                ).then((data) => {
+                  Dialog.close();
+
+                  let plan = createPlanning(
+                    optionDistance,
+                    optionTime,
+                    optionMaxloot,
+                    data
+                  );
+                  $('.fgRabaContent').remove();
+                  $('#am_widget_Farm')
+                    .first()
+                    .before(buildTable(plan.farms));
+
+                  bindEventHandlers();
+                });
+              });
+
+            fgEl('.optionButton').focus();
+          }, 100);
         });
       } else {
         location.href = game_data.link_base_pure + 'am_farm';
@@ -601,7 +606,7 @@ window.FarmGod.Main = (function (Library, Translation) {
   const buildOptions = function () {
     injectFGCSS();
     let options = JSON.parse(localStorage.getItem('farmGod_options')) || {
-      optionGroup: 0,
+      optionGroup: '0',
       optionDistance: 25,
       optionTime: 10,
       optionLosses: false,
@@ -625,7 +630,7 @@ window.FarmGod.Main = (function (Library, Translation) {
           <div class="fg-head-icon">&#x2694;</div>
           <div>
             <div class="fg-head-title">${t.options.title}</div>
-            <div class="fg-head-sub">Tribal Wars &mdash; Script de farmeo automatizado</div>
+            <div class="fg-head-sub">Tribal Wars &mdash; Script de farmeo automatizado &mdash; <span style="color:#f5a623;font-weight:700;">v1.2.5</span></div>
           </div>
         </div>
         <div class="fg-body optionsContent">
@@ -638,7 +643,7 @@ window.FarmGod.Main = (function (Library, Translation) {
           <div class="fg-card">
             <div class="fg-row">
               <span class="fg-label">${t.options.group}</span>
-              ${groupSelect.replace('<select', '<select class="fg-select"')}
+              ${groupSelect.replace('class="optionGroup"', 'class="fg-select optionGroup"')}
             </div>
             <div class="fg-divider"></div>
             <div class="fg-row">
@@ -685,8 +690,7 @@ window.FarmGod.Main = (function (Library, Translation) {
         if (val.type == 'separator') {
           html += `<option disabled=""/>`;
         } else {
-          html += `<option value="${val.group_id}" ${val.group_id == id ? 'selected' : ''
-            }>${val.name}</option>`;
+          html += `<option value="${val.group_id}" ${String(val.group_id) === String(id) ? 'selected' : ''}>${val.name}</option>`;
         }
       });
 
@@ -853,7 +857,6 @@ window.FarmGod.Main = (function (Library, Translation) {
           });
       }
 
-      console.log('villages', data.villages);
       return data;
     };
 
