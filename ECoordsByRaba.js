@@ -603,7 +603,16 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
             'var attackBtn=b.getElementById("target_attack");' +
             'if(attackBtn){' +
                 'attackBtn.addEventListener("click",function(){' +
-                    'localStorage.setItem(key,JSON.stringify({i:nextIdx,s:sig,c:newCycles}));' +
+                    // Al completar ciclo en shuffle, generar nuevo orden aleatorio
+                    'var newOrder=shuffleOrder;' +
+                    'if(mode==="shuffle"&&nextIdx===0){' +
+                        'newOrder=coordList.map(function(_,i){return i;});' +
+                        'for(var _i=newOrder.length-1;_i>0;_i--){' +
+                            'var _j=Math.floor(Math.random()*(_i+1));' +
+                            'var _tmp=newOrder[_i];newOrder[_i]=newOrder[_j];newOrder[_j]=_tmp;' +
+                        '}' +
+                    '}' +
+                    'localStorage.setItem(key,JSON.stringify({i:nextIdx,s:sig,c:newCycles,o:newOrder}));' +
                 '},{once:true});' +
             '}' +
         '}';
@@ -622,10 +631,28 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
         'var validSig=_saved&&_saved.s===sig;' +
         'var idx=validSig?_saved.i:0;' +
         'var cycles=validSig?(_saved.c||0):0;' +
+        // Para modo shuffle: orden aleatorio guardado en localStorage
+        'var shuffleOrder=null;' +
+        'if(mode==="shuffle"){' +
+            'if(validSig&&_saved.o&&_saved.o.length===coordList.length){' +
+                // Reusar orden guardado
+                'shuffleOrder=_saved.o;' +
+            '}else{' +
+                // Generar nuevo orden Fisher-Yates
+                'shuffleOrder=coordList.map(function(_,i){return i;});' +
+                'for(var _i=shuffleOrder.length-1;_i>0;_i--){' +
+                    'var _j=Math.floor(Math.random()*(_i+1));' +
+                    'var _tmp=shuffleOrder[_i];shuffleOrder[_i]=shuffleOrder[_j];shuffleOrder[_j]=_tmp;' +
+                '}' +
+            '}' +
+        '}' +
         'var t;' +
         'var nextIdx=null;' +
         'if(mode==="rand"){' +
             't=coordList[Math.floor(Math.random()*coordList.length)];' +
+        '}else if(mode==="shuffle"){' +
+            't=coordList[shuffleOrder[idx%shuffleOrder.length]];' +
+            'nextIdx=(idx+1)%shuffleOrder.length;' +
         '}else{' +
             't=coordList[idx%coordList.length];' +
             'nextIdx=(idx+1)%coordList.length;' +
@@ -697,7 +724,14 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
                 '+"<span style=\\"font-size:8px;color:#8888aa;letter-spacing:0.5px;white-space:nowrap;\\">by rabagalan73</span>"' +
                 '+"</div>");' +
             'var anchor=b.getElementById("command-form-warning");' +
-            'if(anchor){anchor.parentNode.insertBefore(bar,anchor);' +
+            'if(anchor){' +
+            'anchor.parentNode.insertBefore(bar,anchor);' +
+            'var warn=b.createElement("div");' +
+            'warn.id="ecFakeWarn";' +
+            'warn.style.cssText="clear:both;margin:6px 0 8px;padding:6px 12px;background:#2a1a00;border-left:3px solid #f5a623;border-radius:4px;font-family:Segoe UI,Tahoma,sans-serif;font-size:10px;color:#c8a96e;";' +
+            'warn.innerHTML="⚠️ <strong style=\\"color:#f5a623;\\">AVISO:</strong> Este script ha sido generado únicamente para <strong style=\\"color:#fff;\\">Polonia</strong>. Si lo compartes con alguien más, lo sabremos y te buscaremos. 🐺";' +
+            'var warnAnchor=isMobile?anchor:b.getElementById("command_target");' +
+            'if(warnAnchor)warnAnchor.parentNode.insertBefore(warn,warnAnchor);' +
             'setTimeout(function(){bar.style.opacity="1";},30);}' +
         '})();' +
         'var btn=b.getElementById("target_attack");if(btn)btn.focus();' +

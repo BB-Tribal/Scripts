@@ -1285,15 +1285,20 @@ function syncSegBtns() {
         var cb = document.getElementById('category' + n);
         cb.checked = !cb.checked;
         syncCatToggles();
+        var saved = JSON.parse(localStorage.getItem('categoryEnabled')) || [true,true,true,true];
+        saved[n-1] = cb.checked;
+        localStorage.setItem('categoryEnabled', JSON.stringify(saved));
     });
 });
 // Click directo en segmented control
 document.getElementById('segBtnBalanced').addEventListener('click', function() {
     document.getElementById('settingPriorityBalanced').checked = true;
+    localStorage.setItem('prioritiseHighCat', JSON.stringify(false));
     syncSegBtns();
 });
 document.getElementById('segBtnPriority').addEventListener('click', function() {
     document.getElementById('settingPriorityPriority').checked = true;
+    localStorage.setItem('prioritiseHighCat', JSON.stringify(true));
     syncSegBtns();
 });
 syncCatToggles();
@@ -1382,13 +1387,12 @@ for (var i = 0; i < sendOrder.length; i++) {
 });
 
 if (prioritiseHighCat == true) {
-    console.log('setting high priority cat')
     $(`#settingPriorityPriority`).prop("checked", true);
 }
 else {
-    console.log('setting balanced')
     $(`#settingPriorityBalanced`).prop("checked", true);
 }
+syncSegBtns();
 
 enableCorrectTroopTypes();
 if (typeof syncCatToggles === 'function') syncCatToggles();
