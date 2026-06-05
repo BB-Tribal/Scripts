@@ -129,36 +129,32 @@ var UNIT_FARM = {
 var FARM_VILLAGE          = 24000; // Granja máxima de un pueblo estándar
 var OFF_WITH_SUPPORTS_THRESHOLD = 1500; // Granja mínima en tropas off para clasificar como off cuando hay apoyos (~350 ligeras)
 
+var UNIT_TEMPLATE = {
+	spear: 0, sword: 0, axe: 0, archer: 0,
+	spy: 0, light_cavalry: 0, archer_cavalry: 0, heavy_cavalry: 0,
+	ram: 0, catapult: 0,
+	snob: 0, knight: 0, militia: 0
+};
+
+var BUILDING_TEMPLATE = {
+	build: false,
+	level: 0
+};
+
+var DEFAULT_CONFIG = {
+	postAction: { type: 'eliminar', confirmDelete: false, delayNext: 200 },
+	villageMode: 'mixto'
+};
+
 var win = window;
 win.FastNotes = {
 	table: null,
-	units: {
-		spear: 0, sword: 0, axe: 0, archer: 0,
-		spy: 0, light_cavalry: 0, archer_cavalry: 0, heavy_cavalry: 0,
-		ram: 0, catapult: 0,
-		snob: 0, knight: 0, militia: 0,
-		snob_alive: false,
-		knight_alive: false,
-		militia_alive: false
-	},
-	spy_units: {
-		spear: 0, sword: 0, axe: 0, archer: 0,
-		spy: 0, light_cavalry: 0, archer_cavalry: 0, heavy_cavalry: 0,
-		ram: 0, catapult: 0,
-		snob: 0, knight: 0, militia: 0
-	},
-	wall: {
-		build: false,
-		level: 0,
-	},
-	iglesia: {
-		build: false,
-		level: 0,
-	},
-	torre: {
-		build: false,
-		level: 0,
-	}
+	villageDOM: null,
+	units: Object.assign({}, UNIT_TEMPLATE, { snob_alive: false, knight_alive: false, militia_alive: false }),
+	spy_units: Object.assign({}, UNIT_TEMPLATE),
+	wall: Object.assign({}, BUILDING_TEMPLATE),
+	iglesia: Object.assign({}, BUILDING_TEMPLATE),
+	torre: Object.assign({}, BUILDING_TEMPLATE)
 };
 
 
@@ -172,25 +168,49 @@ initDebug();
 // Resets all FastNotes state so re-running the script never carries over values from a previous report.
 function resetFastNotes() {
 	win.FastNotes.table = null;
-	win.FastNotes.units = {
-		spear: 0, sword: 0, axe: 0, archer: 0,
-		spy: 0, light_cavalry: 0, archer_cavalry: 0, heavy_cavalry: 0,
-		ram: 0, catapult: 0,
-		snob: 0, knight: 0, militia: 0,
-		snob_alive: false, knight_alive: false, militia_alive: false
-	};
-	win.FastNotes.spy_units = {
-		spear: 0, sword: 0, axe: 0, archer: 0,
-		spy: 0, light_cavalry: 0, archer_cavalry: 0, heavy_cavalry: 0,
-		ram: 0, catapult: 0,
-		snob: 0, knight: 0, militia: 0
-	};
-	win.FastNotes.wall    = { build: false, level: 0 };
-	win.FastNotes.iglesia = { build: false, level: 0 };
-	win.FastNotes.torre   = { build: false, level: 0 };
+	win.FastNotes.units = Object.assign({}, UNIT_TEMPLATE, { snob_alive: false, knight_alive: false, militia_alive: false });
+	win.FastNotes.spy_units = Object.assign({}, UNIT_TEMPLATE);
+	win.FastNotes.wall = Object.assign({}, BUILDING_TEMPLATE);
+	win.FastNotes.iglesia = Object.assign({}, BUILDING_TEMPLATE);
+	win.FastNotes.torre = Object.assign({}, BUILDING_TEMPLATE);
 }
 
 // ── Helpers de clasificación ──────────────────────────────────────────────────
+
+function tableExists(selector) {
+	return $(selector)[0] !== undefined;
+}
+
+// ── Configuration System ──────────────────────────────────────────────────
+
+function getStorageKey(key) {
+	return 'fnConfig_' + key;
+}
+
+function loadConfig(key, defaultValue) {
+	try {
+		const stored = localStorage.getItem(getStorageKey(key));
+		return stored ? JSON.parse(stored) : defaultValue;
+	} catch (e) {
+		return defaultValue;
+	}
+}
+
+function saveConfig(key, value) {
+	try {
+		localStorage.setItem(getStorageKey(key), JSON.stringify(value));
+		return true;
+	} catch (e) {
+		console.error('Error saving config:', e);
+		return false;
+	}
+}
+
+function getConfig(key, defaultValue) {
+	return loadConfig(key, defaultValue);
+}
+
+// ──────────────────────────────────────────────────────────────────────────
 
 function calcPower(units) {
 	var atk = 0, def = 0;
@@ -279,30 +299,58 @@ function initSetVillageNote() {
 		return;
 	}
 
-	// If you aren't attacker or defender... Send Alert!
-	if (typeof village_options !== 'undefined') {
-		var mode = village_options.mode.toLowerCase();
-		if (mode === "mixto") {
-			sendAlertMess();
-		} else if (mode === "defensor") {
-			spyValues();
-			getInfo();
-			inspectVillage(tableDef, tt('ModeDefensor'), 'def');
-		} else if (mode === "atacante") {
-			inspectVillage(tableAtt, tt('ModeAtacante'), 'att');
-		} else {
-			UI.ErrorMessage("Tienes que seleccionar un modo correcto: Defensor, Atacante, Mixto", 2000);
-		}
-		return;
+	// If you aren't attacker or defender... Check configuration mode
+	var villageMode = getConfig('villageMode', DEFAULT_CONFIG.villageMode).toLowerCase();
+	if (villageMode === "mixto") {
+		sendAlertMess();
+	} else if (villageMode === "defensor") {
+		spyValues();
+		getInfo();
+		inspectVillage(tableDef, tt('ModeDefensor'), 'def');
+	} else if (villageMode === "atacante") {
+		inspectVillage(tableAtt, tt('ModeAtacante'), 'att');
+	} else {
+		sendAlertMess();
 	}
-	sendAlertMess();
 }
 
 
-// Display an alert message to select where the note will be stored: 'Defender Player Village' or 'Attacker Player Village'!
-// This alert will be displayed when you are neither the attacker nor the defender player.
-function sendAlertMess() {
-	$('#fn-select-modal').remove();
+// Create and inject modal styles (only once)
+function injectConfigModalStyles() {
+	if ($('#fn-config-modal-css').length) return;
+	$('head').append(`<style id="fn-config-modal-css">
+		#fn-config-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); z-index: 99999; display: flex; align-items: center; justify-content: center; }
+		#fn-config-box { background: #fdf8f0; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.45); border: 1.5px solid #c8b89a; overflow: hidden; width: 480px; font-family: 'Segoe UI', Tahoma, sans-serif; animation: fnFadeIn 0.18s ease; }
+		@keyframes fnFadeIn { from { opacity:0; transform:scale(0.93); } to { opacity:1; transform:scale(1); } }
+		#fn-config-box .fn-config-head { background: linear-gradient(135deg, #5a3a28 0%, #3b2010 50%, #1e0f06 100%); padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.07); position: relative; }
+		#fn-config-box .fn-config-head::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #c8a96e 30%, #e8c97e 50%, #c8a96e 70%, transparent); }
+		#fn-config-box .fn-config-title { font-size: 15px; font-weight: 900; color: #f5e6c8; letter-spacing: 0.5px; }
+		#fn-config-box .fn-config-close { background: rgba(255,255,255,0.12); border: none; cursor: pointer; width: 26px; height: 26px; border-radius: 6px; font-size: 13px; font-weight: 900; color: #f5e6c8; display: flex; align-items: center; justify-content: center; transition: background 0.15s; z-index: 1; }
+		#fn-config-box .fn-config-close:hover { background: rgba(200,50,50,0.5); }
+		#fn-config-box .fn-config-body { padding: 22px 18px; }
+		.fn-config-group { margin-bottom: 20px; }
+		.fn-config-group:last-child { margin-bottom: 0; }
+		.fn-config-group label { display: block; font-size: 12px; font-weight: 800; color: #2e1f14; margin-bottom: 8px; }
+		.fn-config-group select { width: 100%; padding: 10px; border: 1px solid #c8b89a; border-radius: 6px; font-size: 12px; font-family: inherit; background: #fff; color: #333; }
+		.fn-config-group select:focus { outline: none; border-color: #8b5a3c; box-shadow: 0 0 0 2px rgba(139,90,60,0.1); }
+		.fn-config-checkbox-group { display: flex; align-items: center; gap: 8px; }
+		.fn-config-checkbox-group input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+		.fn-config-checkbox-group label { margin: 0; font-size: 12px; cursor: pointer; }
+		.fn-delay-buttons { display: flex; gap: 8px; }
+		.fn-delay-btn { flex: 1; padding: 10px; border: 2px solid #c8b89a; background: #fff; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 800; color: #2e1f14; transition: all 0.15s; }
+		.fn-delay-btn:hover { border-color: #8b5a3c; background: #f5e6c8; }
+		.fn-delay-btn.active { background: #4caf50; color: #fff; border-color: #4caf50; }
+		#fn-config-box .fn-config-footer { background: #f0e8d8; border-top: 1px solid #d8c9a8; padding: 12px 18px; display: flex; gap: 8px; justify-content: flex-end; }
+		.fn-config-btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 800; transition: all 0.15s; }
+		.fn-config-save { background: #4caf50; color: #fff; }
+		.fn-config-save:hover { background: #45a049; transform: translateY(-1px); }
+		.fn-config-cancel { background: #ccc; color: #333; }
+		.fn-config-cancel:hover { background: #bbb; }
+	</style>`);
+}
+
+function injectModalStyles() {
+	if ($('#fn-modal-css').length) return;
 	$('head').append(`<style id="fn-modal-css">
 		#fn-select-modal {
 			position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -384,6 +432,179 @@ function sendAlertMess() {
 			padding: 7px 18px; font-size: 10px; color: #8b7355; text-align: center;
 		}
 	</style>`);
+}
+
+// Show comparison modal for note merge decision
+function showComparisonModal(compData) {
+	$('#fn-comparison-modal').remove();
+	injectComparisonModalStyles();
+
+	var newNoteDisplay = compData.newNote.fullText.replace(/\[.*?\]/g, function(match) {
+		if (match.includes('spoiler')) return match;
+		return '';
+	});
+
+	newNoteDisplay = compData.newNote.fullText;
+
+	var oldNoteDisplay = compData.oldNote.fullText;
+
+	$('body').append(`
+	<div id="fn-comparison-modal">
+		<div id="fn-comparison-box">
+			<div class="fn-comp-head">
+				<div class="fn-comp-title">🔄 Comparar Notas - ${compData.playerName}</div>
+				<button class="fn-comp-close" onclick="$('#fn-comparison-modal').remove()">✕</button>
+			</div>
+			<div class="fn-comp-content">
+				<div class="fn-comp-panel">
+					<div class="fn-comp-panel-header">📝 Nota Nueva</div>
+					<div class="fn-comp-panel-content" id="fn-comp-new"></div>
+				</div>
+				<div class="fn-comp-panel">
+					<div class="fn-comp-panel-header">📋 Nota Anterior</div>
+					<div class="fn-comp-panel-content" id="fn-comp-old"></div>
+				</div>
+			</div>
+			<div class="fn-comp-footer">
+				<button class="fn-comp-btn fn-comp-btn-close" onclick="$('#fn-comparison-modal').remove()">Cancelar</button>
+				<button class="fn-comp-btn fn-comp-btn-keep" onclick="handleComparisonAction('keep', '${compData.villageId}')">Conservar Anterior</button>
+				<button class="fn-comp-btn fn-comp-btn-merge" onclick="handleComparisonAction('merge', '${compData.villageId}', true)">Fusionar</button>
+				<button class="fn-comp-btn fn-comp-btn-overwrite" onclick="handleComparisonAction('overwrite', '${compData.villageId}')">Sobreescribir</button>
+			</div>
+		</div>
+	</div>`);
+
+	// Insertar el contenido HTML en los paneles
+	const newRendered = compData.newNote.rendered || compData.newNote.fullText;
+	const oldContent = compData.oldNote.fullText;
+
+	$('#fn-comp-new').html(newRendered);
+
+	// Mostrar la nota anterior (renderizada como se ve en TW)
+	if (oldContent.includes('<')) {
+		$('#fn-comp-old').html(oldContent);
+	} else {
+		$('#fn-comp-old').text(oldContent);
+	}
+
+	// Copiar el spoiler del panel derecho al izquierdo (para que se vea igual)
+	const oldSpoiler = document.querySelector('#fn-comp-old .spoiler');
+	const newSpoilerPlaceholder = document.querySelector('#fn-comp-new .spoiler');
+	if (oldSpoiler && newSpoilerPlaceholder) {
+		newSpoilerPlaceholder.replaceWith(oldSpoiler.cloneNode(true));
+	}
+
+	// Store comparison data globally for button handlers
+	window.fnCurrentComparison = compData;
+}
+
+function handleComparisonAction(action, villageId, isMerge = false) {
+	var comp = window.fnCurrentComparison;
+	if (!comp) return;
+
+	$('#fn-comparison-modal').remove();
+
+	if (action === 'overwrite') {
+		postNote(comp.newNote.fullText, comp.autodetected, comp.villageId);
+	} else if (action === 'keep') {
+		fnToast('Nota anterior conservada', '');
+	} else if (action === 'merge') {
+		var mergedNote = mergeNotes(comp.newNote.fullText, comp.oldNote.fullText);
+		postNote(mergedNote, comp.autodetected, comp.villageId);
+	}
+
+	window.fnCurrentComparison = null;
+}
+
+// Show configuration modal
+function showConfigModal() {
+	$('#fn-config-modal').remove();
+	injectConfigModalStyles();
+
+	var postConfig = getConfig('postAction', DEFAULT_CONFIG.postAction);
+	var villageMode = getConfig('villageMode', DEFAULT_CONFIG.villageMode);
+
+	$('body').append(`
+	<div id="fn-config-modal">
+		<div id="fn-config-box">
+			<div class="fn-config-head">
+				<div class="fn-config-title">⚙️ Configuración de Fast Notes</div>
+				<button class="fn-config-close" onclick="$('#fn-config-modal').remove()">✕</button>
+			</div>
+			<div class="fn-config-body">
+				<div class="fn-config-group">
+					<label>Acción después de agregar nota</label>
+					<select id="fn-cfg-post-action">
+						<option value="nada" ${postConfig.type === 'nada' ? 'selected' : ''}>No hacer nada</option>
+						<option value="eliminar" ${postConfig.type === 'eliminar' ? 'selected' : ''}>Eliminar informe</option>
+						<option value="siguiente" ${postConfig.type === 'siguiente' ? 'selected' : ''}>Ir al siguiente informe</option>
+						<option value="archivar" ${postConfig.type === 'archivar' ? 'selected' : ''}>Archivar informe</option>
+					</select>
+				</div>
+
+				<div class="fn-config-group">
+					<div class="fn-config-checkbox-group">
+						<input type="checkbox" id="fn-cfg-confirm-delete" ${postConfig.confirmDelete ? 'checked' : ''}>
+						<label for="fn-cfg-confirm-delete">Pedir confirmación al eliminar</label>
+					</div>
+				</div>
+
+				<div class="fn-config-group">
+					<label>Tiempo de espera antes de ir al siguiente</label>
+					<div class="fn-delay-buttons">
+						<button type="button" class="fn-delay-btn ${postConfig.delayNext === 0 ? 'active' : ''}" onclick="selectDelay(0, event)">Sin espera</button>
+						<button type="button" class="fn-delay-btn ${postConfig.delayNext === 200 ? 'active' : ''}" onclick="selectDelay(200, event)">200 ms</button>
+						<button type="button" class="fn-delay-btn ${postConfig.delayNext === 600 ? 'active' : ''}" onclick="selectDelay(600, event)">600 ms</button>
+					</div>
+					<input type="hidden" id="fn-cfg-delay" value="${postConfig.delayNext || 200}">
+				</div>
+
+				<div class="fn-config-group">
+					<label>Modo de pueblo (cuando no eres atacante ni defensor)</label>
+					<select id="fn-cfg-village-mode">
+						<option value="mixto" ${villageMode === 'mixto' ? 'selected' : ''}>Mixto (preguntar cada vez)</option>
+						<option value="defensor" ${villageMode === 'defensor' ? 'selected' : ''}>Siempre defensor</option>
+						<option value="atacante" ${villageMode === 'atacante' ? 'selected' : ''}>Siempre atacante</option>
+					</select>
+				</div>
+			</div>
+			<div class="fn-config-footer">
+				<button class="fn-config-btn fn-config-cancel" onclick="$('#fn-config-modal').remove()">Cancelar</button>
+				<button class="fn-config-btn fn-config-save" onclick="saveAndCloseConfig()">Guardar</button>
+			</div>
+		</div>
+	</div>`);
+}
+
+function selectDelay(ms, event) {
+	event.preventDefault();
+	$('#fn-cfg-delay').val(ms);
+	$('.fn-delay-btn').removeClass('active');
+	$(event.target).addClass('active');
+}
+
+function saveAndCloseConfig() {
+	var postAction = document.getElementById('fn-cfg-post-action').value;
+	var confirmDelete = document.getElementById('fn-cfg-confirm-delete').checked;
+	var delayNext = parseInt(document.getElementById('fn-cfg-delay').value) || 200;
+	var villageMode = document.getElementById('fn-cfg-village-mode').value;
+
+	saveConfig('postAction', {
+		type: postAction,
+		confirmDelete: confirmDelete,
+		delayNext: delayNext
+	});
+	saveConfig('villageMode', villageMode);
+
+	$('#fn-config-modal').remove();
+	fnToast('Configuración guardada', '');
+}
+
+// Display an alert message to select where the note will be stored: 'Defender Player Village' or 'Attacker Player Village'!
+// This alert will be displayed when you are neither the attacker nor the defender player.
+function sendAlertMess() {
+	$('#fn-select-modal').remove();
+	injectModalStyles();
 
 	$('body').append(`
 	<div id="fn-select-modal">
@@ -393,7 +614,10 @@ function sendAlertMess() {
 					<div class="fn-modal-head-title">⚔️ Fast Notes</div>
 					<div class="fn-modal-head-subtitle">Selección de pueblo objetivo</div>
 				</div>
-				<button class="fn-modal-head-close" onclick="$('#fn-select-modal').remove()">✕</button>
+				<div style="display:flex;gap:8px;align-items:center;">
+					<button class="fn-modal-head-close" onclick="showConfigModal()" style="background: rgba(100,150,200,0.3);" title="Configuración">⚙️</button>
+					<button class="fn-modal-head-close" onclick="$('#fn-select-modal').remove()">✕</button>
+				</div>
 			</div>
 			<div class="fn-modal-body">
 				<div class="fn-modal-desc">
@@ -455,19 +679,22 @@ async function inspectVillage(table, autodetected, villageRole) {
 	var dom_target_village = fetches[0];
 	var playerInfo = fetches[1];
 
+	// Guardar el DOM para acceso posterior en createNote()
+	win.FastNotes.villageDOM = dom_target_village;
+
 	if (dom_target_village === null) return;
 	var content_value = dom_target_village.getElementById("content_value");
 	var points = content_value.getElementsByTagName('table')[1].getElementsByTagName('td')[4].textContent.trim();
 
 	// In the case of not seeing any units / troops
 	if (table.rows[2].getElementsByTagName('table')[0] == undefined) {
-		createNote(playerName, 'unknown', points, autodetected, villageId, { blindaje: null, offInDef: false, spyUsed: false, inVillFarm: 0, villageRole: villageRole, playerInfo: playerInfo });
+		await createNote(playerName, 'unknown', points, autodetected, villageId, { blindaje: null, offInDef: false, spyUsed: false, inVillFarm: 0, villageRole: villageRole, playerInfo: playerInfo }, dom_target_village);
 		return;
 	}
 	var units = table.rows[2].getElementsByTagName('table')[0];
 	getValues(units);
 
-	calc(playerName, points, autodetected, villageId, villageRole, playerInfo);
+	await calc(playerName, points, autodetected, villageId, villageRole, playerInfo);
 }
 
 //////////////////////////////////
@@ -482,50 +709,71 @@ function safeInt(el, className) {
 	} catch(ex) { return 0; }
 }
 
+// Extract units from a row, optionally checking losses
+function extractUnits(row, lostRow = null) {
+	return {
+		spear: safeInt(row, "unit-item-spear"),
+		sword: safeInt(row, "unit-item-sword"),
+		axe: safeInt(row, "unit-item-axe"),
+		archer: safeInt(row, "unit-item-archer"),
+		spy: safeInt(row, "unit-item-spy"),
+		light_cavalry: safeInt(row, "unit-item-light"),
+		archer_cavalry: safeInt(row, "unit-item-marcher"),
+		heavy_cavalry: safeInt(row, "unit-item-heavy"),
+		ram: safeInt(row, "unit-item-ram"),
+		catapult: safeInt(row, "unit-item-catapult"),
+		snob: safeInt(row, "unit-item-snob"),
+		knight: safeInt(row, "unit-item-knight"),
+		militia: safeInt(row, "unit-item-militia")
+	};
+}
+
 // Get unit values from the report table
 function getValues(units) {
 	const row = units.rows[1];
 	const lost = units.rows[2];
-	const fn = win.FastNotes.units;
+	const extracted = extractUnits(row, lost);
 
-	fn.spear        = safeInt(row, "unit-item-spear");
-	fn.sword        = safeInt(row, "unit-item-sword");
-	fn.axe          = safeInt(row, "unit-item-axe");
-	fn.spy          = safeInt(row, "unit-item-spy");
-	fn.light_cavalry= safeInt(row, "unit-item-light");
-	fn.heavy_cavalry= safeInt(row, "unit-item-heavy");
-	fn.ram          = safeInt(row, "unit-item-ram");
-	fn.catapult     = safeInt(row, "unit-item-catapult");
-	fn.snob         = safeInt(row, "unit-item-snob");
-	if (fn.snob - safeInt(lost, "unit-item-snob") > 0) fn.snob_alive = true;
+	Object.assign(win.FastNotes.units, extracted);
 
-	// Check if world have Archers!
-	fn.archer         = safeInt(row, "unit-item-archer");
-	fn.archer_cavalry = safeInt(row, "unit-item-marcher");
-	if (DEBUG && fn.archer === 0 && fn.archer_cavalry === 0) console.debug("This world don't have archers!");
+	if (extracted.snob - safeInt(lost, "unit-item-snob") > 0) win.FastNotes.units.snob_alive = true;
+	if (extracted.knight - safeInt(lost, "unit-item-knight") > 0) win.FastNotes.units.knight_alive = true;
+	if (extracted.militia - safeInt(lost, "unit-item-militia") > 0) win.FastNotes.units.militia_alive = true;
 
-	// Check if world have Knight!
-	fn.knight = safeInt(row, "unit-item-knight");
-	if (fn.knight - safeInt(lost, "unit-item-knight") > 0) fn.knight_alive = true;
-	if (DEBUG && fn.knight === 0) console.debug("This world don't have knight!");
-
-	fn.militia = safeInt(row, "unit-item-militia");
-	if (fn.militia - safeInt(lost, "unit-item-militia") > 0) fn.militia_alive = true;
+	if (DEBUG && extracted.archer === 0 && extracted.archer_cavalry === 0) console.debug("This world don't have archers!");
+	if (DEBUG && extracted.knight === 0) console.debug("This world don't have knight!");
 }
 
 function builds(table) {
+	const buildingMap = {
+		'Muralla': 'wall',
+		'Iglesia': 'iglesia',
+		'Torre': 'torre'
+	};
+
 	for (var i = 0, row; row = table.rows[i]; i++) {
-		if (row.cells[0].textContent.includes("Muralla")) {
-			win.FastNotes.wall.level = parseInt(row.cells[1].textContent);
-			win.FastNotes.wall.build = true;
+		for (const [buildingName, buildingKey] of Object.entries(buildingMap)) {
+			if (row.cells[0].textContent.includes(buildingName)) {
+				win.FastNotes[buildingKey].level = parseInt(row.cells[1].textContent);
+				win.FastNotes[buildingKey].build = true;
+			}
 		}
-		if (row.cells[0].textContent.includes("Iglesia")) {
-			win.FastNotes.iglesia.level = parseInt(row.cells[1].textContent);
-			win.FastNotes.iglesia.build = true;
-		}
-		if (row.cells[0].textContent.includes("Torre")) {
-			win.FastNotes.torre.level = parseInt(row.cells[1].textContent);
-			win.FastNotes.torre.build = true;
+	}
+}
+
+function parseAndSetBuilding(text, cellIndex) {
+	const buildingMap = {
+		'Muralla': 'wall',
+		'Iglesia': 'iglesia',
+		'Torre': 'torre'
+	};
+
+	for (const [buildingName, buildingKey] of Object.entries(buildingMap)) {
+		if (text.includes(buildingName)) {
+			const split = text.replace(".", "").split(" ");
+			win.FastNotes[buildingKey].level = parseInt(split[split.length - 1], 10);
+			win.FastNotes[buildingKey].build = true;
+			return;
 		}
 	}
 }
@@ -549,27 +797,14 @@ function getInfo() {
 	} else if (atack_results_table !== undefined) {
 		for (var i = 0, row; row = atack_results_table.rows[i]; i++) {
 			if (row.cells[1] != null) {
-				if (row.cells[1].textContent.includes('Muralla')) {
-					var split = row.cells[1].textContent.replace(".", "").split(" ");
-					win.FastNotes.wall.build = true;
-					win.FastNotes.wall.level = parseInt(split[split.length - 1], 10);
-				}
-				if (row.cells[0].textContent.includes("Iglesia")) {
-					var split = row.cells[1].textContent.replace(".", "").split(" ");
-					win.FastNotes.iglesia.level = parseInt(split[split.length - 1], 10);
-					win.FastNotes.iglesia.build = true;
-				}
-				if (row.cells[0].textContent.includes("Torre")) {
-					var split = row.cells[1].textContent.replace(".", "").split(" ");
-					win.FastNotes.torre.level = parseInt(split[split.length - 1], 10);
-					win.FastNotes.torre.build = true;
-				}
+				parseAndSetBuilding(row.cells[1].textContent, 1);
+				parseAndSetBuilding(row.cells[0].textContent, 0);
 			}
 		}
 	}
 }
 
-function calc(playerName, points, autodetected, villageId, villageRole, playerInfo) {
+async function calc(playerName, points, autodetected, villageId, villageRole, playerInfo) {
 	var fn = win.FastNotes;
 	var typeVillage, blindaje = null, offInDef = false, spyUsed = false, inVillFarm = 0;
 
@@ -578,7 +813,8 @@ function calc(playerName, points, autodetected, villageId, villageRole, playerIn
 		fn.units.spy + fn.units.light_cavalry + fn.units.archer_cavalry + fn.units.heavy_cavalry +
 		fn.units.ram + fn.units.catapult + fn.units.snob + fn.units.knight;
 	if (totalUnits === 0 && !hasSpyData()) {
-		createNote(playerName, 'empty', points, autodetected, villageId, { blindaje: null, offInDef: false, spyUsed: false, inVillFarm: 0, villageRole: villageRole });
+		// dom_target_village no está disponible en calc(), será null
+		await createNote(playerName, 'empty', points, autodetected, villageId, { blindaje: null, offInDef: false, spyUsed: false, inVillFarm: 0, villageRole: villageRole }, null);
 		return;
 	}
 
@@ -628,10 +864,10 @@ function calc(playerName, points, autodetected, villageId, villageRole, playerIn
 		console.debug("SpyUsed:", spyUsed, "| OffInDef:", offInDef);
 	}
 
-	createNote(playerName, typeVillage, points, autodetected, villageId, {
+	await createNote(playerName, typeVillage, points, autodetected, villageId, {
 		blindaje: blindaje, offInDef: offInDef, spyUsed: spyUsed,
 		inVillFarm: inVillFarm, villageRole: villageRole, playerInfo: playerInfo
-	});
+	}, null);
 }
 
 function spyValues() {
@@ -639,24 +875,12 @@ function spyValues() {
 	var units = $('table#attack_spy_away')[0];
 	if (units !== undefined) {
 		const row = units.rows[1].getElementsByTagName("table")[0].rows[1];
-		const sp = win.FastNotes.spy_units;
+		const extracted = extractUnits(row);
 
-		sp.spear        = safeInt(row, "unit-item-spear");
-		sp.sword        = safeInt(row, "unit-item-sword");
-		sp.axe          = safeInt(row, "unit-item-axe");
-		sp.spy          = safeInt(row, "unit-item-spy");
-		sp.light_cavalry= safeInt(row, "unit-item-light");
-		sp.heavy_cavalry= safeInt(row, "unit-item-heavy");
-		sp.ram          = safeInt(row, "unit-item-ram");
-		sp.catapult     = safeInt(row, "unit-item-catapult");
-		sp.snob         = safeInt(row, "unit-item-snob");
-		if (sp.snob > 0) win.FastNotes.units.snob_alive = true;
+		Object.assign(win.FastNotes.spy_units, extracted);
 
-		sp.archer         = safeInt(row, "unit-item-archer");
-		sp.archer_cavalry = safeInt(row, "unit-item-marcher");
-
-		sp.knight = safeInt(row, "unit-item-knight");
-		if (sp.knight > 0) {
+		if (extracted.snob > 0) win.FastNotes.units.snob_alive = true;
+		if (extracted.knight > 0) {
 			win.FastNotes.units.knight_alive = true;
 			win.FastNotes.units.knight = 1;
 		}
@@ -668,8 +892,263 @@ function spyValues() {
 //            NOTES             //
 //////////////////////////////////
 
+// Extract [spoiler]...[/spoiler] content from note
+function extractSpoilerContent(noteText) {
+	const regex = /\[spoiler=([^\]]*)\]([\s\S]*?)\[\/spoiler\]/g;
+	const spoilers = [];
+	let match;
+	while ((match = regex.exec(noteText)) !== null) {
+		spoilers.push({
+			label: match[1],
+			content: match[2]
+		});
+	}
+	return spoilers;
+}
+
+// Parse analysis fields from note text
+function parseAnalysisFields(noteText) {
+	const fields = {
+		player: '',
+		type: '',
+		points: '',
+		blindaje: ''
+	};
+
+	// Extract player: [player]NAME[/player]
+	const playerMatch = noteText.match(/\[player\](.*?)\[\/player\]/);
+	if (playerMatch) fields.player = playerMatch[1].split('[')[0].trim();
+
+	// Extract type: TIPO     ▸  [color...]TEXT[/color]
+	const typeMatch = noteText.match(/TIPO\s+▸\s+([\s\S]*?)(?:\n|$)/);
+	if (typeMatch) fields.type = typeMatch[1].replace(/\[.*?\]/g, '').trim();
+
+	// Extract points: PUEBLO   ▸  ... [b]POINTS[/b] pts
+	const pointsMatch = noteText.match(/PUEBLO\s+▸\s+.*?\[b\]([\d,\.]+)\[\/b\]\s*pts/);
+	if (pointsMatch) fields.points = pointsMatch[1];
+
+	// Extract blindaje level: BLINDAJE  ▸  [color...]█[/color]  LEVEL
+	const blindajeMatch = noteText.match(/BLINDAJE\s+▸\s+(.*?)(?:\n|$)/);
+	if (blindajeMatch) {
+		const blindajeText = blindajeMatch[1].replace(/\[.*?\]/g, '').trim();
+		fields.blindaje = blindajeText;
+	}
+
+	return fields;
+}
+
+// Render BBCode to HTML (simple renderer for display)
+function renderBBCode(bbcode, existingNoteHtml = null) {
+	let html = bbcode;
+
+	console.log('[renderBBCode] Iniciando...');
+	console.log('[renderBBCode] BBCode contiene [report_export]:', html.includes('[report_export]'));
+	// Log de la sección alrededor del report_export
+	const rIdx = html.indexOf('[report_export]');
+	if (rIdx !== -1) console.log('[renderBBCode] BBCode alrededor de report_export:', JSON.stringify(html.substring(Math.max(0, rIdx - 30), rIdx + 30)));
+	console.log('[renderBBCode] existingNoteHtml:', existingNoteHtml ? 'SÍ (' + existingNoteHtml.length + ' chars)' : 'NO');
+
+	// PRIMERO: Reemplazar el bloque completo [spoiler=label][report_export]...[/report_export][/spoiler]
+	html = html.replace(/\[spoiler=[^\]]*\]\s*\[report_export\][\s\S]*?\[\/report_export\]\s*\[\/spoiler\]/g, '___REPORT_PLACEHOLDER___');
+
+	// También reemplazar [report_export] suelto
+	html = html.replace(/\[report_export\][\s\S]*?\[\/report_export\]/g, '___REPORT_PLACEHOLDER___');
+
+	// Quitar el [spoiler] sin label que queda envolviendo el placeholder
+	html = html.replace(/\[spoiler\]([\s\S]*?)\[\/spoiler\]/gi, '$1');
+
+	console.log('[renderBBCode] Después de reemplazar report_export, html contiene placeholder:', html.includes('___REPORT_PLACEHOLDER___'));
+
+	// Procesar spoilers con parámetro [spoiler=label]
+	html = html.replace(/\[spoiler=([^\]]*)\]([\s\S]*?)\[\/spoiler\]/gi, function(match, label, content) {
+		// Escapar HTML en el contenido
+		content = content
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/\n/g, '<br>');
+		return '<details><summary>📋 ' + label + '</summary><div style="margin-top:8px; padding:8px; background:#f9f9f9; font-size:10px; word-break:break-all;">' + content + '</div></details>';
+	});
+
+	// DESPUÉS: Reemplazar el placeholder con el informe renderizado
+	if (html.includes('___REPORT_PLACEHOLDER___') && existingNoteHtml) {
+		console.log('[renderBBCode] Extrayendo informe de nota anterior...');
+
+		const tempDiv = document.createElement('div');
+		tempDiv.innerHTML = existingNoteHtml;
+
+		// Buscar <details>
+		let detailsElements = tempDiv.querySelectorAll('details');
+		console.log('[renderBBCode] <details> encontrados:', detailsElements.length);
+
+		// Si no hay <details>, buscar div.spoiler
+		if (detailsElements.length === 0) {
+			console.log('[renderBBCode] No hay <details>, buscando div.spoiler...');
+			detailsElements = tempDiv.querySelectorAll('div.spoiler');
+			console.log('[renderBBCode] div.spoiler encontrados:', detailsElements.length);
+
+			// Para div.spoiler, extraer contenido limpio
+			if (detailsElements.length > 0) {
+				console.log('[renderBBCode] Usando contenido de div.spoiler');
+				const spoilerDiv = detailsElements[0];
+
+				const children = Array.from(spoilerDiv.children);
+
+				// Child 1 es el contenido (Child 0 es el INPUT toggle)
+				let contentHtml = '';
+				if (children.length >= 2) {
+					const contentDiv = children[1].cloneNode(true);
+					// El contenido está en un <span style="display:none"> - quitar ese estilo
+					contentDiv.querySelectorAll('[style*="display"]').forEach(el => {
+						el.style.display = '';
+					});
+					contentHtml = contentDiv.innerHTML;
+				} else if (children.length === 1) {
+					contentHtml = children[0].innerHTML;
+				} else {
+					contentHtml = spoilerDiv.innerHTML;
+				}
+
+				// Mostrar el informe directamente sin spoiler (estamos en el modal de comparación)
+				// Clonar el spoiler y quitar display:none del contenido para que se vea igual que la nota anterior
+				const spoilerClone = spoilerDiv.cloneNode(true);
+				spoilerClone.querySelectorAll('[style*="display"]').forEach(el => { el.style.display = ''; });
+				const reportHtml = spoilerClone.outerHTML;
+				html = html.replace('___REPORT_PLACEHOLDER___', reportHtml);
+				console.log('[renderBBCode] Reemplazo de spoiler completado');
+			}
+		} else {
+			// Manejo de <details>
+			for (let details of detailsElements) {
+				const summary = details.querySelector('summary');
+				if (summary && summary.textContent.includes('Ver Informe')) {
+					console.log('[renderBBCode] ENCONTRADO spoiler Ver Informe, extrayendo...');
+					const clone = details.cloneNode(true);
+					const summaryToRemove = clone.querySelector('summary');
+					if (summaryToRemove) summaryToRemove.remove();
+					const reportHtml = '<details><summary>📋 Ver Informe</summary>' + clone.innerHTML + '</details>';
+					html = html.replace('___REPORT_PLACEHOLDER___', reportHtml);
+					console.log('[renderBBCode] Reemplazo completado');
+					break;
+				}
+			}
+		}
+	}
+
+	// Si el placeholder sigue ahí (no encontró informe), eliminar
+	if (html.includes('___REPORT_PLACEHOLDER___')) {
+		console.log('[renderBBCode] Placeholder sigue ahí, eliminando...');
+		html = html.replace('___REPORT_PLACEHOLDER___', '');
+	}
+
+	// Procesar tags de color
+	html = html.replace(/\[color=#([a-f0-9]{6})\](.*?)\[\/color\]/gi, '<span style="color:#$1">$2</span>');
+
+	// Procesar tags básicos
+	html = html.replace(/\[b\](.*?)\[\/b\]/gi, '<b>$1</b>');
+	html = html.replace(/\[u\](.*?)\[\/u\]/gi, '<u>$1</u>');
+	html = html.replace(/\[i\](.*?)\[\/i\]/gi, '<i>$1</i>');
+
+	// Procesar player links
+	html = html.replace(/\[player\](.*?)\[\/player\]/gi, '<span style="color:#1e50a2"><b>$1</b></span>');
+
+	// Procesar ally tags
+	html = html.replace(/\[\[ally\](.*?)\[\/ally\]\]/gi, '<span style="color:#1e50a2">[$1]</span>');
+
+	// Procesar saltos de línea
+	html = html.replace(/\n/g, '<br>');
+
+	return html;
+}
+
+// Extract note from village DOM (already loaded)
+function extractNoteFromDOM(villageDOM) {
+	if (!villageDOM) {
+		console.log('[FastNotes] villageDOM es null');
+		return null;
+	}
+
+	try {
+		// Obtener el contenido HTML renderizado del .village-note-body
+		const noteBodyEl = villageDOM.querySelector('#own_village_note .village-note-body');
+
+		if (noteBodyEl) {
+			const renderedHTML = noteBodyEl.innerHTML;
+			if (renderedHTML && renderedHTML.trim().length > 0) {
+				console.log('[FastNotes] Nota renderizada encontrada en DOM');
+				return renderedHTML.trim();
+			}
+		}
+
+		console.log('[FastNotes] No hay nota renderizada en el DOM');
+		return null;
+	} catch (e) {
+		console.error('[FastNotes] Error en extractNoteFromDOM:', e);
+		return null;
+	}
+}
+
+// Fetch existing note from village page
+async function fetchExistingNote(villageId) {
+	try {
+		const villageUrl = `/game.php?village=${villageId}&screen=info_village`;
+		console.log('[FastNotes] Fetching note from:', villageUrl);
+
+		const response = await fetch(villageUrl, { credentials: 'include' });
+		console.log('[FastNotes] Fetch response status:', response.status);
+
+		if (!response.ok) {
+			console.warn('[FastNotes] Response not ok:', response.status);
+			return null;
+		}
+
+		const html = await response.text();
+		console.log('[FastNotes] HTML obtenido, tamaño:', html.length);
+
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(html, 'text/html');
+
+		// Buscar en el DOM: #own_village_note .village-note-body contiene el contenido renderizado
+		const noteBodyEl = doc.querySelector('#own_village_note .village-note-body');
+		console.log('[FastNotes] Buscando #own_village_note .village-note-body:', noteBodyEl ? 'ENCONTRADO' : 'NO ENCONTRADO');
+
+		if (noteBodyEl) {
+			// El contenido está en HTML (renderizado), necesitamos el BBCode original del textarea
+			// Buscamos el textarea que contiene el código BBCode
+			const noteTextarea = doc.querySelector('textarea[name="note"]');
+
+			if (noteTextarea) {
+				const noteText = noteTextarea.value || noteTextarea.textContent;
+				const trimmed = noteText ? noteText.trim() : '';
+				if (trimmed.length > 0) {
+					console.log('[FastNotes] Nota encontrada en textarea, length:', trimmed.length);
+					return trimmed;
+				}
+			}
+
+			// Si no está en textarea, extraer del HTML renderizado con regex
+			console.log('[FastNotes] Extrayendo del HTML renderizado...');
+			const textareaMatch = html.match(/<textarea[^>]*name=["\']note["\'][^>]*>([\s\S]*?)<\/textarea>/);
+
+			if (textareaMatch && textareaMatch[1]) {
+				const noteText = textareaMatch[1].trim();
+				if (noteText.length > 0) {
+					console.log('[FastNotes] Nota encontrada en HTML, length:', noteText.length);
+					return noteText;
+				}
+			}
+		}
+
+		console.warn('[FastNotes] No se encontró nota en la página');
+		return null;
+	} catch (e) {
+		console.error('[FastNotes] Error en fetchExistingNote:', e);
+		return null;
+	}
+}
+
 // Create and edit text content for the Village Note
-function createNote(playerName, typeVillage, points, autodetected, villageId, meta) {
+async function createNote(playerName, typeVillage, points, autodetected, villageId, meta, villageDOM) {
 	var fn = win.FastNotes;
 
 	var time = $('#content_value')[0].getElementsByTagName('table')[4].rows[1].cells[1].textContent;
@@ -720,66 +1199,191 @@ function createNote(playerName, typeVillage, points, autodetected, villageId, me
 	var exportEl = $('#report_export_code')[0];
 	var exportCode = exportEl ? (exportEl.value !== undefined && exportEl.value !== '' ? exportEl.value : exportEl.textContent) : '';
 	noteText += exportCode.replace("[spoiler]", "[spoiler=📋 Ver Informe]");
-	postNote(noteText, autodetected, villageId);
+
+	// Check for existing note
+	console.log('[FastNotes] Buscando nota previa para villageId:', villageId);
+
+	// Intentar usar villageDOM guardado en win.FastNotes
+	const savedDOM = win.FastNotes.villageDOM;
+	console.log('[FastNotes] ¿villageDOM guardado?:', savedDOM ? 'SÍ' : 'NO');
+
+	let existingNote = null;
+
+	if (savedDOM) {
+		console.log('[FastNotes] Usando DOM guardado...');
+		existingNote = extractNoteFromDOM(savedDOM);
+		console.log('[FastNotes] Nota extraída del DOM:', existingNote ? 'SÍ (' + existingNote.length + ' chars)' : 'NO');
+	} else {
+		console.log('[FastNotes] DOM no disponible, haciendo fetch...');
+		existingNote = await fetchExistingNote(villageId);
+		console.log('[FastNotes] Nota obtenida por fetch:', existingNote ? 'SÍ (' + existingNote.length + ' chars)' : 'NO');
+	}
+
+	if (existingNote) {
+		console.log('[FastNotes] Mostrando modal de comparación');
+
+		// Renderizar la nota nueva pasando la nota anterior para extraer el informe
+		const renderedNewNote = renderBBCode(noteText, existingNote);
+
+		const compData = {
+			villageId: villageId,
+			playerName: playerName,
+			newNote: {
+				fullText: noteText,
+				rendered: renderedNewNote,
+				analysis: parseAnalysisFields(noteText),
+				spoilers: extractSpoilerContent(noteText)
+			},
+			oldNote: {
+				fullText: existingNote,
+				analysis: parseAnalysisFields(existingNote),
+				spoilers: extractSpoilerContent(existingNote)
+			},
+			autodetected: autodetected
+		};
+
+		showComparisonModal(compData);
+	} else {
+		console.log('[FastNotes] No hay nota previa, guardando directamente');
+		postNote(noteText, autodetected, villageId);
+	}
 }
 
-// Posts a note in the specific village!
-function postNote(noteText, autodetected, villageId) {
-	var mode = "";
-	var delete_confirm = false;
-	var cooldown_next = false;
-	var delay_next = 200;
-
-	if (typeof note_added !== 'undefined') mode = note_added.mode.toLowerCase();
-	if (typeof next_options !== 'undefined') {
-		cooldown_next = next_options.delay.enable;
-		delay_next = next_options.delay.cooldown;
-	}
-	if (typeof delete_options !== 'undefined') delete_confirm = delete_options.confirm_msg;
-
+// Execute configured post-note action
+function executePostAction(noteText, autodetected, villageId) {
+	var config = getConfig('postAction', DEFAULT_CONFIG.postAction);
 	var msg = "";
 
-	if (mode == "siguiente") {
+	if (config.type === "nada") {
+		// Do nothing
+		msg = "";
+	} else if (config.type === "siguiente") {
 		var next = $('#report-next')[0];
-		if (next !== undefined) msg = "Pasando al siguiente informe.";
 		if (next !== undefined) {
-			if (cooldown_next) setTimeout(function() { next.click(); }, delay_next);
-			else next.click();
+			msg = "Pasando al siguiente informe.";
+			setTimeout(function() { next.click(); }, config.delayNext || 200);
 		}
-	} else if (mode == "eliminar") {
-		if (delete_confirm) {
+	} else if (config.type === "eliminar") {
+		if (config.confirmDelete) {
 			msg = '¿Deseas eliminar el informe? <button class="btn" onclick="removeReport()">Sí</button> <button class="btn">No</button>';
 		} else {
 			removeReport();
 		}
+	} else if (config.type === "archivar") {
+		archiveReport(villageId);
 	}
 
+	return msg;
+}
+
+function archiveReport(villageId) {
+	var moveForm = $('form[action*="action=move"]')[0];
+	if (!moveForm) return;
+
+	var groupSelect = $(moveForm).find('select[name="group_id"]')[0];
+	if (!groupSelect) return;
+
+	var archiveGroup = null;
+	for (var i = 0; i < groupSelect.options.length; i++) {
+		if (groupSelect.options[i].text.includes('Archivo')) {
+			archiveGroup = groupSelect.options[i].value;
+			break;
+		}
+	}
+
+	if (archiveGroup) {
+		$(groupSelect).val(archiveGroup);
+		$(moveForm).submit();
+	}
+}
+
+// Merge old note with new note: keeps analysis updated + combines reports
+function mergeNotes(newNoteText, oldNoteText) {
+	var newAnalysis = parseAnalysisFields(newNoteText);
+	var newSpoilers = extractSpoilerContent(newNoteText);
+	var oldSpoilers = extractSpoilerContent(oldNoteText);
+
+	var sep  = '[color=#8b7355]━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color]';
+	var mergedText = '';
+
+	mergedText += '[color=#1a0d00][b]『 ANALISIS DE PUEBLO 』[/b][/color]\n';
+	mergedText += sep + '\n';
+
+	// Extract analysis info from new note to keep it updated
+	var playerMatch = newNoteText.match(/» \[b\]JUGADOR\[\/b\].*?\n/);
+	var typeMatch = newNoteText.match(/» \[b\]TIPO\[\/b\].*?\n/);
+	var puebloMatch = newNoteText.match(/» \[b\]PUEBLO\[\/b\].*?\n/);
+	var blindajeMatch = newNoteText.match(/» \[b\]BLINDAJE\[\/b\].*?\n/);
+
+	if (playerMatch) mergedText += playerMatch[0];
+	if (typeMatch) mergedText += typeMatch[0];
+	if (puebloMatch) mergedText += puebloMatch[0];
+	if (blindajeMatch) mergedText += blindajeMatch[0];
+
+	mergedText += sep + '\n';
+
+	// Add all spoilers from new note first
+	if (newSpoilers && newSpoilers.length > 0) {
+		for (var i = 0; i < newSpoilers.length; i++) {
+			mergedText += '[spoiler=' + newSpoilers[i].label + ']' + newSpoilers[i].content + '[/spoiler]\n';
+		}
+	}
+
+	// Add all spoilers from old note
+	if (oldSpoilers && oldSpoilers.length > 0) {
+		for (var i = 0; i < oldSpoilers.length; i++) {
+			mergedText += '[spoiler=' + oldSpoilers[i].label.replace('📋 Ver Informe', '📋 Informe Anterior') + ']' + oldSpoilers[i].content + '[/spoiler]\n';
+		}
+	}
+
+	return mergedText;
+}
+
+// Posts a note in the specific village!
+function postNote(noteText, autodetected, villageId) {
 	TribalWars.post('info_village', { ajaxaction: 'edit_notes', id: villageId }, { note: noteText }, function() {
+		var msg = executePostAction(noteText, autodetected, villageId);
 		fnToast(autodetected, msg);
 	});
 }
 
+function createToastStyles() {
+	if ($('#fn-toast-css').length) return;
+	$('head').append(`<style id="fn-toast-css">
+		#fn-toast {
+			position:fixed;top:22px;right:22px;z-index:99999;
+			background:#1e1e1e;color:#fff;
+			border-radius:10px;padding:13px 16px;
+			box-shadow:0 8px 28px rgba(0,0,0,0.55);
+			font-family:'Segoe UI',Tahoma,sans-serif;
+			display:flex;align-items:center;gap:12px;
+			min-width:240px;max-width:320px;
+			opacity:1;transition:opacity 0.4s;
+		}
+		#fn-toast-icon { font-size:22px;line-height:1; }
+		#fn-toast-title { font-size:12px;font-weight:800; }
+		#fn-toast-subtitle { font-size:11px;color:#ccc;margin-top:2px; }
+		#fn-toast-extra { font-size:10px;color:#aaa;margin-top:3px; }
+		#fn-toast-close { margin-left:auto;cursor:pointer;color:#666;font-size:14px;font-weight:900;line-height:1;padding:2px 4px; }
+		.fn-toast-success { border-left:4px solid #4caf50; }
+		.fn-toast-success #fn-toast-title { color:#4caf50; }
+		.fn-toast-error { border-left:4px solid #e53935; }
+		.fn-toast-error #fn-toast-title { color:#e53935; }
+	</style>`);
+}
+
 function fnToast(subtitle, extra) {
+	createToastStyles();
 	$('#fn-toast').remove();
 	$('body').append(`
-	<div id="fn-toast" style="
-		position:fixed;top:22px;right:22px;z-index:99999;
-		background:#1e1e1e;color:#fff;
-		border-radius:10px;padding:13px 16px;
-		box-shadow:0 8px 28px rgba(0,0,0,0.55);
-		border-left:4px solid #4caf50;
-		font-family:'Segoe UI',Tahoma,sans-serif;
-		display:flex;align-items:center;gap:12px;
-		min-width:240px;max-width:320px;
-		opacity:1;transition:opacity 0.4s;
-	">
-		<span style="font-size:22px;line-height:1">✅</span>
+	<div id="fn-toast" class="fn-toast-success">
+		<span id="fn-toast-icon">✅</span>
 		<div style="line-height:1.5">
-			<div style="font-size:12px;font-weight:800;color:#4caf50;">Nota añadida</div>
-			<div style="font-size:11px;color:#ccc;margin-top:2px;">${subtitle}</div>
-			${extra ? '<div style="font-size:10px;color:#aaa;margin-top:3px;">'+extra+'</div>' : ''}
+			<div id="fn-toast-title">Nota añadida</div>
+			<div id="fn-toast-subtitle">${subtitle}</div>
+			${extra ? '<div id="fn-toast-extra">'+extra+'</div>' : ''}
 		</div>
-		<span onclick="$('#fn-toast').remove()" style="margin-left:auto;cursor:pointer;color:#666;font-size:14px;font-weight:900;line-height:1;padding:2px 4px;">✕</span>
+		<span id="fn-toast-close" onclick="$('#fn-toast').remove()">✕</span>
 	</div>`);
 	setTimeout(function() {
 		$('#fn-toast').css('opacity', '0');
@@ -788,25 +1392,16 @@ function fnToast(subtitle, extra) {
 }
 
 function fnErrorToast() {
+	createToastStyles();
 	$('#fn-toast').remove();
 	$('body').append(`
-	<div id="fn-toast" style="
-		position:fixed;top:22px;right:22px;z-index:99999;
-		background:#1e1e1e;color:#fff;
-		border-radius:10px;padding:13px 16px;
-		box-shadow:0 8px 28px rgba(0,0,0,0.55);
-		border-left:4px solid #e53935;
-		font-family:'Segoe UI',Tahoma,sans-serif;
-		display:flex;align-items:center;gap:12px;
-		min-width:240px;max-width:320px;
-		opacity:1;transition:opacity 0.4s;
-	">
-		<span style="font-size:22px;line-height:1">⚠️</span>
+	<div id="fn-toast" class="fn-toast-error">
+		<span id="fn-toast-icon">⚠️</span>
 		<div style="line-height:1.5">
-			<div style="font-size:12px;font-weight:800;color:#e53935;">Pantalla incorrecta</div>
-			<div style="font-size:11px;color:#ccc;margin-top:2px;">Ejecuta el script desde un informe de ataque o defensa.</div>
+			<div id="fn-toast-title">Pantalla incorrecta</div>
+			<div id="fn-toast-subtitle">Ejecuta el script desde un informe de ataque o defensa.</div>
 		</div>
-		<span onclick="$('#fn-toast').remove()" style="margin-left:auto;cursor:pointer;color:#666;font-size:14px;font-weight:900;line-height:1;padding:2px 4px;">✕</span>
+		<span id="fn-toast-close" onclick="$('#fn-toast').remove()">✕</span>
 	</div>`);
 	setTimeout(function() {
 		$('#fn-toast').css('opacity', '0');
@@ -867,53 +1462,96 @@ function initDebug() {
 	}
 }
 
+function injectComparisonModalStyles() {
+	if ($('#fn-comparison-modal-css').length) return;
+	$('head').append(`<style id="fn-comparison-modal-css">
+		#fn-comparison-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); z-index: 100000; display: flex; align-items: center; justify-content: center; }
+		#fn-comparison-box { background: #fdf8f0; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1.5px solid #c8b89a; overflow: hidden; width: 90%; max-width: 1100px; height: 85vh; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; flex-direction: column; animation: fnFadeIn 0.25s ease; }
+		#fn-comparison-box .fn-comp-head { background: linear-gradient(135deg, #5a3a28 0%, #3b2010 50%, #1e0f06 100%); padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.07); position: relative; }
+		#fn-comparison-box .fn-comp-head::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #c8a96e 30%, #e8c97e 50%, #c8a96e 70%, transparent); }
+		.fn-comp-title { font-size: 15px; font-weight: 900; color: #f5e6c8; letter-spacing: 0.5px; }
+		.fn-comp-close { background: rgba(255,255,255,0.12); border: none; cursor: pointer; width: 26px; height: 26px; border-radius: 6px; font-size: 13px; font-weight: 900; color: #f5e6c8; display: flex; align-items: center; justify-content: center; transition: background 0.15s; z-index: 1; }
+		.fn-comp-close:hover { background: rgba(200,50,50,0.5); }
+		#fn-comparison-box .fn-comp-content { display: flex; flex: 1; overflow: hidden; gap: 1px; background: #d8c9a8; }
+		.fn-comp-panel { flex: 1; display: flex; flex-direction: column; background: #fdf8f0; overflow: hidden; }
+		.fn-comp-panel-header { background: linear-gradient(90deg, #f0e8d8 0%, #e8dcc8 100%); padding: 12px 16px; border-bottom: 1px solid #d8c9a8; font-weight: 800; font-size: 12px; color: #5a3e2b; text-transform: uppercase; letter-spacing: 0.5px; }
+		.fn-comp-panel-content { flex: 1; overflow-y: auto; padding: 16px; font-size: 11px; line-height: 1.5; color: #333; word-wrap: break-word; }
+		.fn-comp-panel-content pre { font-family: inherit; white-space: pre-wrap; margin: 0; }
+		.fn-comp-panel:nth-child(2) .fn-comp-panel-header { background: linear-gradient(90deg, #f5f0e8 0%, #f0e8d8 100%); }
+		.fn-comp-panel-content::-webkit-scrollbar { width: 8px; }
+		.fn-comp-panel-content::-webkit-scrollbar-track { background: #f0e8d8; }
+		.fn-comp-panel-content::-webkit-scrollbar-thumb { background: #c8b89a; border-radius: 4px; }
+		.fn-comp-panel-content::-webkit-scrollbar-thumb:hover { background: #a89a7e; }
+		.fn-comp-panel-content pre { margin: 0; padding: 0; font-size: 10px; white-space: pre-wrap; word-wrap: break-word; }
+		.fn-comp-panel-content a { color: #1e50a2; text-decoration: none; }
+		.fn-comp-panel-content a:hover { text-decoration: underline; }
+		.fn-comp-panel-content table { border-collapse: collapse; margin: 5px 0; }
+		.fn-comp-panel-content table td { padding: 2px 5px; border: 1px solid #ddd; }
+		#fn-comparison-box .fn-comp-footer { background: #f0e8d8; border-top: 1px solid #d8c9a8; padding: 14px 18px; display: flex; gap: 8px; justify-content: flex-end; }
+		.fn-comp-btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 800; transition: all 0.15s; }
+		.fn-comp-btn-overwrite { background: #e74c3c; color: #fff; }
+		.fn-comp-btn-overwrite:hover { background: #c0392b; transform: translateY(-1px); }
+		.fn-comp-btn-keep { background: #f39c12; color: #fff; }
+		.fn-comp-btn-keep:hover { background: #d68910; transform: translateY(-1px); }
+		.fn-comp-btn-merge { background: #4caf50; color: #fff; }
+		.fn-comp-btn-merge:hover { background: #45a049; transform: translateY(-1px); }
+		.fn-comp-btn-close { background: #999; color: #fff; }
+		.fn-comp-btn-close:hover { background: #777; }
+	</style>`);
+}
+
+function createNoteCardStyles() {
+	if ($('#fn-note-card-css').length) return;
+	$('head').append(`<style id="fn-note-card-css">
+		#fn-note-card {
+			font-family: 'Segoe UI', Tahoma, sans-serif;
+			margin: 14px 0;
+			border-radius: 10px;
+			overflow: hidden;
+			box-shadow: 0 4px 18px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.12);
+			border: 1.5px solid #c8b89a;
+		}
+		#fn-note-card .fn-header {
+			background: linear-gradient(135deg, #4a3728 0%, #2e1f14 100%);
+			padding: 11px 16px;
+			display: flex; align-items: center; justify-content: space-between;
+		}
+		#fn-note-card .fn-header-title {
+			font-size: 13px; font-weight: 800; color: #f5e6c8;
+			letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;
+		}
+		#fn-note-card .fn-header-badge {
+			font-size: 9px; font-weight: 700; color: #c8a96e;
+			text-transform: uppercase; letter-spacing: 1px;
+			background: rgba(255,255,255,0.08); padding: 3px 8px; border-radius: 20px;
+		}
+		#fn-note-card .fn-body {
+			background: #fdf8f0;
+			padding: 14px 16px;
+			font-size: 12px;
+			line-height: 1.7;
+			color: #3d2b1f;
+		}
+		#fn-note-card .fn-body table { width: 100% !important; border: none !important; background: transparent !important; }
+		#fn-note-card .fn-body table td { border: none !important; background: transparent !important; padding: 1px 0 !important; }
+		#fn-note-card .fn-footer {
+			background: #f0e8d8;
+			border-top: 1px solid #d8c9a8;
+			padding: 7px 16px;
+			font-size: 10px; color: #8b7355;
+			display: flex; align-items: center; justify-content: space-between;
+		}
+		#fn-note-card .fn-footer strong { color: #5a3e2b; }
+	</style>`);
+}
+
 // Function to detect if you are in report view or info_command view!
 function initGetVillageNote() {
 	$.get($('.village_anchor').first().find('a').first().attr('href'), function(html) {
 		const note = jQuery(html).find('#own_village_note .village-note');
 		if (note.length > 0) {
+			createNoteCardStyles();
 			const noteContent = `
-			<style>
-				#fn-note-card {
-					font-family: 'Segoe UI', Tahoma, sans-serif;
-					margin: 14px 0;
-					border-radius: 10px;
-					overflow: hidden;
-					box-shadow: 0 4px 18px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.12);
-					border: 1.5px solid #c8b89a;
-				}
-				#fn-note-card .fn-header {
-					background: linear-gradient(135deg, #4a3728 0%, #2e1f14 100%);
-					padding: 11px 16px;
-					display: flex; align-items: center; justify-content: space-between;
-				}
-				#fn-note-card .fn-header-title {
-					font-size: 13px; font-weight: 800; color: #f5e6c8;
-					letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;
-				}
-				#fn-note-card .fn-header-badge {
-					font-size: 9px; font-weight: 700; color: #c8a96e;
-					text-transform: uppercase; letter-spacing: 1px;
-					background: rgba(255,255,255,0.08); padding: 3px 8px; border-radius: 20px;
-				}
-				#fn-note-card .fn-body {
-					background: #fdf8f0;
-					padding: 14px 16px;
-					font-size: 12px;
-					line-height: 1.7;
-					color: #3d2b1f;
-				}
-				#fn-note-card .fn-body table { width: 100% !important; border: none !important; background: transparent !important; }
-				#fn-note-card .fn-body table td { border: none !important; background: transparent !important; padding: 1px 0 !important; }
-				#fn-note-card .fn-footer {
-					background: #f0e8d8;
-					border-top: 1px solid #d8c9a8;
-					padding: 7px 16px;
-					font-size: 10px; color: #8b7355;
-					display: flex; align-items: center; justify-content: space-between;
-				}
-				#fn-note-card .fn-footer strong { color: #5a3e2b; }
-			</style>
 			<div id="fn-note-card">
 				<div class="fn-header">
 					<div class="fn-header-title">⚔️ Nota de Pueblo</div>
