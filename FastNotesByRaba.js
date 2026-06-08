@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.1      */
+/*    Versión 6.2      */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.1',
+	version: 'v6.2',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -439,59 +439,58 @@ function showComparisonModal(compData) {
 	$('#fn-comparison-modal').remove();
 	injectComparisonModalStyles();
 
-	var newNoteDisplay = compData.newNote.fullText.replace(/\[.*?\]/g, function(match) {
-		if (match.includes('spoiler')) return match;
-		return '';
-	});
-
-	newNoteDisplay = compData.newNote.fullText;
-
-	var oldNoteDisplay = compData.oldNote.fullText;
-
 	$('body').append(`
 	<div id="fn-comparison-modal">
 		<div id="fn-comparison-box">
 			<div class="fn-comp-head">
-				<div class="fn-comp-title">🔄 Comparar Notas - ${compData.playerName}</div>
+				<div class="fn-comp-head-info">
+					<div class="fn-comp-head-title">⚔️ Conflicto de Notas</div>
+					<div class="fn-comp-head-subtitle">${compData.playerName} · Ya existe una nota para este pueblo</div>
+				</div>
 				<button class="fn-comp-close" onclick="$('#fn-comparison-modal').remove()">✕</button>
 			</div>
 			<div class="fn-comp-content">
 				<div class="fn-comp-panel">
-					<div class="fn-comp-panel-header">📝 Nota Nueva</div>
+					<div class="fn-comp-panel-header fn-comp-panel-header-new">✨ NOTA NUEVA</div>
 					<div class="fn-comp-panel-content" id="fn-comp-new"></div>
 				</div>
 				<div class="fn-comp-panel">
-					<div class="fn-comp-panel-header">📋 Nota Anterior</div>
+					<div class="fn-comp-panel-header fn-comp-panel-header-old">📋 NOTA ANTERIOR</div>
 					<div class="fn-comp-panel-content" id="fn-comp-old"></div>
 				</div>
 			</div>
 			<div class="fn-comp-footer">
-				<button class="fn-comp-btn fn-comp-btn-close" onclick="$('#fn-comparison-modal').remove()">Cancelar</button>
-				<button class="fn-comp-btn fn-comp-btn-keep" onclick="handleComparisonAction('keep', '${compData.villageId}')">Conservar Anterior</button>
-				<button class="fn-comp-btn fn-comp-btn-merge" onclick="handleComparisonAction('merge', '${compData.villageId}', true)">Fusionar</button>
-				<button class="fn-comp-btn fn-comp-btn-overwrite" onclick="handleComparisonAction('overwrite', '${compData.villageId}')">Sobreescribir</button>
+				<button class="fn-comp-btn fn-comp-btn-close" onclick="$('#fn-comparison-modal').remove()">
+					<span class="fn-comp-btn-icon">✕</span>
+					<span>Cancelar</span>
+				</button>
+				<button class="fn-comp-btn fn-comp-btn-keep" onclick="handleComparisonAction('keep', '${compData.villageId}')">
+					<span class="fn-comp-btn-icon">🔒</span>
+					<span>Conservar Anterior</span>
+				</button>
+				<button class="fn-comp-btn fn-comp-btn-merge" onclick="handleComparisonAction('merge', '${compData.villageId}', true)">
+					<span class="fn-comp-btn-icon">🔀</span>
+					<span>Fusionar</span>
+				</button>
+				<button class="fn-comp-btn fn-comp-btn-overwrite" onclick="handleComparisonAction('overwrite', '${compData.villageId}')">
+					<span class="fn-comp-btn-icon">⚡</span>
+					<span>Sobreescribir</span>
+				</button>
 			</div>
 		</div>
 	</div>`);
 
-	// Insertar el contenido HTML en los paneles
-	const newRendered = compData.newNote.rendered || compData.newNote.fullText;
+	// Renderizar la nota nueva de forma independiente (sin usar HTML de la nota antigua)
+	const newRendered = renderBBCode(compData.newNote.fullText, null);
 	const oldContent = compData.oldNote.fullText;
 
 	$('#fn-comp-new').html(newRendered);
 
-	// Mostrar la nota anterior (renderizada como se ve en TW)
+	// Mostrar la nota anterior tal como está almacenada
 	if (oldContent.includes('<')) {
 		$('#fn-comp-old').html(oldContent);
 	} else {
 		$('#fn-comp-old').text(oldContent);
-	}
-
-	// Copiar el spoiler del panel derecho al izquierdo (para que se vea igual)
-	const oldSpoiler = document.querySelector('#fn-comp-old .spoiler');
-	const newSpoilerPlaceholder = document.querySelector('#fn-comp-new .spoiler');
-	if (oldSpoiler && newSpoilerPlaceholder) {
-		newSpoilerPlaceholder.replaceWith(oldSpoiler.cloneNode(true));
 	}
 
 	// Store comparison data globally for button handlers
@@ -1465,38 +1464,43 @@ function initDebug() {
 function injectComparisonModalStyles() {
 	if ($('#fn-comparison-modal-css').length) return;
 	$('head').append(`<style id="fn-comparison-modal-css">
-		#fn-comparison-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); z-index: 100000; display: flex; align-items: center; justify-content: center; }
-		#fn-comparison-box { background: #fdf8f0; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1.5px solid #c8b89a; overflow: hidden; width: 90%; max-width: 1100px; height: 85vh; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; flex-direction: column; animation: fnFadeIn 0.25s ease; }
-		#fn-comparison-box .fn-comp-head { background: linear-gradient(135deg, #5a3a28 0%, #3b2010 50%, #1e0f06 100%); padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.07); position: relative; }
+		#fn-comparison-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.72); z-index: 100000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+		#fn-comparison-box { background: #fdf8f0; border-radius: 14px; box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(200,169,110,0.3); border: 1.5px solid #c8b89a; overflow: hidden; width: 90%; max-width: 1100px; height: 85vh; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; flex-direction: column; animation: fnFadeIn 0.22s ease; }
+		#fn-comparison-box .fn-comp-head { background: linear-gradient(135deg, #5a3a28 0%, #3b2010 50%, #1e0f06 100%); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; position: relative; }
 		#fn-comparison-box .fn-comp-head::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #c8a96e 30%, #e8c97e 50%, #c8a96e 70%, transparent); }
-		.fn-comp-title { font-size: 15px; font-weight: 900; color: #f5e6c8; letter-spacing: 0.5px; }
-		.fn-comp-close { background: rgba(255,255,255,0.12); border: none; cursor: pointer; width: 26px; height: 26px; border-radius: 6px; font-size: 13px; font-weight: 900; color: #f5e6c8; display: flex; align-items: center; justify-content: center; transition: background 0.15s; z-index: 1; }
-		.fn-comp-close:hover { background: rgba(200,50,50,0.5); }
-		#fn-comparison-box .fn-comp-content { display: flex; flex: 1; overflow: hidden; gap: 1px; background: #d8c9a8; }
+		.fn-comp-head-info { display: flex; flex-direction: column; gap: 3px; }
+		.fn-comp-head-title { font-size: 16px; font-weight: 900; color: #f5e6c8; letter-spacing: 0.4px; line-height: 1.2; }
+		.fn-comp-head-subtitle { font-size: 10px; color: rgba(200,169,110,0.8); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+		.fn-comp-close { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; width: 28px; height: 28px; border-radius: 7px; font-size: 13px; font-weight: 900; color: #f5e6c8; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+		.fn-comp-close:hover { background: rgba(200,50,50,0.55); border-color: rgba(200,50,50,0.3); }
+		#fn-comparison-box .fn-comp-content { display: flex; flex: 1; overflow: hidden; gap: 1px; background: #c8b89a; }
 		.fn-comp-panel { flex: 1; display: flex; flex-direction: column; background: #fdf8f0; overflow: hidden; }
-		.fn-comp-panel-header { background: linear-gradient(90deg, #f0e8d8 0%, #e8dcc8 100%); padding: 12px 16px; border-bottom: 1px solid #d8c9a8; font-weight: 800; font-size: 12px; color: #5a3e2b; text-transform: uppercase; letter-spacing: 0.5px; }
-		.fn-comp-panel-content { flex: 1; overflow-y: auto; padding: 16px; font-size: 11px; line-height: 1.5; color: #333; word-wrap: break-word; }
+		.fn-comp-panel-header { padding: 10px 16px; border-bottom: 1px solid #d8c9a8; font-weight: 900; font-size: 10px; letter-spacing: 1.5px; }
+		.fn-comp-panel-header-new { background: linear-gradient(90deg, #e8f5e9 0%, #f1f8f1 100%); color: #2e7d32; border-left: 3px solid #4caf50; }
+		.fn-comp-panel-header-old { background: linear-gradient(90deg, #fff8e1 0%, #fdf8f0 100%); color: #8b6914; border-left: 3px solid #f39c12; }
+		.fn-comp-panel-content { flex: 1; overflow-y: auto; padding: 16px; font-size: 11px; line-height: 1.6; color: #333; word-wrap: break-word; }
 		.fn-comp-panel-content pre { font-family: inherit; white-space: pre-wrap; margin: 0; }
-		.fn-comp-panel:nth-child(2) .fn-comp-panel-header { background: linear-gradient(90deg, #f5f0e8 0%, #f0e8d8 100%); }
-		.fn-comp-panel-content::-webkit-scrollbar { width: 8px; }
+		.fn-comp-panel-content::-webkit-scrollbar { width: 6px; }
 		.fn-comp-panel-content::-webkit-scrollbar-track { background: #f0e8d8; }
-		.fn-comp-panel-content::-webkit-scrollbar-thumb { background: #c8b89a; border-radius: 4px; }
+		.fn-comp-panel-content::-webkit-scrollbar-thumb { background: #c8b89a; border-radius: 3px; }
 		.fn-comp-panel-content::-webkit-scrollbar-thumb:hover { background: #a89a7e; }
-		.fn-comp-panel-content pre { margin: 0; padding: 0; font-size: 10px; white-space: pre-wrap; word-wrap: break-word; }
 		.fn-comp-panel-content a { color: #1e50a2; text-decoration: none; }
 		.fn-comp-panel-content a:hover { text-decoration: underline; }
 		.fn-comp-panel-content table { border-collapse: collapse; margin: 5px 0; }
 		.fn-comp-panel-content table td { padding: 2px 5px; border: 1px solid #ddd; }
-		#fn-comparison-box .fn-comp-footer { background: #f0e8d8; border-top: 1px solid #d8c9a8; padding: 14px 18px; display: flex; gap: 8px; justify-content: flex-end; }
-		.fn-comp-btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 800; transition: all 0.15s; }
-		.fn-comp-btn-overwrite { background: #e74c3c; color: #fff; }
-		.fn-comp-btn-overwrite:hover { background: #c0392b; transform: translateY(-1px); }
-		.fn-comp-btn-keep { background: #f39c12; color: #fff; }
-		.fn-comp-btn-keep:hover { background: #d68910; transform: translateY(-1px); }
-		.fn-comp-btn-merge { background: #4caf50; color: #fff; }
-		.fn-comp-btn-merge:hover { background: #45a049; transform: translateY(-1px); }
-		.fn-comp-btn-close { background: #999; color: #fff; }
-		.fn-comp-btn-close:hover { background: #777; }
+		#fn-comparison-box .fn-comp-footer { background: linear-gradient(180deg, #f5ead8 0%, #ede0c8 100%); border-top: 1px solid #d0bfa0; padding: 12px 18px; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+		.fn-comp-btn { padding: 9px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: 0.3px; transition: all 0.18s; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+		.fn-comp-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,0.2); }
+		.fn-comp-btn:active { transform: translateY(0); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+		.fn-comp-btn-icon { font-size: 13px; line-height: 1; }
+		.fn-comp-btn-close { background: linear-gradient(135deg, #78909c, #546e7a); color: #fff; }
+		.fn-comp-btn-close:hover { background: linear-gradient(135deg, #90a4ae, #607d8b); }
+		.fn-comp-btn-keep { background: linear-gradient(135deg, #f9a825, #f57f17); color: #fff; }
+		.fn-comp-btn-keep:hover { background: linear-gradient(135deg, #fbc02d, #f9a825); }
+		.fn-comp-btn-merge { background: linear-gradient(135deg, #43a047, #2e7d32); color: #fff; }
+		.fn-comp-btn-merge:hover { background: linear-gradient(135deg, #66bb6a, #43a047); }
+		.fn-comp-btn-overwrite { background: linear-gradient(135deg, #e53935, #b71c1c); color: #fff; }
+		.fn-comp-btn-overwrite:hover { background: linear-gradient(135deg, #ef5350, #e53935); }
 	</style>`);
 }
 
