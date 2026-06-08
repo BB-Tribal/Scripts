@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.13     */
+/*    Versión 6.12     */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.13',
+	version: 'v6.12',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -500,14 +500,14 @@ function showComparisonModal(compData) {
 		var reportCell = document.querySelector('td.report_ReportAttack');
 		if (reportCell) {
 			var clone = reportCell.cloneNode(true);
-			// Eliminar height forzado que genera espacio en blanco
-			clone.removeAttribute('height');
-			clone.style.height = 'auto';
-			// Quitar los enlaces del simulador
+			// Quitar los enlaces del simulador que no aportan nada en el modal
 			var noPreview = clone.querySelector('.no-preview');
 			if (noPreview) noPreview.remove();
+			// Quitar el atributo height que genera espacio en blanco extra
+			clone.removeAttribute('height');
 
-			// Insertar hora de envío al principio del recuadro
+			// Insertar hora de envío al principio del recuadro del informe
+			var sentRow = document.querySelector('table.vis tr td:first-child');
 			var allVisRows = document.querySelectorAll('table.vis > tbody > tr, table.vis > tr');
 			var sentTime = '';
 			allVisRows.forEach(function(row) {
@@ -517,7 +517,7 @@ function showComparisonModal(compData) {
 			});
 			if (sentTime) {
 				var timeEl = document.createElement('div');
-				timeEl.style.cssText = 'font-size:11px;color:#666;margin-bottom:4px;';
+				timeEl.style.cssText = 'font-size:11px;color:#666;margin-bottom:6px;';
 				timeEl.textContent = 'Enviado: ' + sentTime;
 				clone.insertBefore(timeEl, clone.firstChild);
 			}
@@ -530,29 +530,36 @@ function showComparisonModal(compData) {
 		injectTarget.replaceWith(details);
 	}
 
-	// Renderizar la nota anterior con el mismo renderer que la nueva
-	const oldRendered = renderBBCode(compData.oldNote.fullText, null);
-	$('#fn-comp-old').html(oldRendered);
-
-	// Inyectar el informe de la nota anterior (extraído del BBCode almacenado)
-	var oldInjectTarget = document.querySelector('#fn-comp-old .fn-new-report-inject');
-	if (oldInjectTarget) {
-		var reportMatch = compData.oldNote.fullText.match(/\[report_export\]([\s\S]*?)\[\/report_export\]/);
-		if (reportMatch) {
-			var oldDet = document.createElement('details');
-			oldDet.className = 'fn-comp-report-spoiler';
-			var oldSum = document.createElement('summary');
-			oldSum.textContent = '📋 Ver Informe';
-			var oldBdy = document.createElement('div');
-			oldBdy.className = 'fn-comp-report-body';
-			oldBdy.innerHTML = reportMatch[1];
-			oldDet.appendChild(oldSum);
-			oldDet.appendChild(oldBdy);
-			oldInjectTarget.replaceWith(oldDet);
-		} else {
-			oldInjectTarget.remove();
-		}
+	// Mostrar la nota anterior: usar el HTML renderizado por TW si está disponible, si no renderizar el BBCode
+	var oldDisplayHtml = compData.oldNote.renderedHtml || null;
+	if (oldDisplayHtml) {
+		$('#fn-comp-old').html(oldDisplayHtml);
+	} else {
+		var oldRendered = oldContent.includes('[color=') || oldContent.includes('[b]')
+			? renderBBCode(oldContent, null)
+			: oldContent;
+		$('#fn-comp-old').html(oldRendered);
+		// Si quedaron placeholders (sin HTML renderizado), convertirlos en spoilers estáticos
+		document.querySelectorAll('#fn-comp-old .fn-new-report-inject').forEach(function(el) {
+			var det = document.createElement('details');
+			det.className = 'fn-comp-report-spoiler';
+			var sum = document.createElement('summary');
+			sum.textContent = '📋 Ver Informe';
+			det.appendChild(sum);
+			el.replaceWith(det);
+		});
 	}
+
+	// Normalizar los <details> nativos de TW para que tengan el mismo estilo
+	document.querySelectorAll('#fn-comp-old details').forEach(function(det) {
+		det.classList.add('fn-comp-report-spoiler');
+		var sum = det.querySelector('summary');
+		if (sum) sum.textContent = sum.textContent.trim() || '📋 Ver Informe';
+		var body = det.querySelector(':scope > *:not(summary)');
+		if (body && !body.classList.contains('fn-comp-report-body')) {
+			body.classList.add('fn-comp-report-body');
+		}
+	});
 
 	// Store comparison data globally for button handlers
 	window.fnCurrentComparison = compData;
@@ -1001,13 +1008,6 @@ function parseAnalysisFields(noteText) {
 function renderBBCode(bbcode, existingNoteHtml = null) {
 	let html = bbcode;
 
-	console.log('[renderBBCode] Iniciando...');
-	console.log('[renderBBCode] BBCode contiene [report_export]:', html.includes('[report_export]'));
-	// Log de la sección alrededor del report_export
-	const rIdx = html.indexOf('[report_export]');
-	if (rIdx !== -1) console.log('[renderBBCode] BBCode alrededor de report_export:', JSON.stringify(html.substring(Math.max(0, rIdx - 30), rIdx + 30)));
-	console.log('[renderBBCode] existingNoteHtml:', existingNoteHtml ? 'SÍ (' + existingNoteHtml.length + ' chars)' : 'NO');
-
 	// PRIMERO: Reemplazar el bloque completo [spoiler=label][report_export]...[/report_export][/spoiler]
 	html = html.replace(/\[spoiler=[^\]]*\]\s*\[report_export\][\s\S]*?\[\/report_export\]\s*\[\/spoiler\]/g, '___REPORT_PLACEHOLDER___');
 
@@ -1016,8 +1016,6 @@ function renderBBCode(bbcode, existingNoteHtml = null) {
 
 	// Quitar el [spoiler] sin label que queda envolviendo el placeholder
 	html = html.replace(/\[spoiler\]([\s\S]*?)\[\/spoiler\]/gi, '$1');
-
-	console.log('[renderBBCode] Después de reemplazar report_export, html contiene placeholder:', html.includes('___REPORT_PLACEHOLDER___'));
 
 	// Procesar spoilers con parámetro [spoiler=label]
 	html = html.replace(/\[spoiler=([^\]]*)\]([\s\S]*?)\[\/spoiler\]/gi, function(match, label, content) {
@@ -1032,24 +1030,15 @@ function renderBBCode(bbcode, existingNoteHtml = null) {
 
 	// DESPUÉS: Reemplazar el placeholder con el informe renderizado
 	if (html.includes('___REPORT_PLACEHOLDER___') && existingNoteHtml) {
-		console.log('[renderBBCode] Extrayendo informe de nota anterior...');
-
 		const tempDiv = document.createElement('div');
 		tempDiv.innerHTML = existingNoteHtml;
 
-		// Buscar <details>
 		let detailsElements = tempDiv.querySelectorAll('details');
-		console.log('[renderBBCode] <details> encontrados:', detailsElements.length);
 
-		// Si no hay <details>, buscar div.spoiler
 		if (detailsElements.length === 0) {
-			console.log('[renderBBCode] No hay <details>, buscando div.spoiler...');
 			detailsElements = tempDiv.querySelectorAll('div.spoiler');
-			console.log('[renderBBCode] div.spoiler encontrados:', detailsElements.length);
 
-			// Para div.spoiler, extraer contenido limpio
 			if (detailsElements.length > 0) {
-				console.log('[renderBBCode] Usando contenido de div.spoiler');
 				const spoilerDiv = detailsElements[0];
 
 				const children = Array.from(spoilerDiv.children);
@@ -1075,20 +1064,16 @@ function renderBBCode(bbcode, existingNoteHtml = null) {
 				spoilerClone.querySelectorAll('[style*="display"]').forEach(el => { el.style.display = ''; });
 				const reportHtml = spoilerClone.outerHTML;
 				html = html.replace('___REPORT_PLACEHOLDER___', reportHtml);
-				console.log('[renderBBCode] Reemplazo de spoiler completado');
 			}
 		} else {
-			// Manejo de <details>
 			for (let details of detailsElements) {
 				const summary = details.querySelector('summary');
 				if (summary && summary.textContent.includes('Ver Informe')) {
-					console.log('[renderBBCode] ENCONTRADO spoiler Ver Informe, extrayendo...');
 					const clone = details.cloneNode(true);
 					const summaryToRemove = clone.querySelector('summary');
 					if (summaryToRemove) summaryToRemove.remove();
 					const reportHtml = '<details><summary>📋 Ver Informe</summary>' + clone.innerHTML + '</details>';
 					html = html.replace('___REPORT_PLACEHOLDER___', reportHtml);
-					console.log('[renderBBCode] Reemplazo completado');
 					break;
 				}
 			}
@@ -1097,7 +1082,7 @@ function renderBBCode(bbcode, existingNoteHtml = null) {
 
 	// Si el placeholder sigue ahí, insertar marcador para inyectar el informe via DOM después
 	if (html.includes('___REPORT_PLACEHOLDER___')) {
-		html = html.replace('___REPORT_PLACEHOLDER___', '<div class="fn-new-report-inject"></div>');
+		html = html.replace(/___REPORT_PLACEHOLDER___/g, '<div class="fn-new-report-inject"></div>');
 	}
 
 	// Procesar tags de color
@@ -1122,25 +1107,26 @@ function renderBBCode(bbcode, existingNoteHtml = null) {
 
 // Extract note from village DOM (already loaded)
 function extractNoteFromDOM(villageDOM) {
-	if (!villageDOM) {
-		console.log('[FastNotes] villageDOM es null');
-		return null;
-	}
+	if (!villageDOM) return null;
 
 	try {
-		// Obtener el contenido HTML renderizado del .village-note-body
-		const noteBodyEl = villageDOM.querySelector('#own_village_note .village-note-body');
+		var bbcode = null, html = null;
 
-		if (noteBodyEl) {
-			const renderedHTML = noteBodyEl.innerHTML;
-			if (renderedHTML && renderedHTML.trim().length > 0) {
-				console.log('[FastNotes] Nota renderizada encontrada en DOM');
-				return renderedHTML.trim();
-			}
+		const noteTextarea = villageDOM.querySelector('textarea[name="note"]');
+		if (noteTextarea) {
+			const noteText = (noteTextarea.value || noteTextarea.textContent || '').trim();
+			if (noteText.length > 0) bbcode = noteText;
 		}
 
-		console.log('[FastNotes] No hay nota renderizada en el DOM');
-		return null;
+		const noteBodyEl = villageDOM.querySelector('#own_village_note .village-note-body');
+		if (noteBodyEl) {
+			const renderedHTML = noteBodyEl.innerHTML.trim();
+			if (renderedHTML.length > 0) html = renderedHTML;
+		}
+
+		if (!bbcode && !html) return null;
+
+		return { bbcode: bbcode, html: html };
 	} catch (e) {
 		console.error('[FastNotes] Error en extractNoteFromDOM:', e);
 		return null;
@@ -1151,54 +1137,28 @@ function extractNoteFromDOM(villageDOM) {
 async function fetchExistingNote(villageId) {
 	try {
 		const villageUrl = `/game.php?village=${villageId}&screen=info_village`;
-		console.log('[FastNotes] Fetching note from:', villageUrl);
-
 		const response = await fetch(villageUrl, { credentials: 'include' });
-		console.log('[FastNotes] Fetch response status:', response.status);
-
-		if (!response.ok) {
-			console.warn('[FastNotes] Response not ok:', response.status);
-			return null;
-		}
+		if (!response.ok) return null;
 
 		const html = await response.text();
-		console.log('[FastNotes] HTML obtenido, tamaño:', html.length);
-
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(html, 'text/html');
 
-		// Buscar en el DOM: #own_village_note .village-note-body contiene el contenido renderizado
 		const noteBodyEl = doc.querySelector('#own_village_note .village-note-body');
-		console.log('[FastNotes] Buscando #own_village_note .village-note-body:', noteBodyEl ? 'ENCONTRADO' : 'NO ENCONTRADO');
-
 		if (noteBodyEl) {
-			// El contenido está en HTML (renderizado), necesitamos el BBCode original del textarea
-			// Buscamos el textarea que contiene el código BBCode
 			const noteTextarea = doc.querySelector('textarea[name="note"]');
-
 			if (noteTextarea) {
-				const noteText = noteTextarea.value || noteTextarea.textContent;
-				const trimmed = noteText ? noteText.trim() : '';
-				if (trimmed.length > 0) {
-					console.log('[FastNotes] Nota encontrada en textarea, length:', trimmed.length);
-					return trimmed;
-				}
+				const trimmed = (noteTextarea.value || noteTextarea.textContent || '').trim();
+				if (trimmed.length > 0) return trimmed;
 			}
 
-			// Si no está en textarea, extraer del HTML renderizado con regex
-			console.log('[FastNotes] Extrayendo del HTML renderizado...');
 			const textareaMatch = html.match(/<textarea[^>]*name=["\']note["\'][^>]*>([\s\S]*?)<\/textarea>/);
-
 			if (textareaMatch && textareaMatch[1]) {
 				const noteText = textareaMatch[1].trim();
-				if (noteText.length > 0) {
-					console.log('[FastNotes] Nota encontrada en HTML, length:', noteText.length);
-					return noteText;
-				}
+				if (noteText.length > 0) return noteText;
 			}
 		}
 
-		console.warn('[FastNotes] No se encontró nota en la página');
 		return null;
 	} catch (e) {
 		console.error('[FastNotes] Error en fetchExistingNote:', e);
@@ -1260,29 +1220,25 @@ async function createNote(playerName, typeVillage, points, autodetected, village
 	noteText += exportCode.replace("[spoiler]", "[spoiler=📋 Ver Informe]");
 
 	// Check for existing note
-	console.log('[FastNotes] Buscando nota previa para villageId:', villageId);
 
 	// Intentar usar villageDOM guardado en win.FastNotes
 	const savedDOM = win.FastNotes.villageDOM;
-	console.log('[FastNotes] ¿villageDOM guardado?:', savedDOM ? 'SÍ' : 'NO');
-
 	let existingNote = null;
 
 	if (savedDOM) {
-		console.log('[FastNotes] Usando DOM guardado...');
 		existingNote = extractNoteFromDOM(savedDOM);
-		console.log('[FastNotes] Nota extraída del DOM:', existingNote ? 'SÍ (' + existingNote.length + ' chars)' : 'NO');
 	} else {
-		console.log('[FastNotes] DOM no disponible, haciendo fetch...');
-		existingNote = await fetchExistingNote(villageId);
-		console.log('[FastNotes] Nota obtenida por fetch:', existingNote ? 'SÍ (' + existingNote.length + ' chars)' : 'NO');
+		var fetched = await fetchExistingNote(villageId);
+		if (fetched) existingNote = { bbcode: fetched, html: null };
 	}
 
 	if (existingNote) {
-		console.log('[FastNotes] Mostrando modal de comparación');
 
-		// Renderizar la nota nueva pasando la nota anterior para extraer el informe
-		const renderedNewNote = renderBBCode(noteText, existingNote);
+		var existingBBCode = existingNote.bbcode || existingNote;
+		var existingHTML   = existingNote.html   || null;
+
+		// Renderizar la nota nueva pasando el HTML de la nota anterior para extraer el informe renderizado
+		const renderedNewNote = renderBBCode(noteText, existingHTML);
 
 		const compData = {
 			villageId: villageId,
@@ -1294,16 +1250,16 @@ async function createNote(playerName, typeVillage, points, autodetected, village
 				spoilers: extractSpoilerContent(noteText)
 			},
 			oldNote: {
-				fullText: existingNote,
-				analysis: parseAnalysisFields(existingNote),
-				spoilers: extractSpoilerContent(existingNote)
+				fullText: existingBBCode,
+				renderedHtml: existingHTML,
+				analysis: parseAnalysisFields(existingBBCode),
+				spoilers: extractSpoilerContent(existingBBCode)
 			},
 			autodetected: autodetected
 		};
 
 		showComparisonModal(compData);
 	} else {
-		console.log('[FastNotes] No hay nota previa, guardando directamente');
 		postNote(noteText, autodetected, villageId);
 	}
 }
@@ -1356,42 +1312,22 @@ function archiveReport(villageId) {
 	}
 }
 
-// Merge old note with new note: keeps analysis updated + combines reports
+// Merge old note with new note: nueva nota completa + informes anteriores numerados al final
 function mergeNotes(newNoteText, oldNoteText) {
-	var newAnalysis = parseAnalysisFields(newNoteText);
-	var newSpoilers = extractSpoilerContent(newNoteText);
 	var oldSpoilers = extractSpoilerContent(oldNoteText);
 
-	var sep  = '[color=#8b7355]━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color]';
-	var mergedText = '';
+	// Renombrar el spoiler del informe nuevo a "📋 Ver Informe 1"
+	var mergedText = newNoteText.trimEnd().replace(
+		/\[spoiler=📋 Ver Informe\]/,
+		'[spoiler=📋 Ver Informe 1]'
+	);
 
-	mergedText += '[color=#1a0d00][b]『 ANALISIS DE PUEBLO 』[/b][/color]\n';
-	mergedText += sep + '\n';
-
-	// Extract analysis info from new note to keep it updated
-	var playerMatch = newNoteText.match(/» \[b\]JUGADOR\[\/b\].*?\n/);
-	var typeMatch = newNoteText.match(/» \[b\]TIPO\[\/b\].*?\n/);
-	var puebloMatch = newNoteText.match(/» \[b\]PUEBLO\[\/b\].*?\n/);
-	var blindajeMatch = newNoteText.match(/» \[b\]BLINDAJE\[\/b\].*?\n/);
-
-	if (playerMatch) mergedText += playerMatch[0];
-	if (typeMatch) mergedText += typeMatch[0];
-	if (puebloMatch) mergedText += puebloMatch[0];
-	if (blindajeMatch) mergedText += blindajeMatch[0];
-
-	mergedText += sep + '\n';
-
-	// Add all spoilers from new note first
-	if (newSpoilers && newSpoilers.length > 0) {
-		for (var i = 0; i < newSpoilers.length; i++) {
-			mergedText += '[spoiler=' + newSpoilers[i].label + ']' + newSpoilers[i].content + '[/spoiler]\n';
-		}
-	}
-
-	// Add all spoilers from old note
+	// Añadir los informes de la nota anterior numerados a continuación
 	if (oldSpoilers && oldSpoilers.length > 0) {
 		for (var i = 0; i < oldSpoilers.length; i++) {
-			mergedText += '[spoiler=' + oldSpoilers[i].label.replace('📋 Ver Informe', '📋 Informe Anterior') + ']' + oldSpoilers[i].content + '[/spoiler]\n';
+			var num = i + 2;
+			var label = oldSpoilers[i].label.replace(/📋 Ver Informe(\s*\d+)?/, '📋 Ver Informe ' + num);
+			mergedText += '\n[spoiler=' + label + ']' + oldSpoilers[i].content + '[/spoiler]';
 		}
 	}
 
