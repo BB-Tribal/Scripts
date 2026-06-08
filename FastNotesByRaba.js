@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.4      */
+/*    Versión 6.5      */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.4',
+	version: 'v6.5',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -1044,7 +1044,7 @@ function renderBBCode(bbcode, existingNoteHtml = null) {
 			if (el) clonedHtml += el.outerHTML;
 		});
 		var reportSpoiler = clonedHtml
-			? '<details><summary style="cursor:pointer;padding:4px 0;font-weight:700;font-size:11px;">📋 Ver Informe</summary><div style="margin-top:8px;overflow-x:auto;">' + clonedHtml + '</div></details>'
+			? '<details class="fn-comp-report-spoiler"><summary>📋 Ver Informe</summary><div class="fn-comp-report-body">' + clonedHtml + '</div></details>'
 			: '';
 		html = html.replace('___REPORT_PLACEHOLDER___', reportSpoiler);
 	}
@@ -1487,7 +1487,7 @@ function injectComparisonModalStyles() {
 		.fn-comp-panel-header { padding: 10px 16px; border-bottom: 1px solid #d8c9a8; font-weight: 900; font-size: 10px; letter-spacing: 1.5px; }
 		.fn-comp-panel-header-new { background: linear-gradient(90deg, #e8f5e9 0%, #f1f8f1 100%); color: #2e7d32; border-left: 3px solid #4caf50; }
 		.fn-comp-panel-header-old { background: linear-gradient(90deg, #fff8e1 0%, #fdf8f0 100%); color: #8b6914; border-left: 3px solid #f39c12; }
-		.fn-comp-panel-content { flex: 1; overflow-y: auto; padding: 16px; font-size: 11px; line-height: 1.6; color: #333; word-wrap: break-word; }
+		.fn-comp-panel-content { flex: 1; overflow-y: auto; padding: 16px; font-size: 11px; line-height: 1.6; color: #222; word-wrap: break-word; background: #ffffff; }
 		.fn-comp-panel-content pre { font-family: inherit; white-space: pre-wrap; margin: 0; }
 		.fn-comp-panel-content::-webkit-scrollbar { width: 6px; }
 		.fn-comp-panel-content::-webkit-scrollbar-track { background: #f0e8d8; }
@@ -1495,8 +1495,11 @@ function injectComparisonModalStyles() {
 		.fn-comp-panel-content::-webkit-scrollbar-thumb:hover { background: #a89a7e; }
 		.fn-comp-panel-content a { color: #1e50a2; text-decoration: none; }
 		.fn-comp-panel-content a:hover { text-decoration: underline; }
-		.fn-comp-panel-content table { border-collapse: collapse; margin: 5px 0; }
-		.fn-comp-panel-content table td { padding: 2px 5px; border: 1px solid #ddd; }
+		.fn-comp-report-spoiler { margin-top: 6px; }
+		.fn-comp-report-spoiler summary { cursor: pointer; padding: 5px 10px; font-weight: 800; font-size: 11px; background: #f0e8d8; border: 1px solid #d8c9a8; border-radius: 5px; list-style: none; display: flex; align-items: center; gap: 6px; }
+		.fn-comp-report-spoiler summary:hover { background: #e8dcc8; }
+		.fn-comp-report-spoiler[open] summary { border-radius: 5px 5px 0 0; }
+		.fn-comp-report-spoiler .fn-comp-report-body { border: 1px solid #d8c9a8; border-top: none; border-radius: 0 0 5px 5px; padding: 10px; overflow-x: auto; background: #fff; }
 		#fn-comparison-box .fn-comp-footer { background: linear-gradient(180deg, #f5ead8 0%, #ede0c8 100%); border-top: 1px solid #d0bfa0; padding: 12px 18px; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
 		.fn-comp-btn { padding: 9px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: 0.3px; transition: all 0.18s; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 		.fn-comp-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,0.2); }
