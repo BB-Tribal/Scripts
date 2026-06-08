@@ -1,7 +1,7 @@
 javascript:
 
 /* Script By Raba */
-/* Versión: 3.2 */
+/* Versión: 3.6 */
 
 
 var collection;
@@ -43,68 +43,28 @@ const conditions = ["🤵", "💥", "💣", "🏹", "🐴", "🕵️", "🏇", "
 
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-async function processAll(){
-    var contador = 0;
-    for(var i = 0; i < collection.length; i++){
-        var label = content[i].getElementsByClassName('quickedit-label')[0].innerHTML;
-        var iconos = content[i].getElementsByClassName('icon-container')[0];
+const CHUNK_SIZE = 5;       // peticiones simultáneas por lote
+const DELAY_FETCH = 100;    // ms entre peticiones dentro de un lote
+const DELAY_OPEN = 150;     // ms tras click rename (espera que abra el form)
+const WAIT_CLOSE_MAX = 500; // ms máximo esperando que el form se cierre
 
-        var allHints = Array.from(iconos.getElementsByClassName('command_hover_details')).map(el => el.dataset.iconHint).join(' ');
-        var isSaqueo = allHints.match(/saqueo/i);
-        var isApoyo  = allHints.match(/apoyo/i);
-
-        // Pantalla de visión general del pueblo
-        if(screen_village){
-            var returning = $(content[i]).find('.command_hover_details')[0].dataset.commandType;
-            var otherPlayer = $(content[i]).find('.rename-icon')[0];
-            var isRenamed = conditions.some(el => label.includes(el));
-            if(returning != "return" && otherPlayer != undefined && !isRenamed && !isSaqueo && !isApoyo){
-                var link = content[i].querySelector('a').href;
-                $(content[i]).find('.rename-icon').click();
-                await sleep(300);
-                var edit = $(content[i]).closest('.command-row').find('.quickedit-edit, .quickedit-out .quickedit-edit').find('input[type=text]');
-                if(edit.length === 0) edit = $(content[i]).find('input[type=text]');
-                edit.val(calculate(link));
-                edit.closest('form, div').find('input[type=button]').click();
-                await sleep(300);
-            }
-
-        // Pantalla de Plaza de Reuniones o Pueblo.
-        }else{
-            if(label.match(/Ataque a/i) && !isSaqueo){
-                var link = content[i].querySelector('a').href;
-                $(content[i]).find('.rename-icon').click();
-                await sleep(300);
-                $(collection[i].getElementsByClassName("quickedit-edit")[0]).find('input[type=text]').val(calculate(link));
-                $(collection[i].getElementsByClassName("quickedit-edit")[0]).find('input[type=button]').click();
-                await sleep(300);
-            }
-        }
+async function waitFormClose(contentEl){
+    for(var t = 0; t < WAIT_CLOSE_MAX / 50; t++){
+        await sleep(50);
+        if($(contentEl).find('.quickedit-edit input[type=text]').length === 0) return;
     }
 }
 
-processAll();
-
-function getParameterByName(name, url = window.location.href) {
-	return new URL(url).searchParams.get(name);
+async function getSourceAsDOMAsync(url){
+    var response = await fetch(url);
+    if(!response.ok) throw new Error('HTTP ' + response.status);
+    var text = await response.text();
+    var parser = new DOMParser();
+    return parser.parseFromString(text, "text/html");
 }
 
-// ******************************************** //
-//              Source AS Document              //
-// ******************************************** //
-
-// Returns the page with the specify url. The returns type is Document.
-function getSourceAsDOM(url){
-    xmlhttp=new XMLHttpRequest();
-    xmlhttp.open("GET",url,false);
-    xmlhttp.send();
-    parser=new DOMParser();
-    return parser.parseFromString(xmlhttp.responseText,"text/html");      
-}
-
-// Accede al ataque y revisa las tropas. Las calcula y cambia el nombre al ataque.
-function calculate (link){
-    var source = getSourceAsDOM(link);
+async function calculateAsync(link){
+    var source = await getSourceAsDOMAsync(link);
     var spear = parseInt(source.getElementsByClassName('unit-item unit-item-spear')[0].textContent);
     var sword = parseInt(source.getElementsByClassName('unit-item unit-item-sword')[0].textContent);
     var axe = parseInt(source.getElementsByClassName('unit-item unit-item-axe')[0].textContent);
@@ -140,19 +100,85 @@ function calculate (link){
     }else if(troopsValue > 2000){
         atackName = lang.off;
     }else{
-        if(spear != 0) atackName = atackName +spear + lang.spear;
-        if(sword != 0) atackName = atackName +sword + lang.sword;
-        if(axe != 0) atackName = atackName +axe + lang.axe;
-        if(archer != 0) atackName = atackName +archer + lang.archer;
-        if( spy!= 0) atackName = atackName +spy + lang.spy;
-        if(light != 0) atackName = atackName +light + lang.light;
-        if(marcher != 0) atackName = atackName +marcher + lang.marcher;
-        if(ram != 0) atackName = atackName +ram + lang.ram;     
-        if(catapult != 0) atackName = atackName +catapult + lang.catapult;         
-        if(knight != 0) atackName = atackName +knight + lang.knight;        
-        if(snob != 0) atackName = atackName +snob + lang.snob;        
+        if(spear != 0) atackName = atackName + spear + lang.spear;
+        if(sword != 0) atackName = atackName + sword + lang.sword;
+        if(axe != 0) atackName = atackName + axe + lang.axe;
+        if(archer != 0) atackName = atackName + archer + lang.archer;
+        if(spy != 0) atackName = atackName + spy + lang.spy;
+        if(light != 0) atackName = atackName + light + lang.light;
+        if(marcher != 0) atackName = atackName + marcher + lang.marcher;
+        if(ram != 0) atackName = atackName + ram + lang.ram;
+        if(catapult != 0) atackName = atackName + catapult + lang.catapult;
+        if(knight != 0) atackName = atackName + knight + lang.knight;
+        if(snob != 0) atackName = atackName + snob + lang.snob;
     }
     return atackName;
 }
+
+async function processAll(){
+    // Fase 1: recopilar todos los ataques que hay que renombrar
+    var toProcess = [];
+    for(var i = 0; i < collection.length; i++){
+        var label = content[i].getElementsByClassName('quickedit-label')[0].innerHTML;
+        var iconos = content[i].getElementsByClassName('icon-container')[0];
+        var allHints = Array.from(iconos.getElementsByClassName('command_hover_details')).map(el => el.dataset.iconHint).join(' ');
+        var isSaqueo = allHints.match(/saqueo/i);
+        var isApoyo  = allHints.match(/apoyo/i);
+
+        if(screen_village){
+            var returning = $(content[i]).find('.command_hover_details')[0].dataset.commandType;
+            var otherPlayer = $(content[i]).find('.rename-icon')[0];
+            var isRenamed = conditions.some(el => label.includes(el));
+            if(returning != "return" && otherPlayer != undefined && !isRenamed && !isSaqueo && !isApoyo){
+                toProcess.push({ idx: i, link: content[i].querySelector('a').href });
+            }
+        }else{
+            if(label.match(/Ataque a/i) && !isSaqueo){
+                toProcess.push({ idx: i, link: content[i].querySelector('a').href });
+            }
+        }
+    }
+
+    // Fase 2 + 3: lotes de CHUNK_SIZE — fetch en paralelo escalonado, luego rename
+    for(var start = 0; start < toProcess.length; start += CHUNK_SIZE){
+        var chunk = toProcess.slice(start, start + CHUNK_SIZE);
+
+        // Lanzar fetches con un pequeño escalonado para no bombardear el servidor
+        var fetchPromises = chunk.map((item, k) =>
+            sleep(k * DELAY_FETCH).then(() => calculateAsync(item.link).catch(() => null))
+        );
+        var names = await Promise.all(fetchPromises);
+
+        // Renombrar los del lote secuencialmente
+        for(var j = 0; j < chunk.length; j++){
+            var i = chunk[j].idx;
+            var atackName = names[j];
+            if(atackName === null) continue;
+
+            if(screen_village){
+                $(content[i]).find('.rename-icon').click();
+                await sleep(DELAY_OPEN);
+                var edit = $(content[i]).closest('.command-row').find('.quickedit-edit, .quickedit-out .quickedit-edit').find('input[type=text]');
+                if(edit.length === 0) edit = $(content[i]).find('input[type=text]');
+                edit.val(atackName);
+                edit.closest('form, div').find('input[type=button]').click();
+                await waitFormClose(content[i]);
+            }else{
+                $(content[i]).find('.rename-icon').click();
+                await sleep(DELAY_OPEN);
+                $(collection[i].getElementsByClassName("quickedit-edit")[0]).find('input[type=text]').val(atackName);
+                $(collection[i].getElementsByClassName("quickedit-edit")[0]).find('input[type=button]').click();
+                await waitFormClose(content[i]);
+            }
+        }
+    }
+}
+
+processAll();
+
+function getParameterByName(name, url = window.location.href) {
+	return new URL(url).searchParams.get(name);
+}
+
 
 void(0);
