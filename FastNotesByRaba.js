@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.9      */
+/*    Versión 6.10     */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.9',
+	version: 'v6.10',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -496,17 +496,6 @@ function showComparisonModal(compData) {
 		var body = document.createElement('div');
 		body.className = 'fn-comp-report-body';
 
-		// Añadir hora de batalla desde la tabla exterior (table.vis)
-		var allRows = document.querySelectorAll('table.vis > tbody > tr, table.vis > tr');
-		allRows.forEach(function(row) {
-			if (row.cells[0] && row.cells[0].textContent.trim() === 'Hora de batalla') {
-				var timeDiv = document.createElement('div');
-				timeDiv.style.cssText = 'font-size:11px;color:#555;margin-bottom:6px;';
-				timeDiv.textContent = '⚔️ Hora de batalla: ' + (row.cells[1] ? row.cells[1].textContent.trim() : '');
-				body.appendChild(timeDiv);
-			}
-		});
-
 		// Todo el informe está en td.report_ReportAttack
 		var reportCell = document.querySelector('td.report_ReportAttack');
 		if (reportCell) {
@@ -514,6 +503,23 @@ function showComparisonModal(compData) {
 			// Quitar los enlaces del simulador que no aportan nada en el modal
 			var noPreview = clone.querySelector('.no-preview');
 			if (noPreview) noPreview.remove();
+
+			// Insertar hora de envío al principio del recuadro del informe
+			var sentRow = document.querySelector('table.vis tr td:first-child');
+			var allVisRows = document.querySelectorAll('table.vis > tbody > tr, table.vis > tr');
+			var sentTime = '';
+			allVisRows.forEach(function(row) {
+				if (row.cells[0] && row.cells[0].textContent.trim() === 'Hora de envío') {
+					sentTime = row.cells[1] ? row.cells[1].textContent.trim() : '';
+				}
+			});
+			if (sentTime) {
+				var timeEl = document.createElement('div');
+				timeEl.style.cssText = 'font-size:11px;color:#666;margin-bottom:6px;';
+				timeEl.textContent = 'Enviado: ' + sentTime;
+				clone.insertBefore(timeEl, clone.firstChild);
+			}
+
 			body.appendChild(clone);
 		}
 
@@ -1525,7 +1531,7 @@ function injectComparisonModalStyles() {
 		.fn-comp-report-spoiler summary { cursor: pointer; padding: 5px 10px; font-weight: 800; font-size: 11px; background: #f0e8d8; border: 1px solid #d8c9a8; border-radius: 5px; list-style: none; display: flex; align-items: center; gap: 6px; }
 		.fn-comp-report-spoiler summary:hover { background: #e8dcc8; }
 		.fn-comp-report-spoiler[open] summary { border-radius: 5px 5px 0 0; }
-		.fn-comp-report-spoiler .fn-comp-report-body { border: 1px solid #d8c9a8; border-top: none; border-radius: 0 0 5px 5px; padding: 10px; overflow-x: auto; background: transparent; }
+		.fn-comp-report-spoiler .fn-comp-report-body { border: 1px solid #d8c9a8; border-top: none; border-radius: 0 0 5px 5px; padding: 10px; overflow-x: auto; background: #f4e5c2; }
 		#fn-comparison-box .fn-comp-footer { background: linear-gradient(180deg, #f5ead8 0%, #ede0c8 100%); border-top: 1px solid #d0bfa0; padding: 12px 18px; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
 		.fn-comp-btn { padding: 9px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: 0.3px; transition: all 0.18s; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 		.fn-comp-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,0.2); }
