@@ -496,17 +496,13 @@ function showComparisonModal(compData) {
 		var body = document.createElement('div');
 		body.className = 'fn-comp-report-body';
 
-		// Coger todas las tablas directas de #content_value hasta el bloque de exportación
-		var contentValue = document.querySelector('#content_value');
-		if (contentValue) {
-			var children = Array.from(contentValue.children);
-			for (var k = 0; k < children.length; k++) {
-				var child = children[k];
-				// Parar al llegar al textarea de exportación o al bloque de acciones del informe
-				if (child.querySelector('textarea') || child.querySelector('input[name="report_id"]')) break;
-				body.appendChild(child.cloneNode(true));
+		// Coger todos los table hijos directos de #content_value excepto el de exportación
+		var tables = document.querySelectorAll('#content_value > table');
+		tables.forEach(function(table) {
+			if (!table.querySelector('textarea') && !table.querySelector('input[name="del_report"]')) {
+				body.appendChild(table.cloneNode(true));
 			}
-		}
+		});
 
 		details.appendChild(summary);
 		details.appendChild(body);
