@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.7      */
+/*    Versión 6.8      */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.7',
+	version: 'v6.8',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -496,13 +496,15 @@ function showComparisonModal(compData) {
 		var body = document.createElement('div');
 		body.className = 'fn-comp-report-body';
 
-		// Coger todos los table hijos directos de #content_value excepto el de exportación
-		var tables = document.querySelectorAll('#content_value > table');
-		tables.forEach(function(table) {
-			if (!table.querySelector('textarea') && !table.querySelector('input[name="del_report"]')) {
-				body.appendChild(table.cloneNode(true));
-			}
-		});
+		// Todo el informe está en td.report_ReportAttack
+		var reportCell = document.querySelector('td.report_ReportAttack');
+		if (reportCell) {
+			var clone = reportCell.cloneNode(true);
+			// Quitar los enlaces del simulador que no aportan nada en el modal
+			var noPreview = clone.querySelector('.no-preview');
+			if (noPreview) noPreview.remove();
+			body.appendChild(clone);
+		}
 
 		details.appendChild(summary);
 		details.appendChild(body);
