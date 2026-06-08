@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.6      */
+/*    Versión 6.7      */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.6',
+	version: 'v6.7',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -489,18 +489,25 @@ function showComparisonModal(compData) {
 	// Inyectar el informe actual via DOM (evita problemas de parseo de HTML complejo como string)
 	var injectTarget = document.querySelector('#fn-comp-new .fn-new-report-inject');
 	if (injectTarget) {
-		var reportSections = ['#attack_info_att', '#attack_info_def', '#attack_results',
-			'#attack_spy_away', '#attack_spy_buildings_left', '#attack_spy_buildings_right'];
 		var details = document.createElement('details');
 		details.className = 'fn-comp-report-spoiler';
 		var summary = document.createElement('summary');
 		summary.textContent = '📋 Ver Informe';
 		var body = document.createElement('div');
 		body.className = 'fn-comp-report-body';
-		reportSections.forEach(function(sel) {
-			var el = document.querySelector(sel);
-			if (el) body.appendChild(el.cloneNode(true));
-		});
+
+		// Coger todas las tablas directas de #content_value hasta el bloque de exportación
+		var contentValue = document.querySelector('#content_value');
+		if (contentValue) {
+			var children = Array.from(contentValue.children);
+			for (var k = 0; k < children.length; k++) {
+				var child = children[k];
+				// Parar al llegar al textarea de exportación o al bloque de acciones del informe
+				if (child.querySelector('textarea') || child.querySelector('input[name="report_id"]')) break;
+				body.appendChild(child.cloneNode(true));
+			}
+		}
+
 		details.appendChild(summary);
 		details.appendChild(body);
 		injectTarget.replaceWith(details);
