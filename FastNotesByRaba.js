@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.2      */
+/*    Versión 6.3      */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.2',
+	version: 'v6.3',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -1034,10 +1034,11 @@ function renderBBCode(bbcode, existingNoteHtml = null) {
 		}
 	}
 
-	// Si el placeholder sigue ahí (no encontró informe), eliminar
+	// Si el placeholder sigue ahí, mostrar botón que enlaza al informe actual
 	if (html.includes('___REPORT_PLACEHOLDER___')) {
-		console.log('[renderBBCode] Placeholder sigue ahí, eliminando...');
-		html = html.replace('___REPORT_PLACEHOLDER___', '');
+		console.log('[renderBBCode] Placeholder sigue ahí, insertando enlace al informe actual...');
+		var reportBtn = '<a href="' + window.location.href + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0e8d8;border:1px solid #c8b89a;border-radius:6px;font-size:11px;font-weight:700;color:#5a3e2b;text-decoration:none;margin-top:4px;">📋 Ver Informe</a>';
+		html = html.replace('___REPORT_PLACEHOLDER___', reportBtn);
 	}
 
 	// Procesar tags de color
