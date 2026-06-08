@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.10     */
+/*    Versión 6.11     */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.10',
+	version: 'v6.11',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -1528,9 +1528,13 @@ function injectComparisonModalStyles() {
 		.fn-comp-panel-content a { color: #1e50a2; text-decoration: none; }
 		.fn-comp-panel-content a:hover { text-decoration: underline; }
 		.fn-comp-report-spoiler { margin-top: 6px; }
-		.fn-comp-report-spoiler summary { cursor: pointer; padding: 5px 10px; font-weight: 800; font-size: 11px; background: #f0e8d8; border: 1px solid #d8c9a8; border-radius: 5px; list-style: none; display: flex; align-items: center; gap: 6px; }
-		.fn-comp-report-spoiler summary:hover { background: #e8dcc8; }
-		.fn-comp-report-spoiler[open] summary { border-radius: 5px 5px 0 0; }
+		.fn-comp-report-spoiler summary,
+		#fn-comp-old details summary, #fn-comp-old .spoiler-title { cursor: pointer; padding: 5px 10px; font-weight: 800; font-size: 11px; background: #f0e8d8; border: 1px solid #d8c9a8; border-radius: 5px; list-style: none; display: flex; align-items: center; gap: 6px; }
+		.fn-comp-report-spoiler summary:hover,
+		#fn-comp-old details summary:hover { background: #e8dcc8; }
+		.fn-comp-report-spoiler[open] summary,
+		#fn-comp-old details[open] summary { border-radius: 5px 5px 0 0; }
+		#fn-comp-old details { margin-top: 6px; }
 		.fn-comp-report-spoiler .fn-comp-report-body { border: 1px solid #d8c9a8; border-top: none; border-radius: 0 0 5px 5px; padding: 10px; overflow-x: auto; background: #f4e5c2; }
 		#fn-comparison-box .fn-comp-footer { background: linear-gradient(180deg, #f5ead8 0%, #ede0c8 100%); border-top: 1px solid #d0bfa0; padding: 12px 18px; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
 		.fn-comp-btn { padding: 9px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: 0.3px; transition: all 0.18s; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
