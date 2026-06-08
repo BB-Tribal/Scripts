@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.3      */
+/*    Versión 6.4      */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.3',
+	version: 'v6.4',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -1034,11 +1034,19 @@ function renderBBCode(bbcode, existingNoteHtml = null) {
 		}
 	}
 
-	// Si el placeholder sigue ahí, mostrar botón que enlaza al informe actual
+	// Si el placeholder sigue ahí, clonar el informe renderizado de la página actual
 	if (html.includes('___REPORT_PLACEHOLDER___')) {
-		console.log('[renderBBCode] Placeholder sigue ahí, insertando enlace al informe actual...');
-		var reportBtn = '<a href="' + window.location.href + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f0e8d8;border:1px solid #c8b89a;border-radius:6px;font-size:11px;font-weight:700;color:#5a3e2b;text-decoration:none;margin-top:4px;">📋 Ver Informe</a>';
-		html = html.replace('___REPORT_PLACEHOLDER___', reportBtn);
+		var reportSections = ['#attack_info_att', '#attack_info_def', '#attack_results',
+			'#attack_spy_away', '#attack_spy_buildings_left', '#attack_spy_buildings_right'];
+		var clonedHtml = '';
+		reportSections.forEach(function(sel) {
+			var el = document.querySelector(sel);
+			if (el) clonedHtml += el.outerHTML;
+		});
+		var reportSpoiler = clonedHtml
+			? '<details><summary style="cursor:pointer;padding:4px 0;font-weight:700;font-size:11px;">📋 Ver Informe</summary><div style="margin-top:8px;overflow-x:auto;">' + clonedHtml + '</div></details>'
+			: '';
+		html = html.replace('___REPORT_PLACEHOLDER___', reportSpoiler);
 	}
 
 	// Procesar tags de color
