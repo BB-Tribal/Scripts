@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.11     */
+/*    Versión 6.12     */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.11',
+	version: 'v6.12',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -500,12 +500,14 @@ function showComparisonModal(compData) {
 		var reportCell = document.querySelector('td.report_ReportAttack');
 		if (reportCell) {
 			var clone = reportCell.cloneNode(true);
-			// Quitar los enlaces del simulador que no aportan nada en el modal
+			// Eliminar height forzado que genera espacio en blanco
+			clone.removeAttribute('height');
+			clone.style.height = 'auto';
+			// Quitar los enlaces del simulador
 			var noPreview = clone.querySelector('.no-preview');
 			if (noPreview) noPreview.remove();
 
-			// Insertar hora de envío al principio del recuadro del informe
-			var sentRow = document.querySelector('table.vis tr td:first-child');
+			// Insertar hora de envío al principio del recuadro
 			var allVisRows = document.querySelectorAll('table.vis > tbody > tr, table.vis > tr');
 			var sentTime = '';
 			allVisRows.forEach(function(row) {
@@ -515,7 +517,7 @@ function showComparisonModal(compData) {
 			});
 			if (sentTime) {
 				var timeEl = document.createElement('div');
-				timeEl.style.cssText = 'font-size:11px;color:#666;margin-bottom:6px;';
+				timeEl.style.cssText = 'font-size:11px;color:#666;margin-bottom:4px;';
 				timeEl.textContent = 'Enviado: ' + sentTime;
 				clone.insertBefore(timeEl, clone.firstChild);
 			}
@@ -534,6 +536,28 @@ function showComparisonModal(compData) {
 	} else {
 		$('#fn-comp-old').text(oldContent);
 	}
+
+	// Normalizar spoilers del panel derecho para que usen el mismo diseño que el izquierdo
+	$('#fn-comp-old .spoiler').each(function() {
+		var inputBtn = $(this).find('input[type=button]').first();
+		var label = inputBtn.val() || 'Ver Informe';
+		var contentDiv = $(this).children('div').first();
+		var details = document.createElement('details');
+		details.className = 'fn-comp-report-spoiler';
+		var sum = document.createElement('summary');
+		sum.textContent = '📋 ' + label;
+		var bdy = document.createElement('div');
+		bdy.className = 'fn-comp-report-body';
+		bdy.innerHTML = contentDiv.html() || '';
+		details.appendChild(sum);
+		details.appendChild(bdy);
+		$(this).replaceWith(details);
+	});
+	// También normalizar <details> nativos de TW si los hubiera
+	$('#fn-comp-old details:not(.fn-comp-report-spoiler)').each(function() {
+		$(this).addClass('fn-comp-report-spoiler');
+		$(this).find('summary').addClass('fn-comp-report-summary');
+	});
 
 	// Store comparison data globally for button handlers
 	window.fnCurrentComparison = compData;
