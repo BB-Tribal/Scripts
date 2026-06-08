@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.12     */
+/*    Versión 6.13     */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.12',
+	version: 'v6.13',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -530,34 +530,29 @@ function showComparisonModal(compData) {
 		injectTarget.replaceWith(details);
 	}
 
-	// Mostrar la nota anterior tal como está almacenada
-	if (oldContent.includes('<')) {
-		$('#fn-comp-old').html(oldContent);
-	} else {
-		$('#fn-comp-old').text(oldContent);
-	}
+	// Renderizar la nota anterior con el mismo renderer que la nueva
+	const oldRendered = renderBBCode(compData.oldNote.fullText, null);
+	$('#fn-comp-old').html(oldRendered);
 
-	// Normalizar spoilers del panel derecho para que usen el mismo diseño que el izquierdo
-	$('#fn-comp-old .spoiler').each(function() {
-		var inputBtn = $(this).find('input[type=button]').first();
-		var label = inputBtn.val() || 'Ver Informe';
-		var contentDiv = $(this).children('div').first();
-		var details = document.createElement('details');
-		details.className = 'fn-comp-report-spoiler';
-		var sum = document.createElement('summary');
-		sum.textContent = '📋 ' + label;
-		var bdy = document.createElement('div');
-		bdy.className = 'fn-comp-report-body';
-		bdy.innerHTML = contentDiv.html() || '';
-		details.appendChild(sum);
-		details.appendChild(bdy);
-		$(this).replaceWith(details);
-	});
-	// También normalizar <details> nativos de TW si los hubiera
-	$('#fn-comp-old details:not(.fn-comp-report-spoiler)').each(function() {
-		$(this).addClass('fn-comp-report-spoiler');
-		$(this).find('summary').addClass('fn-comp-report-summary');
-	});
+	// Inyectar el informe de la nota anterior (extraído del BBCode almacenado)
+	var oldInjectTarget = document.querySelector('#fn-comp-old .fn-new-report-inject');
+	if (oldInjectTarget) {
+		var reportMatch = compData.oldNote.fullText.match(/\[report_export\]([\s\S]*?)\[\/report_export\]/);
+		if (reportMatch) {
+			var oldDet = document.createElement('details');
+			oldDet.className = 'fn-comp-report-spoiler';
+			var oldSum = document.createElement('summary');
+			oldSum.textContent = '📋 Ver Informe';
+			var oldBdy = document.createElement('div');
+			oldBdy.className = 'fn-comp-report-body';
+			oldBdy.innerHTML = reportMatch[1];
+			oldDet.appendChild(oldSum);
+			oldDet.appendChild(oldBdy);
+			oldInjectTarget.replaceWith(oldDet);
+		} else {
+			oldInjectTarget.remove();
+		}
+	}
 
 	// Store comparison data globally for button handlers
 	window.fnCurrentComparison = compData;
