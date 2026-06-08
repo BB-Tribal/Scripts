@@ -29,14 +29,14 @@ village_options = {
 /************************/
 
 /*     Script Raba      */
-/*    Versión 6.5      */
+/*    Versión 6.6      */
 
 /************************/
 
 
 var scriptData = {
 	name: 'Fast Notes',
-	version: 'v6.5',
+	version: 'v6.6',
 	editor: 'Rabagalan73',
 	author: 'Rabagalan73',
 	authorUrl: '',
@@ -485,6 +485,26 @@ function showComparisonModal(compData) {
 	const oldContent = compData.oldNote.fullText;
 
 	$('#fn-comp-new').html(newRendered);
+
+	// Inyectar el informe actual via DOM (evita problemas de parseo de HTML complejo como string)
+	var injectTarget = document.querySelector('#fn-comp-new .fn-new-report-inject');
+	if (injectTarget) {
+		var reportSections = ['#attack_info_att', '#attack_info_def', '#attack_results',
+			'#attack_spy_away', '#attack_spy_buildings_left', '#attack_spy_buildings_right'];
+		var details = document.createElement('details');
+		details.className = 'fn-comp-report-spoiler';
+		var summary = document.createElement('summary');
+		summary.textContent = '📋 Ver Informe';
+		var body = document.createElement('div');
+		body.className = 'fn-comp-report-body';
+		reportSections.forEach(function(sel) {
+			var el = document.querySelector(sel);
+			if (el) body.appendChild(el.cloneNode(true));
+		});
+		details.appendChild(summary);
+		details.appendChild(body);
+		injectTarget.replaceWith(details);
+	}
 
 	// Mostrar la nota anterior tal como está almacenada
 	if (oldContent.includes('<')) {
@@ -1034,19 +1054,9 @@ function renderBBCode(bbcode, existingNoteHtml = null) {
 		}
 	}
 
-	// Si el placeholder sigue ahí, clonar el informe renderizado de la página actual
+	// Si el placeholder sigue ahí, insertar marcador para inyectar el informe via DOM después
 	if (html.includes('___REPORT_PLACEHOLDER___')) {
-		var reportSections = ['#attack_info_att', '#attack_info_def', '#attack_results',
-			'#attack_spy_away', '#attack_spy_buildings_left', '#attack_spy_buildings_right'];
-		var clonedHtml = '';
-		reportSections.forEach(function(sel) {
-			var el = document.querySelector(sel);
-			if (el) clonedHtml += el.outerHTML;
-		});
-		var reportSpoiler = clonedHtml
-			? '<details class="fn-comp-report-spoiler"><summary>📋 Ver Informe</summary><div class="fn-comp-report-body">' + clonedHtml + '</div></details>'
-			: '';
-		html = html.replace('___REPORT_PLACEHOLDER___', reportSpoiler);
+		html = html.replace('___REPORT_PLACEHOLDER___', '<div class="fn-new-report-inject"></div>');
 	}
 
 	// Procesar tags de color
