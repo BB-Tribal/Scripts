@@ -217,7 +217,7 @@ function addDisplay() {
         constOffset = i + getStorage("const_offset");
         e.children[0].innerHTML += "<th colspan='4'>&nbsp;&nbsp;"
             + "<span style='white-space:nowrap'>" + lang.titleAssist + "</span>"
-            + "&nbsp;&nbsp;<button class='ta-help-btn' onclick='toggleTutorial()' title='Ayuda'>?</button></th>";
+            + "&nbsp;&nbsp;<button type='button' class='ta-help-btn' onclick='toggleTutorial()' title='Ayuda'>?</button></th>";
 
         var s=document.createElement("TD"),
             a=document.createAttribute("rowspan"),
