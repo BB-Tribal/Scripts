@@ -1,9 +1,47 @@
 /*
  * Script Name: Timing Assist
- * Version: v1.1
+ * Version: v1.2
  * Modified by: Black_Lottus
  */
 
+var lang = {
+    mustRunFromRally:   "Este script debe ejecutarse desde el punto de reunión."
+                      + "\nEjecutarlo durante un envío de comando añadirá asistencia de milisegundos."
+                      + "\nEjecutarlo después del envío mostrará cuántos milisegundos fallaste y te permitirá recalibrar.",
+    alreadyRunning:     "El script ya está en ejecución. ¿Deseas borrar las variables almacenadas? (Puede solucionar errores recurrentes)",
+    titleAssist:        "Asistente de Tiempos",
+    btnTest:            "Test",
+    btnStart:           "Iniciar",
+    labelHit:           "Hit: ",
+    labelOffset:        "Offset: ",
+    labelTime:          "Hora: ",
+    tooltipMissed:      "Fallaste por",
+    tutorialTitle:      "Asistente de Tiempos",
+    tutorialBody:       "El asistente de tiempos te ayuda a cronometrar tus ataques con precisión mostrando gráficamente los milisegundos en un círculo. El círculo se completa cuando el milisegundo actual alcanza el milisegundo objetivo. "
+                      + "El botón \"Test\" sirve para practicar el timing antes de enviar un comando.",
+    calibTitle:         "Calibración",
+    calibBody:          "El asistente necesita calibrarse regularmente con el reloj de Tribal Wars para una sincronización precisa. Sigue estos pasos:",
+    step1Title:         "Paso 1 - Haz clic en el indicador de color.",
+    step1Body:          "Esto sincroniza el reloj de forma aproximada, sin modificar el \"offset\" de ajuste fino. Hazlo cada hora aproximadamente.",
+    step2Title:         "Paso 2 - Envía un comando de calibración.",
+    step2Body:          "Envía un ataque o apoyo para obtener el tiempo de llegada real frente al estimado. Es el paso más importante y debe repetirse cada 5-7 minutos. Se completa en el paso 3.",
+    step3Title:         "Paso 3 - Ejecuta el script en el punto de reunión tras enviar el comando e introduce el tiempo de llegada real.",
+    step3Body:          "Ejecutar el script en el punto de reunión después de un envío pedirá al usuario el tiempo de llegada real y mostrará el estimado. Introduce el tiempo (s:ms) para actualizar el offset.",
+    calibNote:          "El script debería quedar calibrado. Repite los pasos 2 y 3 para verificar si estima correctamente (±5-20 ms según velocidad de internet). Para errores recurrentes, ejecuta el script dos veces en esta página y acepta para reiniciar las variables.",
+    colorTitle:         "Indicadores de color",
+    colorBody:          "Los indicadores muestran cuánto tiempo lleva sin sincronizarse el reloj.",
+    colorRed:           " - Sin sincronización aproximada ni fina",
+    colorYellow:        " - Sincronización aproximada o fina (solo una)",
+    colorGreen:         " - Ambas sincronizaciones activas",
+    colorNote:          "<b>Nota:</b> Los colores no reflejan necesariamente la calidad de la sincronización. Para asegurarte, verifica si el script estima correctamente el tiempo de llegada tras un comando de prueba (±5-20 ms).",
+    promptEstimated:    "El ms estimado de llegada es ",
+    promptInput:        "Introduce el tiempo de llegada real (s:ms)",
+    errorOffset:        "No se pudo calcular el offset... Por favor, inténtalo de nuevo.",
+    errorManual:        "Algo salió mal... Introduce el offset manualmente. 'Tiempo real - Tiempo estimado' = offset.",
+    errConsoleInput:    "Algo salió mal al pedir datos al usuario. Verifica la entrada.",
+    errConsoleArrival:  "No se pudo identificar el segundo de llegada:\n",
+    errConsoleTable:    "No se pudo encontrar la tabla...\n"
+};
 
 var c, ctx, circleReference,
     lastMillis, lastTimingMillis,
@@ -19,13 +57,11 @@ var c, ctx, circleReference,
     };
 
     if("place" != game_data.screen) {
-    alert("This script must be run from the rally point. "
-    + "\nRunning during command execution will add millisecond assist."
-    + "\n        Running after command excecution will show you by how many milliseconds you missed the target and allow you to .");
+    alert(lang.mustRunFromRally);
     }else if(2 == window.location.href.split("try=").length){
         if(null == runTimes ? runTimes = 1:runTimes++, 1 == runTimes) setTimeout(function(){addDisplay()},50);
         else { 
-            var toReset=confirm("Script already running. Do you delete stored variables (May fix the script in case of recurring errors)?");
+            var toReset=confirm(lang.alreadyRunning);
             1==toReset&&clearStorage()
         }
     }else null==runTimes&&(runTimes=0), promptCalibration();
@@ -39,12 +75,12 @@ var c, ctx, circleReference,
                         break
                     }
                 }catch(e) {
-                    console.log("Could not identify arrival second:\n"+e)
+                    console.log(lang.errConsoleArrival+e)
                 }
                 
                 var n=e.children[e.children.length-1];
                 constOffset=i+getStorage("const_offset"), e.children[0].innerHTML+="<th colspan='4'>    "
-                + "    <span style='white-space:nowrap'>Asistente de Tiempos</span><span>    "
+                + "    <span style='white-space:nowrap'>"+lang.titleAssist+"</span><span>    "
                 + "    <img src='"+imgSrc.questionmark+"' onclick='toggleTutorial()' style='float:right;display:inline;height:15px;width:15px;cursor:pointer'></span></th>";
                 
                 var s=document.createElement("TD"), 
@@ -83,13 +119,13 @@ var c, ctx, circleReference,
                         td.innerHTML="<img src='"+imgSrc.watchtower+"'>";
                     
                     var p=document.createElement("TD");
-                    p.innerHTML="<button id='practice_button' type='button' class='btn btn-recruit' onclick='practiceFunction()' style='width:80px'>Test</button>";
+                    p.innerHTML="<button id='practice_button' type='button' class='btn btn-recruit' onclick='practiceFunction()' style='width:80px'>"+lang.btnTest+"</button>";
                     
                     var u=document.createElement("TD"),
                         h=document.createAttribute("style");
                         h.value="white-space:nowrap",
                         u.setAttributeNode(h),
-                        u.innerHTML="<span>Hit: </span><input style='width:30px' id='hit_input' title='Millisecond to hit' type='text' onchange='storeData(\"hit_ms\")' value='"+hitMs+"'></input>";
+                        u.innerHTML="<span>"+lang.labelHit+"</span><input style='width:30px' id='hit_input' title='Millisecond to hit' type='text' onchange='storeData(\"hit_ms\")' value='"+hitMs+"'></input>";
                     
                     var g=document.createElement("TD"),
                         f=document.createAttribute("style");
@@ -97,24 +133,24 @@ var c, ctx, circleReference,
                         g.setAttributeNode(f);
                     
                     var b,y,T,v=new Date;
-                    y=v.getTime()-getStorage("last_set_offset")<42e4,T=v.getTime()-getStorage("last_set_const")<36e5,b=y&&T?imgSrc.green:y||T?imgSrc.yellow:imgSrc.red,g.innerHTML="<span>Offset: </span><input id='offset_input' type='text' onchange='storeData(\"offset_ms\")' style='width:30px' value='"+calibrationTime+"'></input>                            <img id='offset_status' src='"+b+"' onclick = getInitialOffset() style='cursor:pointer'>";
+                    y=v.getTime()-getStorage("last_set_offset")<42e4,T=v.getTime()-getStorage("last_set_const")<36e5,b=y&&T?imgSrc.green:y||T?imgSrc.yellow:imgSrc.red,g.innerHTML="<span>"+lang.labelOffset+"</span><input id='offset_input' type='text' onchange='storeData(\"offset_ms\")' style='width:30px' value='"+calibrationTime+"'></input>                            <img id='offset_status' src='"+b+"' onclick = getInitialOffset() style='cursor:pointer'>";
                     
                     var ts=document.createElement("TD"),
                         st=document.createAttribute("style");
                         st.value="white-space:nowrap",
                         ts.setAttributeNode(st),
-                        ts.innerHTML="<span>Hora: </span><input style='width:120px' id='date_input' title='Time' type='text'></input>";
+                        ts.innerHTML="<span>"+lang.labelTime+"</span><input style='width:120px' id='date_input' title='Time' type='text'></input>";
                     
                     
                     var _=document.createElement("TD");
-                    _.innerHTML="<span id='miss_display' style='width:34px;display:block' title='Missed by'>0</span>",
+                    _.innerHTML="<span id='miss_display' style='width:34px;display:block' title='"+lang.tooltipMissed+"'>0</span>",
                         $(".village_anchor").parent().parent()[0].appendChild(s),
                         $(".village_anchor").parent().parent()[0].appendChild(l),
                         n.appendChild(p), n.appendChild(u), n.appendChild(g) ,n.appendChild(ts),
                         $("#ds_body")[0].setAttribute("onsubmit","sendFunction()"),
                         timerInterval=setInterval(drawCircle,5)
         }catch(e){
-            console.log("Could not find table...\n"+e)
+            console.log(lang.errConsoleTable+e)
         }
     }
     
@@ -131,7 +167,7 @@ var c, ctx, circleReference,
     
     function practiceFunction(){
         var e=new Date,
-            t=(e=new Date(e.getTime()+calibrationTime+constOffset)).getMilliseconds();buttonText=["Test","Iniciar"],
+            t=(e=new Date(e.getTime()+calibrationTime+constOffset)).getMilliseconds();buttonText=[lang.btnTest,lang.btnStart],
             buttonDOM=$("#practice_button")[0],hitMs=$("#hit_input")[0].value,buttonDOM.innerHTML==buttonText[0]?(clearInterval(timerInterval),
             buttonDOM.innerHTML=buttonText[1],Math.abs(t-hitMs)<=500?$("#miss_display")[0].innerHTML=String(t-hitMs):$("#miss_display")[0].innerHTML=-(1e3-(t-hitMs))):(buttonDOM.innerHTML=buttonText[0],timerInterval=setInterval(drawCircle,5)),lastTimingMillis=1200
     }
@@ -156,26 +192,21 @@ var c, ctx, circleReference,
                 s=document.createAttribute("class"),
                 a=.8*$("#contentContainer")[0].offsetWidth;n.value="popup_box_container",
                 t.setAttributeNode(n),s.value="fader",i.setAttributeNode(s),
-                e="<div class='popup_box mobile show' id='timing_tutorial' style='width:"+a+"px;top:12%'>    "
-                    + "        <div class='popup_box_content' style='max-height: 70%;overflow:auto'><a class='popup_box_close tooltip-delayed' onclick='toggleTutorial()' style='cursor:pointer'>&nbsp;</a>     "
-                    + "       <h2 class='popup_box_header'>Asistente de Tiempos</h2>            <p>The timing assistant helps you to time your attacks precisely by graphically displaying milliseconds on a circle. The circle is completed when millisecond equals target millisecond.      "
-                    + "      The \"Try\"-button can be used to practice timing before executing a command.</p>            "
-                    + "            <h5>Calibration</h5>            <p>The timing assistant needs to be regularly calibrated to the tribal wars clock for precise timing. This is done in the following steps:</p>             "
-                    + "           <p style='display:inline'><b>Step 1 - Click the coloured indicator.</b></p><br>            <p style='display:inline'>This synchronizes the clock roughly, but does not change the \"offset\" used for finely tuning the clocks.      "
-                    + "      This should be done every hour or so.</p><br><br>                        <p style='display:inline'><b>Step 2 - Send a calibration command.</b></p><br>            <p style='display:inline'>Send an attack/support to get real vs estimated hit time.       "
-                    + "      This is the most important step for precision and should be done every 5-7 minutes or so, and is completed in step 3.</p><br><br>          "
-                    + "              <p style='display:inline'><b>Step 3 - Run script in the rally point after command execution and input \"real hit time\".</b></p><br>     "
-                    + "       <p style='display:inline'>Running the script in the rally point after command execution will prompt the user to input real hit time, and display estimated hit time.    "
-                    + "         Input the hit time of the command (s:ms) to tell the script it's offset.</p>             "
-                    + "           <p>The script should at this point be calibrated, and can be controlled by repeating step 2 and 3 to see whether the script estimates correct time or not      "
-                    + "      (Within Â±5-20 ms depending on internet speed and stability). For reoccurring errors, run the script twice on this page and click ok to reset stored variables.</p>       "
-                    + "                 <h5>Colour indicators</h5>            <p>The colour indicators shows how long it is since the clocks have been synchronized.</p>      "
-                    + "      <img src='"+imgSrc.red+"'><p style='display:inline'> - Neither roughly nor finely tuned</p><br>      "
-                    + "      <img src='"+imgSrc.yellow+"'><p style='display:inline'> - Either roughly or finely tuned</p><br>       "
-                    + "     <img src='"+imgSrc.green+"'><p style='display:inline'> - Both roughly and finely tuned</p>       "
-                    + "     <p><b>Note:</b> The colours do not necessarily reflect the quality of synchronization. To ensure correct synchronization, check whether the script is able to      "
-                    + "      estimate the right hit time after sending a trial-command (Â±5-20 ms depending on internet speed and stability).</p>    "
-                    + "        </div></div>",
+                e="<div class='popup_box mobile show' id='timing_tutorial' style='width:"+a+"px;top:12%'>"
+                    + "<div class='popup_box_content' style='max-height:70%;overflow:auto'><a class='popup_box_close tooltip-delayed' onclick='toggleTutorial()' style='cursor:pointer'>&nbsp;</a>"
+                    + "<h2 class='popup_box_header'>"+lang.tutorialTitle+"</h2>"
+                    + "<p>"+lang.tutorialBody+"</p>"
+                    + "<h5>"+lang.calibTitle+"</h5><p>"+lang.calibBody+"</p>"
+                    + "<p style='display:inline'><b>"+lang.step1Title+"</b></p><br><p style='display:inline'>"+lang.step1Body+"</p><br><br>"
+                    + "<p style='display:inline'><b>"+lang.step2Title+"</b></p><br><p style='display:inline'>"+lang.step2Body+"</p><br><br>"
+                    + "<p style='display:inline'><b>"+lang.step3Title+"</b></p><br><p style='display:inline'>"+lang.step3Body+"</p>"
+                    + "<p>"+lang.calibNote+"</p>"
+                    + "<h5>"+lang.colorTitle+"</h5><p>"+lang.colorBody+"</p>"
+                    + "<img src='"+imgSrc.red+"'><p style='display:inline'>"+lang.colorRed+"</p><br>"
+                    + "<img src='"+imgSrc.yellow+"'><p style='display:inline'>"+lang.colorYellow+"</p><br>"
+                    + "<img src='"+imgSrc.green+"'><p style='display:inline'>"+lang.colorGreen+"</p>"
+                    + "<p>"+lang.colorNote+"</p>"
+                    + "</div></div>",
                 
                 t.innerHTML=e,document.body.appendChild(t),
                 document.body.appendChild(i)
@@ -212,13 +243,13 @@ var c, ctx, circleReference,
         if(null==localStorage.timeAssistant);
         else try{
             var e=getStorage("last_hit"),t=t=e.split(":");i="",e=1e3*Number(t[0])+Number(t[1]),1==t[0].length&&(t[0]="0"+t[0]),1==t[1].length?t[1]="00"+t[1]:2==t[1].length&&(t[1]="0"+t[1]),t=t[0]+":"+t[1];
-            var i=prompt("Estimated hit ms is "+t+". Please input correct hit-ms",t);
+            var i=prompt(lang.promptEstimated+t+". "+lang.promptInput,t);
             if(null!=i){
                 var n=i.split(":");e-15e3>(n=1e3*Number(n[0])+Number(n[1]))?n+=6e4:n-15e3>e&&(e+=6e4);
-                var s=n-e;s=0==runTimes?Number(s+calibrationTime):Number(s),isNaN(s)?(storeData("offset",0),alert("Could not calculate offset... Please try again!")):(runTimes++,storeData("offset",s))
+                var s=n-e;s=0==runTimes?Number(s+calibrationTime):Number(s),isNaN(s)?(storeData("offset",0),alert(lang.errorOffset)):(runTimes++,storeData("offset",s))
             }
         }catch(e){
-            console.log("Something went wrong while prompting user. Check input!"),alert("Something went wrong... Please enter offset manually. 'Hit time - estimated hit time' gives offset.")
+            console.log(lang.errConsoleInput),alert(lang.errorManual)
         }
     }
     
@@ -231,7 +262,7 @@ var c, ctx, circleReference,
                 break
             }
         }catch(e){
-            console.log("Could not identify arrival second:\n"+e)
+            console.log(lang.errConsoleArrival+e)
         }
         constOffset=e+(sTime-t.getTime())           
     }
