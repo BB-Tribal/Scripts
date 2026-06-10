@@ -281,12 +281,16 @@ function addDisplay() {
 function drawCircle(){
     null==c&&(c=document.getElementById("millis_canvas"),
         ctx=c.getContext("2d"),circleReference=-Math.PI/2,lastMillis=0,lastTimingMillis=0,
-        hitMs=$("#hit_input")[0].value,$("#second_display")[0].innerHTML=$(".relative_time")[0].innerHTML.split(":")[2]);
+        hitMs=$("#hit_input")[0].value);
+        var _rt=$(".relative_time")[0];
+        if(_rt&&$("#second_display")[0]) $("#second_display")[0].innerHTML=_rt.innerHTML.split(":")[2];
 
+    if(!c||!ctx) return;
     var e=new Date,
         t=(e=new Date(e.getTime()+calibrationTime+constOffset)).getMilliseconds(),
         i=new Date(e.getTime()-hitMs).getMilliseconds();
-    t<lastMillis&&(lastMillis=t,1==String(e.getSeconds()).length?$("#second_display")[0].innerHTML="0"+e.getSeconds():$("#second_display")[0].innerHTML=e.getSeconds());
+    var _sd=$("#second_display")[0];
+    if(t<lastMillis&&_sd) { lastMillis=t; _sd.innerHTML=1==String(e.getSeconds()).length?"0"+e.getSeconds():e.getSeconds(); }
     i<lastTimingMillis&&(ctx.clearRect(0,0,160,160),lastTimingMillis=0);
     ctx.beginPath(),ctx.arc(75,75,50,circleReference+lastTimingMillis*milliPiFraction,circleReference+i*milliPiFraction),ctx.stroke();
     lastMillis=t; lastTimingMillis=i;
