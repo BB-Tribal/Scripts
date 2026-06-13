@@ -381,7 +381,7 @@ function checkDistance(x1, y1, x2, y2) {
 }
 
 function rsFooter() {
-    return `<div class="rs-footer">⚔️ Creado por <strong>rabagalan73</strong> para la reina <strong>M0bscene</strong> ⚔️</div>`;
+    return `<div class="rs-footer">🧱 Creado por <strong>rabagalan73</strong> para la reina <strong>M0bscene</strong> 🧱</div>`;
 }
 
 // ── sessionStorage ───────────────────────────────────────────
@@ -479,7 +479,7 @@ function askCoordinate() {
     <div class="rs-overlay rs-root" id="rs-coord-overlay">
       <div class="rs-modal rs-modal-sm">
         <div class="rs-head">
-          <div class="rs-head-icon">&#x2694;&#xFE0F;</div>
+          <div class="rs-head-icon">&#x1F9F1;</div>
           <div>
             <div class="rs-head-title">${langShinko[0]}</div>
             <div class="rs-head-sub">${langShinko[1]}</div>
@@ -542,9 +542,9 @@ function createList() {
                 <span class="rs-vc-dist">${d.dist}</span>
             </div>
             <div class="rs-vc-body">
-                <div class="rs-vc-res"><span style="color:#a8c060">&#x1FAB5;</span><span class="rs-vc-res-val" style="color:#a8c060">&nbsp;${numberWithCommas(d.res.wood)}</span></div>
-                <div class="rs-vc-res"><span style="color:#b0a090">&#x1F9F1;</span><span class="rs-vc-res-val" style="color:#b0a090">&nbsp;${numberWithCommas(d.res.stone)}</span></div>
-                <div class="rs-vc-res"><span style="color:#90b0c8">&#x2699;&#xFE0F;</span><span class="rs-vc-res-val" style="color:#90b0c8">&nbsp;${numberWithCommas(d.res.iron)}</span></div>
+                <div class="rs-vc-res"><span class="icon header wood"> </span><span class="rs-vc-res-val" style="color:#a8c060">&nbsp;${numberWithCommas(d.res.wood)}</span></div>
+                <div class="rs-vc-res"><span class="icon header stone"> </span><span class="rs-vc-res-val" style="color:#b0a090">&nbsp;${numberWithCommas(d.res.stone)}</span></div>
+                <div class="rs-vc-res"><span class="icon header iron"> </span><span class="rs-vc-res-val" style="color:#90b0c8">&nbsp;${numberWithCommas(d.res.iron)}</span></div>
             </div>
             <div class="rs-vc-foot">
                 <button class="rs-btn-send-card" onclick="sendResource(${d.v.id},${sendBack[0]},${d.res.wood},${d.res.stone},${d.res.iron},${d.idx})">${langShinko[17]}</button>
@@ -571,9 +571,9 @@ function createList() {
             <div class="rs-target-name">${targetName}</div>
             <div class="rs-target-sub">${langShinko[4]}: ${targetPlayer} &nbsp;&middot;&nbsp; ${langShinko[6]}: ${numberWithCommas(targetPts)}</div>
             <div class="rs-res-badges" style="margin-top:8px;">
-              <span class="rs-res-badge rs-badge-wood">&#x1FAB5; ${langShinko[18]}: <span id="rs-wood-sent">0</span></span>
-              <span class="rs-res-badge rs-badge-stone">&#x1F9F1; ${langShinko[18]}: <span id="rs-stone-sent">0</span></span>
-              <span class="rs-res-badge rs-badge-iron">&#x2699;&#xFE0F; ${langShinko[18]}: <span id="rs-iron-sent">0</span></span>
+              <span class="rs-res-badge rs-badge-wood"><span class="icon header wood"> </span> ${langShinko[18]}: <span id="rs-wood-sent">0</span></span>
+              <span class="rs-res-badge rs-badge-stone"><span class="icon header stone"> </span> ${langShinko[18]}: <span id="rs-stone-sent">0</span></span>
+              <span class="rs-res-badge rs-badge-iron"><span class="icon header iron"> </span> ${langShinko[18]}: <span id="rs-iron-sent">0</span></span>
             </div>
           </div>
         </div>
