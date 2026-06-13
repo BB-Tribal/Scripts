@@ -723,7 +723,7 @@ window.FarmGod.Main = (function (Library, Translation) {
 
       return `
         <div class="fg-header">
-          <div class="fg-header-icon">&#x2694;</div>
+          <div class="fg-header-icon"><span class="icon header lc"> </span></div>
           <div class="fg-header-text">
             <div class="fg-header-title">${t.options.title}</div>
             <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo</div>
@@ -768,7 +768,7 @@ window.FarmGod.Main = (function (Library, Translation) {
             </div>` : ''}
           </div>
 
-          <button class="fg-btn optionButton" type="button">&#x2694; ${t.options.button}</button>
+          <button class="fg-btn optionButton" type="button"><span class="icon header lc"> </span> ${t.options.button}</button>
         </div>
 
         <div class="fg-footer">&#9876;&#65039; Creado por <strong>rabagalan73</strong> para la reina <strong>M0bscene</strong> &#9876;&#65039;</div>
@@ -857,7 +857,7 @@ window.FarmGod.Main = (function (Library, Translation) {
     return `
     <div class="fgRabaContent">
       <div class="fg-results-header">
-        <span class="fg-results-title">&#x2694; FarmGod <span class="fg-results-badge">${totalFarms}</span></span>
+        <span class="fg-results-title"><span class="icon header lc"> </span> FarmGod <span class="fg-results-badge">${totalFarms}</span></span>
       </div>
       <div class="fgRabaProgress">
         <div class="fg-progress-wrap">
