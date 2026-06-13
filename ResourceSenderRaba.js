@@ -479,11 +479,10 @@ function askCoordinate() {
       <div class="rs-modal rs-modal-sm">
         <div class="rs-head">
           <div class="rs-head-icon">&#x2694;&#xFE0F;</div>
-          <div style="flex:1;">
+          <div>
             <div class="rs-head-title">${langShinko[0]}</div>
             <div class="rs-head-sub">${langShinko[1]}</div>
           </div>
-          <button class="rs-settings-btn" id="rs-settings-btn" type="button" title="Tema visual">&#9881;</button>
         </div>
         <div class="rs-body">
           <label class="rs-label">${langShinko[7]}</label>
@@ -493,12 +492,10 @@ function askCoordinate() {
           </div>
         </div>
         ${rsFooter()}
-        ${buildRSThemePanel()}
       </div>
     </div>`;
 
     $("body").append(html);
-    bindRSThemeHandlers();
 
     $("#rs-coord-save").on("click", function () {
         var val = $("#rs-coord-input").val();
