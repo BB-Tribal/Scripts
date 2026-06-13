@@ -193,6 +193,7 @@ var RS_THEMES = {
     crimson:  { name:'Crimson',  emoji:'&#x1F534;', '--fg-bg':'#1a0505','--fg-bg2':'#0d0202','--fg-bg3':'#2d0a0a','--fg-border':'#7f1d1d','--fg-accent':'#ef4444','--fg-accent2':'#dc2626','--fg-text':'#fecaca','--fg-text2':'#f87171','--fg-hover':'rgba(239,68,68,.07)','--fg-link':'#f87171','--fg-shadow':'rgba(0,0,0,.8)' },
     arctic:   { name:'Arctic',   emoji:'&#x274C;',  '--fg-bg':'#f0f9ff','--fg-bg2':'#e0f2fe','--fg-bg3':'#ffffff','--fg-border':'#bae6fd','--fg-accent':'#0ea5e9','--fg-accent2':'#0284c7','--fg-text':'#0c4a6e','--fg-text2':'#0369a1','--fg-hover':'rgba(14,165,233,.07)','--fg-link':'#0ea5e9','--fg-shadow':'rgba(14,165,233,.2)' },
     obsidian: { name:'Obsidian', emoji:'&#x1F5A4;', '--fg-bg':'#000000','--fg-bg2':'#0a0a0a','--fg-bg3':'#111111','--fg-border':'#1f1f1f','--fg-accent':'#06b6d4','--fg-accent2':'#0891b2','--fg-text':'#e2e8f0','--fg-text2':'#64748b','--fg-hover':'rgba(6,182,212,.05)','--fg-link':'#38bdf8','--fg-shadow':'rgba(0,0,0,.9)' },
+    tribal:   { name:'Tribal',   emoji:'&#x1F3F0;', '--fg-bg':'#f4e8c4','--fg-bg2':'#e8d4a0','--fg-bg3':'#fdf5e0','--fg-border':'#9b7b3a','--fg-accent':'#7a9b2a','--fg-accent2':'#5a7a1a','--fg-text':'#3d2b0e','--fg-text2':'#7a5c2e','--fg-hover':'rgba(122,155,42,.09)','--fg-link':'#5a7a1a','--fg-shadow':'rgba(61,43,14,.3)' },
 };
 
 function applyRSTheme(themeName) {
