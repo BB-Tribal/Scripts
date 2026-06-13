@@ -414,76 +414,77 @@ window.FarmGod.Main = (function (Library, Translation) {
         $.when(buildOptions()).then((html) => {
           Dialog.show('FarmGod', html);
 
-          // El Dialog de TW inserta en iframe — acceder al documento correcto
-          const fgDoc = () => {
-            const iframe = document.getElementById('popup_box_FarmGod') &&
-              document.getElementById('popup_box_FarmGod').querySelector('iframe');
-            return iframe ? (iframe.contentDocument || iframe.contentWindow.document) : document;
-          };
-          const fgEl = (sel) => $(fgDoc()).find(sel);
+          $('.optionButton')
+            .off('click')
+            .on('click', () => {
+              let optionGroup = parseInt($('.optionGroup').val());
+              let optionDistance = parseFloat(
+                $('.optionDistance').val()
+              );
+              let optionTime = parseFloat($('.optionTime').val());
+              let optionLosses =
+                $('.optionLosses').prop('checked');
+              let optionMaxloot =
+                $('.optionMaxloot').prop('checked');
+              let optionNewbarbs =
+                $('.optionNewbarbs').prop('checked') || false;
 
-          setTimeout(() => {
-            fgEl('.optionGroup')
-              .off('change.fgGroup')
-              .on('change.fgGroup', () => {
-                let saved = JSON.parse(localStorage.getItem('farmGod_options')) || {};
-                saved.optionGroup = String(fgEl('.optionGroup').val());
-                localStorage.setItem('farmGod_options', JSON.stringify(saved));
-              });
+              localStorage.setItem(
+                'farmGod_options',
+                JSON.stringify({
+                  optionGroup: optionGroup,
+                  optionDistance: optionDistance,
+                  optionTime: optionTime,
+                  optionLosses: optionLosses,
+                  optionMaxloot: optionMaxloot,
+                  optionNewbarbs: optionNewbarbs,
+                })
+              );
 
-            fgEl('.optionButton')
-              .off('click.fgButton')
-              .on('click.fgButton', () => {
-                let optionGroup = String(fgEl('.optionGroup').val());
-                let optionDistance = parseFloat(fgEl('.optionDistance').val());
-                let optionTime = parseFloat(fgEl('.optionTime').val());
-                let optionLosses = fgEl('.optionLosses').prop('checked');
-                let optionMaxloot = fgEl('.optionMaxloot').prop('checked');
-                let optionNewbarbs = fgEl('.optionNewbarbs').prop('checked') || false;
+              $('.optionsContent').html(`
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 20px;gap:14px;">
+                  <div style="width:34px;height:34px;border:3px solid var(--fg-border);border-top:3px solid var(--fg-accent);border-radius:50%;animation:fgSpin .8s linear infinite;"></div>
+                  <span style="color:var(--fg-text2);font-size:12px;">Recopilando datos...</span>
+                </div>
+              `);
+              getData(
+                optionGroup,
+                optionNewbarbs,
+                optionLosses
+              ).then((data) => {
+                Dialog.close();
 
-                localStorage.setItem(
-                  'farmGod_options',
-                  JSON.stringify({
-                    optionGroup: optionGroup,
-                    optionDistance: optionDistance,
-                    optionTime: optionTime,
-                    optionLosses: optionLosses,
-                    optionMaxloot: optionMaxloot,
-                    optionNewbarbs: optionNewbarbs,
-                  })
+                let plan = createPlanning(
+                  optionDistance,
+                  optionTime,
+                  optionMaxloot,
+                  data
                 );
+                $('.fgRabaContent').remove();
+                $('#am_widget_Farm')
+                  .first()
+                  .before(buildTable(plan.farms));
 
-                fgEl('.optionsContent').html(`
-                  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:14px;">
-                    <div style="width:36px;height:36px;border:3px solid #2c2f3c;border-top:3px solid #f5a623;border-radius:50%;animation:fgSpin .8s linear infinite;"></div>
-                    <span style="color:#8892a4;font-size:12px;">Recopilando datos...</span>
-                  </div>
-                  <style>@keyframes fgSpin{to{transform:rotate(360deg)}}</style>
-                `);
-                getData(
-                  optionGroup,
-                  optionNewbarbs,
-                  optionLosses
-                ).then((data) => {
-                  Dialog.close();
-
-                  let plan = createPlanning(
-                    optionDistance,
-                    optionTime,
-                    optionMaxloot,
-                    data
-                  );
-                  $('.fgRabaContent').remove();
-                  $('#am_widget_Farm')
-                    .first()
-                    .before(buildTable(plan.farms));
-
-                  bindEventHandlers();
-                });
+                bindEventHandlers();
               });
+            });
 
-            fgEl('.optionButton').focus();
-          }, 100);
+          $(document)
+            .off('click.fgTheme')
+            .on('click.fgTheme', '#fg-settings-btn', function () {
+              $('#fg-theme-panel, #fg-theme-overlay').addClass('open');
+            })
+            .on('click.fgTheme', '#fg-theme-close, #fg-theme-overlay', function () {
+              $('#fg-theme-panel, #fg-theme-overlay').removeClass('open');
+            })
+            .on('click.fgTheme', '.fg-theme-item', function () {
+              let themeName = $(this).data('theme');
+              applyTheme(themeName);
+              $('.fg-theme-item').removeClass('active');
+              $(this).addClass('active');
+            });
+
+          document.querySelector('.optionButton').focus();
         });
       } else {
         location.href = game_data.link_base_pure + 'am_farm';
@@ -501,7 +502,8 @@ window.FarmGod.Main = (function (Library, Translation) {
   const bindEventHandlers = function () {
     $('.farmGod_icon')
       .off('click')
-      .on('click', function () {
+      .on('click', function (e) {
+        e.stopPropagation();
         if (
           game_data.market != 'nl' ||
           $(this).data('origin') == curVillage
@@ -509,6 +511,14 @@ window.FarmGod.Main = (function (Library, Translation) {
           sendFarm($(this));
         } else {
           UI.ErrorMessage(t.messages.villageError);
+        }
+      });
+
+    $('.fg-card-foot')
+      .off('click.fgFoot')
+      .on('click.fgFoot', function (e) {
+        if (!$(e.target).hasClass('farmGod_icon')) {
+          $(this).find('.farmGod_icon').trigger('click');
         }
       });
 
@@ -525,80 +535,154 @@ window.FarmGod.Main = (function (Library, Translation) {
       .on('click', function () {
         curVillage = $(this).data('id');
         UI.SuccessMessage(t.messages.villageChanged);
-        $(this).closest('tr').remove();
+        $(this).closest('.fg-village-group').remove();
       });
+  };
+
+  const THEMES = {
+    inferno:  { name:'Inferno',  emoji:'&#x1F525;', '--fg-bg':'#1c1f27','--fg-bg2':'#13151c','--fg-bg3':'#252831','--fg-border':'#2c2f3c','--fg-accent':'#f5a623','--fg-accent2':'#e8700a','--fg-text':'#e2e8f0','--fg-text2':'#8892a4','--fg-row-even':'#21242e','--fg-row-odd':'#191c24','--fg-hover':'rgba(245,166,35,.05)','--fg-warn-bg':'#2a1f0e','--fg-warn-border':'#6b4c1a','--fg-warn-text':'#c8952a','--fg-link':'#4f8ef7','--fg-shadow':'rgba(0,0,0,.7)' },
+    sakura:   { name:'Sakura',   emoji:'&#x1F338;', '--fg-bg':'#fdf2f8','--fg-bg2':'#fce7f3','--fg-bg3':'#ffffff','--fg-border':'#f9a8d4','--fg-accent':'#ec4899','--fg-accent2':'#db2777','--fg-text':'#1f2937','--fg-text2':'#6b7280','--fg-row-even':'#fdf2f8','--fg-row-odd':'#ffffff','--fg-hover':'rgba(236,72,153,.07)','--fg-warn-bg':'#fdf2f8','--fg-warn-border':'#f9a8d4','--fg-warn-text':'#be185d','--fg-link':'#db2777','--fg-shadow':'rgba(236,72,153,.2)' },
+    amethyst: { name:'Amethyst', emoji:'&#x1F49C;', '--fg-bg':'#faf5ff','--fg-bg2':'#f3e8ff','--fg-bg3':'#ffffff','--fg-border':'#d8b4fe','--fg-accent':'#7c3aed','--fg-accent2':'#6d28d9','--fg-text':'#1f2937','--fg-text2':'#6b7280','--fg-row-even':'#faf5ff','--fg-row-odd':'#ffffff','--fg-hover':'rgba(124,58,237,.07)','--fg-warn-bg':'#faf5ff','--fg-warn-border':'#d8b4fe','--fg-warn-text':'#5b21b6','--fg-link':'#7c3aed','--fg-shadow':'rgba(124,58,237,.2)' },
+    matrix:   { name:'Matrix',   emoji:'&#x1F7E2;', '--fg-bg':'#0a0f0a','--fg-bg2':'#050805','--fg-bg3':'#0f1a0f','--fg-border':'#1a3d1a','--fg-accent':'#00ff41','--fg-accent2':'#00cc34','--fg-text':'#ccffcc','--fg-text2':'#4dff77','--fg-row-even':'#0a1a0a','--fg-row-odd':'#060d06','--fg-hover':'rgba(0,255,65,.05)','--fg-warn-bg':'#051005','--fg-warn-border':'#1a4d1a','--fg-warn-text':'#00ff41','--fg-link':'#00ff41','--fg-shadow':'rgba(0,255,65,.3)' },
+    midnight: { name:'Midnight', emoji:'&#x1F319;', '--fg-bg':'#0f172a','--fg-bg2':'#080d1a','--fg-bg3':'#1e293b','--fg-border':'#334155','--fg-accent':'#3b82f6','--fg-accent2':'#2563eb','--fg-text':'#e2e8f0','--fg-text2':'#94a3b8','--fg-row-even':'#1a2540','--fg-row-odd':'#111827','--fg-hover':'rgba(59,130,246,.07)','--fg-warn-bg':'#0f172a','--fg-warn-border':'#1d4ed8','--fg-warn-text':'#93c5fd','--fg-link':'#60a5fa','--fg-shadow':'rgba(0,0,0,.8)' },
+    crimson:  { name:'Crimson',  emoji:'&#x1F534;', '--fg-bg':'#1a0505','--fg-bg2':'#0d0202','--fg-bg3':'#2d0a0a','--fg-border':'#7f1d1d','--fg-accent':'#ef4444','--fg-accent2':'#dc2626','--fg-text':'#fecaca','--fg-text2':'#f87171','--fg-row-even':'#220808','--fg-row-odd':'#150404','--fg-hover':'rgba(239,68,68,.07)','--fg-warn-bg':'#2d0a0a','--fg-warn-border':'#991b1b','--fg-warn-text':'#fca5a5','--fg-link':'#f87171','--fg-shadow':'rgba(0,0,0,.8)' },
+    arctic:   { name:'Arctic',   emoji:'&#x1F30A;', '--fg-bg':'#f0f9ff','--fg-bg2':'#e0f2fe','--fg-bg3':'#ffffff','--fg-border':'#bae6fd','--fg-accent':'#0ea5e9','--fg-accent2':'#0284c7','--fg-text':'#0c4a6e','--fg-text2':'#0369a1','--fg-row-even':'#f0f9ff','--fg-row-odd':'#ffffff','--fg-hover':'rgba(14,165,233,.07)','--fg-warn-bg':'#f0f9ff','--fg-warn-border':'#7dd3fc','--fg-warn-text':'#0369a1','--fg-link':'#0ea5e9','--fg-shadow':'rgba(14,165,233,.2)' },
+    obsidian: { name:'Obsidian', emoji:'&#x1F5A4;', '--fg-bg':'#000000','--fg-bg2':'#0a0a0a','--fg-bg3':'#111111','--fg-border':'#1f1f1f','--fg-accent':'#06b6d4','--fg-accent2':'#0891b2','--fg-text':'#e2e8f0','--fg-text2':'#64748b','--fg-row-even':'#0d0d0d','--fg-row-odd':'#060606','--fg-hover':'rgba(6,182,212,.05)','--fg-warn-bg':'#001a1f','--fg-warn-border':'#0e4a55','--fg-warn-text':'#67e8f9','--fg-link':'#38bdf8','--fg-shadow':'rgba(0,0,0,.9)' },
+  };
+
+  const applyTheme = function (themeName) {
+    let th = THEMES[themeName] || THEMES.inferno;
+    let vars = Object.entries(th).filter(([k]) => k.startsWith('--')).map(([k,v]) => `${k}:${v}`).join(';');
+    let el = document.getElementById('fg-theme-vars');
+    if (!el) { el = document.createElement('style'); el.id = 'fg-theme-vars'; document.head.appendChild(el); }
+    el.textContent = `#popup_box_FarmGod, #popup_box_FarmGod .popup_box_content, .fgRabaContent { ${vars} }`;
+    localStorage.setItem('farmGod_theme', themeName);
+  };
+
+  const getCurrentTheme = function () {
+    return localStorage.getItem('farmGod_theme') || 'inferno';
   };
 
   const injectFGCSS = function () {
     if (document.getElementById('fg-raba-style')) return;
+    applyTheme(getCurrentTheme());
     var s = document.createElement('style');
     s.id = 'fg-raba-style';
     s.textContent = `
 /* === FarmGod Raba === */
-#popup_box_FarmGod { width:520px !important; background:#1c1f27 !important; border:1px solid #2c2f3c !important; border-radius:14px !important; overflow:hidden !important; box-shadow:0 24px 64px rgba(0,0,0,.7) !important; }
-#popup_box_FarmGod .popup_box_header { background:#13151c !important; border-bottom:1px solid #2c2f3c !important; padding:14px 18px !important; display:flex !important; align-items:center !important; gap:10px !important; }
-#popup_box_FarmGod .popup_box_content { background:#1c1f27 !important; padding:0 !important; }
+#popup_box_FarmGod { width:540px !important; background:var(--fg-bg) !important; border:1px solid var(--fg-border) !important; border-radius:16px !important; overflow:hidden !important; box-shadow:0 32px 80px var(--fg-shadow) !important; }
+#popup_box_FarmGod .popup_box_header { display:none !important; }
+#popup_box_FarmGod .popup_box_content { background:var(--fg-bg) !important; padding:0 !important; position:relative !important; overflow:hidden !important; }
 
-.fg-head { display:flex; align-items:center; gap:10px; }
-.fg-head-icon { width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#f5a623,#e8700a); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
-.fg-head-title { font-size:16px; font-weight:700; color:#fff; }
-.fg-head-sub { font-size:11px; color:#8892a4; margin-top:2px; }
+/* === Header === */
+.fg-header { position:relative; padding:18px 20px 16px; background:var(--fg-bg2); border-bottom:1px solid var(--fg-border); display:flex; align-items:center; gap:14px; overflow:hidden; }
+.fg-header::before { content:""; position:absolute; top:-50px; left:-50px; width:200px; height:200px; background:radial-gradient(circle, var(--fg-accent) 0%, transparent 70%); opacity:.07; pointer-events:none; }
+.fg-header-icon { width:42px; height:42px; border-radius:11px; background:linear-gradient(135deg,var(--fg-accent),var(--fg-accent2)); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; box-shadow:0 4px 16px var(--fg-shadow); }
+.fg-header-text { flex:1; min-width:0; }
+.fg-header-title { font-size:16px; font-weight:800; color:var(--fg-text); letter-spacing:-.3px; }
+.fg-header-sub { font-size:11px; color:var(--fg-text2); margin-top:2px; }
+.fg-settings-btn { width:32px; height:32px; border:1.5px solid var(--fg-border); border-radius:8px; background:var(--fg-bg3); color:var(--fg-text2); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:border-color .15s, color .15s, transform .3s; line-height:1; }
+.fg-settings-btn:hover { border-color:var(--fg-accent); color:var(--fg-accent); transform:rotate(60deg); }
 
-.fg-body { padding:20px; display:flex; flex-direction:column; gap:14px; }
+/* === Body === */
+.fg-body { padding:16px 18px; display:flex; flex-direction:column; gap:10px; }
 
-.fg-warn { background:#2a1f0e; border:1px solid #6b4c1a; border-radius:10px; padding:12px 14px; font-size:11px; color:#c8952a; line-height:1.6; }
-.fg-warn b { color:#f5a623; }
+/* === Warning === */
+.fg-warn { background:var(--fg-warn-bg); border:1px solid var(--fg-warn-border); border-radius:10px; padding:11px 14px; font-size:11px; color:var(--fg-warn-text); line-height:1.6; }
+.fg-warn b { color:var(--fg-accent); }
 .fg-warn img { width:100%; border-radius:6px; margin-top:8px; }
 
-.fg-card { background:#252831; border:1px solid #2c2f3c; border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
-.fg-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.fg-label { font-size:12px; color:#8892a4; font-weight:500; }
-.fg-input { background:#1c1f27; border:1.5px solid #2c2f3c; border-radius:7px; color:#e2e8f0; font-size:13px; padding:7px 10px; outline:none; width:90px; transition:border-color .15s; }
-.fg-input:focus { border-color:#f5a623; }
-.fg-select { background:#1c1f27; border:1.5px solid #2c2f3c; border-radius:7px; color:#e2e8f0; font-size:13px; padding:7px 10px; outline:none; flex:1; transition:border-color .15s; }
-.fg-select:focus { border-color:#f5a623; }
+/* === Sections === */
+.fg-section { display:flex; flex-direction:column; border-radius:10px; overflow:hidden; border:1px solid var(--fg-border); }
+.fg-option-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px; background:var(--fg-bg3); transition:background .12s; }
+.fg-option-row:hover { background:var(--fg-bg2); }
+.fg-option-row + .fg-option-row { border-top:1px solid var(--fg-border); }
+.fg-label { font-size:12px; color:var(--fg-text2); font-weight:500; display:flex; align-items:center; gap:7px; }
+.fg-label-icon { font-size:13px; opacity:.65; }
 
-.fg-toggle { position:relative; width:40px; height:22px; flex-shrink:0; }
+.fg-input { background:var(--fg-bg); border:1.5px solid var(--fg-border); border-radius:7px; color:var(--fg-text); font-size:13px; padding:5px 10px; outline:none; width:78px; transition:border-color .15s; text-align:right; }
+.fg-input:focus { border-color:var(--fg-accent); }
+.fg-select { background:var(--fg-bg); border:1.5px solid var(--fg-border); border-radius:7px; color:var(--fg-text); font-size:13px; padding:5px 10px; outline:none; flex:1; max-width:220px; transition:border-color .15s; }
+.fg-select:focus { border-color:var(--fg-accent); }
+
+/* === Toggle === */
+.fg-toggle { position:relative; width:38px; height:20px; flex-shrink:0; }
 .fg-toggle input { opacity:0; width:0; height:0; }
-.fg-toggle-slider { position:absolute; inset:0; background:#2c2f3c; border-radius:22px; cursor:pointer; transition:.2s; }
-.fg-toggle-slider:before { content:""; position:absolute; width:16px; height:16px; left:3px; bottom:3px; background:#8892a4; border-radius:50%; transition:.2s; }
-.fg-toggle input:checked + .fg-toggle-slider { background:linear-gradient(135deg,#f5a623,#e8700a); }
+.fg-toggle-slider { position:absolute; inset:0; background:var(--fg-border); border-radius:20px; cursor:pointer; transition:.2s; }
+.fg-toggle-slider:before { content:""; position:absolute; width:14px; height:14px; left:3px; bottom:3px; background:var(--fg-text2); border-radius:50%; transition:.2s; }
+.fg-toggle input:checked + .fg-toggle-slider { background:linear-gradient(135deg,var(--fg-accent),var(--fg-accent2)); }
 .fg-toggle input:checked + .fg-toggle-slider:before { transform:translateX(18px); background:#fff; }
 
-.fg-divider { height:1px; background:#2c2f3c; }
-
-.fg-btn { width:100%; padding:11px; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; background:linear-gradient(135deg,#f5a623,#e8700a); color:#1a0a00; transition:opacity .15s, transform .1s; }
-.fg-btn:hover { opacity:.88; }
+/* === CTA Button === */
+.fg-btn { width:100%; padding:12px; border:none; border-radius:10px; font-size:14px; font-weight:800; cursor:pointer; background:linear-gradient(135deg,var(--fg-accent),var(--fg-accent2)); color:var(--fg-bg2); letter-spacing:.3px; position:relative; overflow:hidden; transition:opacity .15s, transform .1s, box-shadow .15s; box-shadow:0 4px 20px var(--fg-shadow); }
+.fg-btn::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.18) 50%,transparent 100%); transform:translateX(-100%); transition:transform .45s; }
+.fg-btn:hover::after { transform:translateX(100%); }
+.fg-btn:hover { opacity:.92; }
 .fg-btn:active { transform:scale(.98); }
 
-.fg-footer { padding:10px 20px; background:#13151c; border-top:1px solid #2c2f3c; font-size:11px; color:#8892a4; text-align:center; }
+/* === Footer === */
+.fg-footer { padding:8px 18px; background:var(--fg-bg2); border-top:1px solid var(--fg-border); font-size:10px; color:var(--fg-text2); text-align:center; }
 
-/* === Tabla de resultados === */
-.fgRabaContent { background:#1c1f27; border:1px solid #2c2f3c; border-radius:14px; overflow:hidden; margin-bottom:14px; }
-.fgRabaContent h4 { margin:0; padding:14px 18px; background:#13151c; border-bottom:1px solid #2c2f3c; font-size:15px; font-weight:700; color:#f5a623; display:flex; align-items:center; gap:8px; }
-.fgRabaContent h4::before { content:""; display:inline-block; width:8px; height:8px; border-radius:50%; background:#f5a623; box-shadow:0 0 8px #f5a623; }
-.fgRabaProgress { padding:10px 16px; background:#1c1f27; border-bottom:1px solid #2c2f3c; }
-.fg-progress-wrap { height:8px; background:#2c2f3c; border-radius:8px; overflow:hidden; }
-.fg-progress-bar { height:100%; background:linear-gradient(90deg,#f5a623,#e8700a); border-radius:8px; transition:width .3s; width:0%; }
-.fg-progress-label { font-size:10px; color:#8892a4; margin-top:4px; text-align:right; }
+/* === Theme Panel === */
+.fg-theme-overlay { position:absolute; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(3px); z-index:9; opacity:0; pointer-events:none; transition:opacity .22s; }
+.fg-theme-overlay.open { opacity:1; pointer-events:all; }
+.fg-theme-panel { position:absolute; top:0; right:0; bottom:0; width:220px; background:var(--fg-bg2); border-left:1px solid var(--fg-border); z-index:10; display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s cubic-bezier(.4,0,.2,1); }
+.fg-theme-panel.open { transform:translateX(0); }
+.fg-theme-panel-head { padding:14px 16px; border-bottom:1px solid var(--fg-border); display:flex; align-items:center; justify-content:space-between; }
+.fg-theme-panel-head span { font-size:13px; font-weight:700; color:var(--fg-text); }
+.fg-theme-close { width:24px; height:24px; border:1px solid var(--fg-border); border-radius:6px; background:transparent; color:var(--fg-text2); cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; transition:border-color .1s, color .1s; }
+.fg-theme-close:hover { border-color:var(--fg-accent); color:var(--fg-accent); }
+.fg-theme-list { padding:10px; display:flex; flex-direction:column; gap:5px; overflow-y:auto; flex:1; }
+.fg-theme-item { display:flex; align-items:center; gap:10px; padding:9px 11px; border-radius:8px; border:1.5px solid transparent; cursor:pointer; transition:border-color .15s, background .15s; background:var(--fg-bg3); }
+.fg-theme-item:hover { border-color:var(--fg-border); }
+.fg-theme-item.active { border-color:var(--fg-accent) !important; }
+.fg-theme-dot { width:26px; height:26px; border-radius:7px; flex-shrink:0; }
+.fg-theme-item-name { font-size:12px; font-weight:600; color:var(--fg-text); }
+.fg-theme-item-sub { font-size:10px; margin-top:1px; }
 
-.fgRabaContent table { width:100%; border-collapse:collapse; font-size:12px; }
-.fgRabaContent table thead tr th, .fgRabaContent th { padding:9px 12px !important; background:#13151c !important; color:#f5a623 !important; font-size:10px !important; font-weight:700 !important; text-transform:uppercase !important; letter-spacing:.5px !important; border-bottom:1px solid #2c2f3c !important; border-right:none !important; border-left:none !important; text-align:center !important; }
-.fgRabaContent td { padding:9px 12px; border-bottom:1px solid #1e2130; color:#e2e8f0; text-align:center; vertical-align:middle; }
-.fgRabaContent tr.farmRow:hover td { background:rgba(245,166,35,.05); }
-.fgRabaContent tr.fg-row-even td { background:#21242e; }
-.fgRabaContent tr.fg-row-odd td { background:#191c24; }
-.fgRabaContent a { color:#4f8ef7; text-decoration:none; }
-.fgRabaContent a:hover { color:#f5a623; }
-.fg-village-banner { background:#1e2130 !important; border-bottom:1px solid #2c2f3c !important; }
-.fg-village-banner td { padding:8px 12px !important; }
-.fg-switch-btn { padding:5px 12px; border:none; border-radius:6px; background:#252831; border:1px solid #2c2f3c; color:#e2e8f0; font-size:11px; font-weight:600; cursor:pointer; float:right; transition:border-color .15s; }
-.fg-switch-btn:hover { border-color:#f5a623; color:#f5a623; }
-.fg-empty { padding:30px !important; color:#8892a4; font-size:13px; }
-.fg-dist { display:inline-block; padding:2px 8px; background:#252831; border:1px solid #2c2f3c; border-radius:20px; font-size:11px; color:#8892a4; }
-.fgRabaContent .farmGod_icon { display:inline-block; cursor:pointer; vertical-align:middle; filter:drop-shadow(0 0 4px rgba(245,166,35,0.5)); transition:filter .15s, transform .15s; }
-.fgRabaContent .farmGod_icon:hover { filter:drop-shadow(0 0 8px rgba(245,166,35,0.9)); transform:scale(1.15); }
-.fgRabaContent td:last-child { text-align:center; padding:6px 12px !important; }
+/* === Cards de resultados === */
+.fgRabaContent { background:var(--fg-bg); border:1px solid var(--fg-border); border-radius:14px; overflow:hidden; margin-bottom:14px; }
+.fg-results-header { padding:13px 18px; background:var(--fg-bg2); border-bottom:1px solid var(--fg-border); display:flex; align-items:center; justify-content:space-between; }
+.fg-results-title { font-size:14px; font-weight:800; color:var(--fg-text); display:flex; align-items:center; gap:8px; }
+.fg-results-badge { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:18px; padding:0 7px; background:var(--fg-accent); color:var(--fg-bg2); border-radius:9px; font-size:10px; font-weight:800; }
+.fgRabaProgress { padding:9px 18px; background:var(--fg-bg); border-bottom:1px solid var(--fg-border); }
+.fg-progress-wrap { height:5px; background:var(--fg-border); border-radius:5px; overflow:hidden; position:relative; }
+.fg-progress-bar { height:100%; background:linear-gradient(90deg,var(--fg-accent),var(--fg-accent2)); border-radius:5px; transition:width .3s; width:0%; position:relative; overflow:hidden; }
+.fg-progress-bar::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent); animation:fgShimmer 1.6s infinite; }
+@keyframes fgShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(400%)} }
+@keyframes fgSpin { to{transform:rotate(360deg)} }
+.fg-progress-label { font-size:10px; color:var(--fg-text2); margin-top:4px; text-align:right; }
+.fg-cards-wrap { padding:12px 14px; display:flex; flex-direction:column; gap:12px; }
+.fg-village-group { display:flex; flex-direction:column; gap:7px; }
+.fg-village-group-head { display:flex; align-items:center; gap:8px; padding:6px 10px 6px 12px; background:var(--fg-bg2); border-radius:8px; border:1px solid var(--fg-border); border-left:3px solid var(--fg-accent); }
+.fg-village-group-name { font-size:11px; font-weight:700; color:var(--fg-text); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fg-village-count { font-size:10px; font-weight:700; color:var(--fg-bg2); background:var(--fg-accent); padding:1px 7px; border-radius:9px; flex-shrink:0; }
+.fg-switch-btn { padding:3px 9px; border-radius:5px; background:transparent; border:1px solid var(--fg-border); color:var(--fg-text2); font-size:10px; font-weight:600; cursor:pointer; flex-shrink:0; transition:border-color .15s, color .15s; }
+.fg-switch-btn:hover { border-color:var(--fg-accent); color:var(--fg-accent); }
+.fg-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:7px; }
+.fg-farm-card { background:var(--fg-bg3); border:1.5px solid var(--fg-border); border-radius:9px; overflow:hidden; display:flex; flex-direction:column; transition:border-color .18s, transform .15s, box-shadow .18s; }
+.fg-farm-card:hover { border-color:var(--fg-accent); transform:translateY(-2px); box-shadow:0 6px 18px var(--fg-shadow); }
+.fg-card-top { padding:8px 9px 7px; position:relative; }
+.fg-farm-card.fg-tmpl-b .fg-card-top { background:linear-gradient(135deg,var(--fg-accent),var(--fg-accent2)); }
+.fg-farm-card.fg-tmpl-a .fg-card-top { background:linear-gradient(135deg,var(--fg-accent2),var(--fg-bg2)); }
+.fg-card-target { font-size:12px; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.4); }
+.fg-card-target a { color:inherit; text-decoration:none; }
+.fg-card-target a:hover { opacity:.82; }
+.fg-card-tmpl { position:absolute; top:6px; right:6px; width:15px; height:15px; border-radius:3px; background:rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:800; color:#fff; }
+.fg-card-body { padding:6px 9px 5px; display:flex; flex-direction:column; gap:3px; flex:1; }
+.fg-card-origin { font-size:10px; color:var(--fg-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fg-card-origin a { color:var(--fg-link); text-decoration:none; }
+.fg-card-origin a:hover { color:var(--fg-accent); }
+.fg-card-dist-row { display:flex; align-items:center; gap:4px; }
+.fg-card-dist-dot { width:4px; height:4px; border-radius:50%; background:var(--fg-accent); flex-shrink:0; opacity:.55; }
+.fg-card-dist-val { font-size:10px; color:var(--fg-text2); }
+.fg-card-foot { padding:6px 8px; border-top:1px solid var(--fg-border); display:flex; align-items:center; justify-content:center; gap:5px; background:var(--fg-bg2); transition:background .15s; }
+.fg-farm-card:hover .fg-card-foot { background:var(--fg-accent); }
+.fg-card-foot .farmGod_icon { display:inline-block; cursor:pointer; vertical-align:middle; filter:drop-shadow(0 0 2px rgba(0,0,0,.3)); transition:transform .15s; }
+.fg-farm-card:hover .fg-card-foot .farmGod_icon { transform:scale(1.1); }
+.fg-card-send-label { font-size:10px; font-weight:600; color:var(--fg-text2); pointer-events:none; transition:color .15s; }
+.fg-farm-card:hover .fg-card-send-label { color:var(--fg-bg2); }
+.fg-empty-cards { padding:44px 20px; text-align:center; color:var(--fg-text2); font-size:13px; }
     `;
     document.head.appendChild(s);
   };
@@ -606,7 +690,7 @@ window.FarmGod.Main = (function (Library, Translation) {
   const buildOptions = function () {
     injectFGCSS();
     let options = JSON.parse(localStorage.getItem('farmGod_options')) || {
-      optionGroup: '0',
+      optionGroup: 0,
       optionDistance: 25,
       optionTime: 10,
       optionLosses: false,
@@ -625,57 +709,77 @@ window.FarmGod.Main = (function (Library, Translation) {
       $templateRows.last().find('td').last().text().toNumber();
 
     return $.when(buildGroupSelect(options.optionGroup)).then((groupSelect) => {
-      return `
-        <div class="fg-head" style="padding:14px 18px;background:#13151c;border-bottom:1px solid #2c2f3c;">
-          <div class="fg-head-icon">&#x2694;</div>
+      let curTheme = getCurrentTheme();
+      let themeItems = Object.entries(THEMES).map(([key, th]) => `
+        <div class="fg-theme-item ${curTheme === key ? 'active' : ''}" data-theme="${key}">
+          <div class="fg-theme-dot" style="background:linear-gradient(135deg,${th['--fg-accent']},${th['--fg-accent2']});box-shadow:0 2px 8px ${th['--fg-shadow']};"></div>
           <div>
-            <div class="fg-head-title">${t.options.title}</div>
-            <div class="fg-head-sub">Tribal Wars &mdash; Script de farmeo automatizado &mdash; <span style="color:#f5a623;font-weight:700;">v1.2.5</span></div>
+            <div class="fg-theme-item-name">${th.emoji} ${th.name}</div>
+            <div class="fg-theme-item-sub" style="color:${th['--fg-accent']}">${th['--fg-bg']}</div>
           </div>
         </div>
-        <div class="fg-body optionsContent">
-          ${checkboxError || templateError ? `
-          <div class="fg-warn">
-            ${t.options.warning}
-            <img src="${t.options.filterImage}">
-          </div>` : ''}
+      `).join('');
 
-          <div class="fg-card">
-            <div class="fg-row">
-              <span class="fg-label">${t.options.group}</span>
+      return `
+        <div class="fg-header">
+          <div class="fg-header-icon">&#x2694;</div>
+          <div class="fg-header-text">
+            <div class="fg-header-title">${t.options.title}</div>
+            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo</div>
+          </div>
+          <button class="fg-settings-btn" id="fg-settings-btn" type="button" title="Tema visual">&#9881;</button>
+        </div>
+
+        <div class="fg-body optionsContent">
+          ${checkboxError || templateError ? `<div class="fg-warn">${t.options.warning}<img src="${t.options.filterImage}"></div>` : ''}
+
+          <div class="fg-section">
+            <div class="fg-option-row">
+              <span class="fg-label"><span class="fg-label-icon">&#128101;</span>${t.options.group}</span>
               ${groupSelect.replace('class="optionGroup"', 'class="fg-select optionGroup"')}
             </div>
-            <div class="fg-divider"></div>
-            <div class="fg-row">
-              <span class="fg-label">${t.options.distance}</span>
+          </div>
+
+          <div class="fg-section">
+            <div class="fg-option-row">
+              <span class="fg-label"><span class="fg-label-icon">&#128205;</span>${t.options.distance}</span>
               <input type="text" class="fg-input optionDistance" value="${options.optionDistance}">
             </div>
-            <div class="fg-divider"></div>
-            <div class="fg-row">
-              <span class="fg-label">${t.options.time}</span>
+            <div class="fg-option-row">
+              <span class="fg-label"><span class="fg-label-icon">&#8987;</span>${t.options.time}</span>
               <input type="text" class="fg-input optionTime" value="${options.optionTime}">
             </div>
-            <div class="fg-divider"></div>
-            <div class="fg-row">
-              <span class="fg-label">${t.options.losses}</span>
+          </div>
+
+          <div class="fg-section">
+            <div class="fg-option-row">
+              <span class="fg-label"><span class="fg-label-icon">&#9876;</span>${t.options.losses}</span>
               <label class="fg-toggle"><input type="checkbox" class="optionLosses" ${options.optionLosses ? 'checked' : ''}><span class="fg-toggle-slider"></span></label>
             </div>
-            <div class="fg-divider"></div>
-            <div class="fg-row">
-              <span class="fg-label">${t.options.maxloot}</span>
+            <div class="fg-option-row">
+              <span class="fg-label"><span class="fg-label-icon">&#128179;</span>${t.options.maxloot}</span>
               <label class="fg-toggle"><input type="checkbox" class="optionMaxloot" ${options.optionMaxloot ? 'checked' : ''}><span class="fg-toggle-slider"></span></label>
             </div>
             ${game_data.market == 'nl' ? `
-            <div class="fg-divider"></div>
-            <div class="fg-row">
-              <span class="fg-label">${t.options.newbarbs}</span>
+            <div class="fg-option-row">
+              <span class="fg-label"><span class="fg-label-icon">&#127807;</span>${t.options.newbarbs}</span>
               <label class="fg-toggle"><input type="checkbox" class="optionNewbarbs" ${options.optionNewbarbs ? 'checked' : ''}><span class="fg-toggle-slider"></span></label>
             </div>` : ''}
           </div>
 
-          <button class="fg-btn optionButton">${t.options.button}</button>
+          <button class="fg-btn optionButton" type="button">&#x2694; ${t.options.button}</button>
         </div>
-        <div class="fg-footer">&#x2694;&#xFE0F; Creado por <strong>rabagalan73</strong> para la reina <strong>M0bscene</strong> &#x2694;&#xFE0F;</div>
+
+        <div class="fg-footer">&#9876;&#65039; Creado por <strong>rabagalan73</strong> para la reina <strong>M0bscene</strong> &#9876;&#65039;</div>
+
+        <div class="fg-theme-overlay" id="fg-theme-overlay"></div>
+        <div class="fg-theme-panel" id="fg-theme-panel">
+          <div class="fg-theme-panel-head">
+            <span>&#127912; Tema visual</span>
+            <button class="fg-theme-close" id="fg-theme-close" type="button">&#x2715;</button>
+          </div>
+          <div class="fg-theme-list">${themeItems}</div>
+        </div>
       `;
     });
   };
@@ -690,7 +794,8 @@ window.FarmGod.Main = (function (Library, Translation) {
         if (val.type == 'separator') {
           html += `<option disabled=""/>`;
         } else {
-          html += `<option value="${val.group_id}" ${String(val.group_id) === String(id) ? 'selected' : ''}>${val.name}</option>`;
+          html += `<option value="${val.group_id}" ${val.group_id == id ? 'selected' : ''
+            }>${val.name}</option>`;
         }
       });
 
@@ -704,56 +809,63 @@ window.FarmGod.Main = (function (Library, Translation) {
     let totalFarms = 0;
     for (let p in plan) totalFarms += plan[p].length;
 
-    let rows = '';
-    let rowIdx = 0;
+    let content = '';
 
     if (!$.isEmptyObject(plan)) {
       for (let prop in plan) {
-        if (game_data.market == 'nl') {
-          rows += `<tr class="fg-village-banner">
-            <td colspan="4">
-              <button class="fg-switch-btn switchVillage" data-id="${plan[prop][0].origin.id}">
-                ${t.table.goTo}: ${plan[prop][0].origin.name} (${plan[prop][0].origin.coord})
-              </button>
-            </td>
-          </tr>`;
-        }
-        plan[prop].forEach((val) => {
-          let cls = rowIdx % 2 === 0 ? 'fg-row-even' : 'fg-row-odd';
-          rowIdx++;
-          rows += `<tr class="farmRow ${cls}">
-            <td><a href="${game_data.link_base_pure}info_village&id=${val.origin.id}">${val.origin.name} <span style="color:#8892a4;">(${val.origin.coord})</span></a></td>
-            <td><a href="${game_data.link_base_pure}info_village&id=${val.target.id}">${val.target.coord}</a></td>
-            <td><span class="fg-dist">${val.fields.toFixed(1)}</span></td>
-            <td><a href="#" data-origin="${val.origin.id}" data-target="${val.target.id}" data-template="${val.template.id}" class="farmGod_icon farm_icon farm_icon_${val.template.name}" style="margin:auto;display:inline-block;"></a></td>
-          </tr>`;
-        });
+        let groupFarms = plan[prop];
+
+        let cards = groupFarms.map((val) => {
+          let isB = val.template.name === 'b';
+          return `<div class="fg-farm-card ${isB ? 'fg-tmpl-b' : 'fg-tmpl-a'}">
+            <div class="fg-card-top">
+              <div class="fg-card-target"><a href="${game_data.link_base_pure}info_village&id=${val.target.id}">${val.target.coord}</a></div>
+              <span class="fg-card-tmpl">${val.template.name.toUpperCase()}</span>
+            </div>
+            <div class="fg-card-body">
+              <div class="fg-card-origin"><a href="${game_data.link_base_pure}info_village&id=${val.origin.id}">${val.origin.name}</a></div>
+              <div class="fg-card-dist-row">
+                <span class="fg-card-dist-dot"></span>
+                <span class="fg-card-dist-val">${val.fields.toFixed(1)} ${t.table.fields.toLowerCase()}</span>
+              </div>
+            </div>
+            <div class="fg-card-foot">
+              <a href="#" data-origin="${val.origin.id}" data-target="${val.target.id}" data-template="${val.template.id}" class="farmGod_icon farm_icon farm_icon_${val.template.name}"></a>
+              <span class="fg-card-send-label">${t.table.farm}</span>
+            </div>
+          </div>`;
+        }).join('');
+
+        let switchBtn = game_data.market == 'nl'
+          ? `<button class="fg-switch-btn switchVillage" data-id="${groupFarms[0].origin.id}">&#8644;</button>`
+          : '';
+
+        content += `<div class="fg-village-group">
+          <div class="fg-village-group-head">
+            <span class="fg-village-group-name">&#9876; ${groupFarms[0].origin.name} <span style="opacity:.45">(${groupFarms[0].origin.coord})</span></span>
+            <span class="fg-village-count">${groupFarms.length}</span>
+            ${switchBtn}
+          </div>
+          <div class="fg-card-grid">${cards}</div>
+        </div>`;
       }
     } else {
-      rows = `<tr><td colspan="4" class="fg-empty">${t.table.noFarmsPlanned}</td></tr>`;
+      content = `<div class="fg-empty-cards">${t.table.noFarmsPlanned}</div>`;
     }
 
     return `
     <div class="fgRabaContent">
-      <h4>&#x2694; FarmGod</h4>
+      <div class="fg-results-header">
+        <span class="fg-results-title">&#x2694; FarmGod <span class="fg-results-badge">${totalFarms}</span></span>
+      </div>
       <div class="fgRabaProgress">
         <div class="fg-progress-wrap">
           <div class="fg-progress-bar" id="FarmGodProgessbar" data-current="0" data-max="${totalFarms}"></div>
         </div>
         <div class="fg-progress-label" id="fg-progress-label">0 / ${totalFarms}</div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>${t.table.origin}</th>
-            <th>${t.table.target}</th>
-            <th>${t.table.fields}</th>
-            <th>${t.table.farm}</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div class="fg-footer">&#x2694;&#xFE0F; Creado por <strong>rabagalan73</strong> para la reina <strong>M0bscene</strong> &#x2694;&#xFE0F;</div>
+      <div class="fg-cards-wrap">${content}</div>
+      <div class="fg-footer">&#9876;&#65039; Creado por <strong>rabagalan73</strong> para la reina <strong>M0bscene</strong> &#9876;&#65039;</div>
     </div>`;
   };
 
@@ -857,6 +969,7 @@ window.FarmGod.Main = (function (Library, Translation) {
           });
       }
 
+      console.log('villages', data.villages);
       return data;
     };
 
@@ -1145,13 +1258,13 @@ window.FarmGod.Main = (function (Library, Translation) {
         function (r) {
           UI.SuccessMessage(r.success);
           updateFGProgress();
-          $this.closest('.farmRow').remove();
+          $this.closest('.fg-farm-card').remove();
           farmBusy = false;
         },
         function (r) {
           UI.ErrorMessage(r || t.messages.sendError);
           updateFGProgress();
-          $this.closest('.farmRow').remove();
+          $this.closest('.fg-farm-card').remove();
           farmBusy = false;
         }
       );
