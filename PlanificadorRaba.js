@@ -31,7 +31,7 @@ function applyRATheme(name) {
     const get = k => th[k] || '';
     let el = document.getElementById('ra-theme-vars');
     if (!el) { el = document.createElement('style'); el.id = 'ra-theme-vars'; document.head.appendChild(el); }
-    el.textContent = `:root {
+    el.textContent = `#raSingleVillagePlanner, #raPlannerLauncher {
         --bg-base:       ${get('--fg-bg')};
         --bg-card:       ${get('--fg-bg3')};
         --bg-card-hover: ${get('--fg-hover')};
@@ -631,29 +631,29 @@ function renderUI(body) {
                 <span class="ra-footer-credit">Desarrollado por <strong>rabagalan73</strong> · Para uso exclusivo de <strong>M0bscene</strong></span>
             </div>
 
+            <!-- Theme Panel -->
+            <div class="ra-theme-panel" id="raThemePanel">
+                <div class="ra-theme-panel-head">
+                    <span>🎨 Tema visual</span>
+                    <button class="ra-theme-close" id="raThemeClose">✕</button>
+                </div>
+                <div class="ra-theme-list" id="raThemeList">
+                    ${Object.entries(RA_THEMES).map(([k, t]) => {
+                        const active = k === getRACurrentTheme() ? ' active' : '';
+                        return `<div class="ra-theme-item${active}" data-ra-theme="${k}">
+                            <div class="ra-theme-dot" style="background:${t['--fg-accent']};border:2px solid ${t['--fg-accent2']};"></div>
+                            <span class="ra-theme-item-name">${t.emoji} ${t.name}</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+
             <!-- Resize handle -->
             <div class="ra-resize-handle" id="raResizeHandle"></div>
         </div>
 
         <!-- Modals Container -->
         <div id="raModalsContainer"></div>
-
-        <!-- Theme Panel -->
-        <div class="ra-theme-panel" id="raThemePanel">
-            <div class="ra-theme-panel-head">
-                <span>🎨 Tema visual</span>
-                <button class="ra-theme-close" id="raThemeClose">✕</button>
-            </div>
-            <div class="ra-theme-list" id="raThemeList">
-                ${Object.entries(RA_THEMES).map(([k, t]) => {
-                    const active = k === getRACurrentTheme() ? ' active' : '';
-                    return `<div class="ra-theme-item${active}" data-ra-theme="${k}">
-                        <div class="ra-theme-dot" style="background:${t['--fg-accent']};border:2px solid ${t['--fg-accent2']};"></div>
-                        <span class="ra-theme-item-name">${t.emoji} ${t.name}</span>
-                    </div>`;
-                }).join('')}
-            </div>
-        </div>
 
         <style>
             :root {

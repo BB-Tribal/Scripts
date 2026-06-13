@@ -754,7 +754,7 @@ function renderUI(body) {
         .svs-label-hint { font-size: 10px; font-weight: 400; color: var(--fg-text2); text-transform: none; letter-spacing: 0; }
         .svs-field input[type="text"],
         .svs-field select {
-            background: rgba(0,0,0,0.4); border: 1px solid var(--fg-border); border-radius: 6px;
+            background: var(--fg-bg3); border: 1px solid var(--fg-border); border-radius: 6px;
             color: var(--fg-text); padding: 7px 11px; font-size: 13px; width: 100%;
             transition: border-color 0.18s, box-shadow 0.18s; outline: none;
             font-family: inherit; appearance: none; -webkit-appearance: none;
@@ -770,7 +770,7 @@ function renderUI(body) {
         .svs-units-grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 14px; }
         .svs-unit-label {
             display: flex; flex-direction: column; align-items: center; gap: 4px;
-            padding: 7px 9px; background: rgba(0,0,0,0.25);
+            padding: 7px 9px; background: var(--fg-bg2);
             border: 2px solid var(--fg-border); border-radius: 8px;
             cursor: pointer; transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.12s;
             min-width: 44px; position: relative; user-select: none;
@@ -785,7 +785,7 @@ function renderUI(body) {
         .svs-unit-label input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
         .svs-unit-check {
             width: 14px; height: 14px; border-radius: 3px; border: 1.5px solid var(--fg-border);
-            background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
+            background: var(--fg-bg3); display: flex; align-items: center; justify-content: center;
             color: transparent; transition: all 0.18s; flex-shrink: 0;
         }
         .svs-unit-label.is-checked .svs-unit-check { background: var(--fg-accent); border-color: var(--fg-accent); color: #fff; }
@@ -837,8 +837,8 @@ function renderUI(body) {
         }
         .svs-table thead th:first-child { text-align: left; padding-left: 14px; }
         .svs-table tbody tr { transition: background 0.12s; }
-        .svs-table tbody tr:nth-child(odd)  { background: rgba(0,0,0,0.2); }
-        .svs-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.1); }
+        .svs-table tbody tr:nth-child(odd)  { background: var(--fg-bg2); }
+        .svs-table tbody tr:nth-child(even) { background: var(--fg-bg3); }
         .svs-table tbody tr:hover { background: var(--fg-hover) !important; }
         .svs-table tbody td {
             padding: 7px 11px; text-align: center; color: var(--fg-text);
@@ -887,7 +887,7 @@ function renderUI(body) {
 
         /* Footer */
         .svs-footer {
-            padding: 9px 18px; background: rgba(0,0,0,0.22);
+            padding: 9px 18px; background: var(--fg-bg2);
             border-top: 1px solid var(--fg-border); border-radius: 0 0 10px 10px;
             text-align: center; font-size: 11px; color: var(--fg-text2); font-style: italic;
         }
@@ -925,7 +925,7 @@ function renderUI(body) {
         }
         .svs-modal-body textarea {
             width: 100%; resize: vertical;
-            background: rgba(0,0,0,0.4); border: 1px solid var(--fg-border); border-radius: 6px;
+            background: var(--fg-bg3); border: 1px solid var(--fg-border); border-radius: 6px;
             color: var(--fg-text); padding: 9px 11px; font-family: 'Courier New', monospace;
             font-size: 12px; line-height: 1.5; outline: none;
             transition: border-color 0.18s, box-shadow 0.18s;
@@ -954,7 +954,7 @@ function renderUI(body) {
         .svs-modal-body strong { color: var(--fg-text); }
         .svs-modal-body .svs-help-field {
             display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px;
-            background: rgba(0,0,0,0.25); border: 1px solid var(--fg-border); border-radius: 7px; margin-bottom: 7px;
+            background: var(--fg-bg2); border: 1px solid var(--fg-border); border-radius: 7px; margin-bottom: 7px;
         }
         .svs-modal-body .svs-help-field-icon { color: var(--fg-link); flex-shrink: 0; margin-top: 1px; }
         .svs-modal-body .svs-help-field-name { font-weight: 700; color: var(--fg-text); display: block; margin-bottom: 2px; }
@@ -968,15 +968,14 @@ function renderUI(body) {
 
         /* ── Theme Panel ── */
         .svs-theme-panel {
-            position: absolute; top: 0; right: 0; bottom: 0;
+            display: none; position: absolute; top: 0; right: 0; bottom: 0;
             width: 210px; background: var(--fg-bg2);
             border-left: 1px solid var(--fg-border);
-            z-index: 200; display: flex; flex-direction: column;
-            transform: translateX(100%); transition: transform .25s ease;
+            z-index: 200; flex-direction: column;
             box-shadow: -6px 0 24px rgba(0,0,0,.3);
             border-radius: 0 10px 10px 0;
         }
-        .svs-theme-panel.open { transform: translateX(0); }
+        .svs-theme-panel.open { display: flex; }
         .svs-theme-panel-head {
             background: linear-gradient(135deg, var(--fg-bg3) 0%, var(--fg-bg2) 100%);
             padding: 11px 14px; display: flex; align-items: center; justify-content: space-between;
