@@ -203,11 +203,11 @@ function applyRSTheme(themeName) {
     var el = document.getElementById('rs-theme-vars');
     if (!el) { el = document.createElement('style'); el.id = 'rs-theme-vars'; document.head.appendChild(el); }
     el.textContent = '.rs-root, #rs-main-panel { ' + vars + ' }';
-    localStorage.setItem('farmGod_theme', themeName);
+    localStorage.setItem('rs_theme', themeName);
 }
 
 function getRSCurrentTheme() {
-    return localStorage.getItem('farmGod_theme') || 'teal';
+    return localStorage.getItem('rs_theme') || 'teal';
 }
 
 function buildRSThemePanel() {
