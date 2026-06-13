@@ -983,8 +983,8 @@ function renderUI(body) {
                 border-collapse: collapse;
             }
             .ra-table thead tr {
-                background: #16A34A !important;
-                border-bottom: 2px solid #15803D !important;
+                background: var(--bg-header) !important;
+                border-bottom: 2px solid var(--accent-red-h) !important;
             }
             .ra-table th {
                 padding: 10px 8px;
