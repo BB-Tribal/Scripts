@@ -12,6 +12,52 @@ const scriptData = {
     version: 'v2.1.1',
 };
 
+// ── Theme System ──────────────────────────────────────────
+const RA_THEMES = {
+    emerald:  { name:'Esmeralda', emoji:'&#x1F49A;', '--fg-bg':'#F8FAF8','--fg-bg2':'#EBF7ED','--fg-bg3':'#FFFFFF','--fg-border':'#C8DFC8','--fg-accent':'#16A34A','--fg-accent2':'#15803D','--fg-text':'#1A2E1A','--fg-text2':'#5A7A5A','--fg-hover':'#EBF7ED','--fg-link':'#16A34A','--fg-shadow':'rgba(0,0,0,.7)' },
+    inferno:  { name:'Inferno',   emoji:'&#x1F525;', '--fg-bg':'#1c1f27','--fg-bg2':'#21242e','--fg-bg3':'#252831','--fg-border':'#2c2f3c','--fg-accent':'#f5a623','--fg-accent2':'#e8700a','--fg-text':'#e2e8f0','--fg-text2':'#8892a4','--fg-hover':'rgba(245,166,35,.08)','--fg-link':'#4f8ef7','--fg-shadow':'rgba(0,0,0,.7)' },
+    sakura:   { name:'Sakura',    emoji:'&#x1F338;', '--fg-bg':'#fdf2f8','--fg-bg2':'#fce7f3','--fg-bg3':'#ffffff','--fg-border':'#f9a8d4','--fg-accent':'#ec4899','--fg-accent2':'#db2777','--fg-text':'#1f2937','--fg-text2':'#6b7280','--fg-hover':'rgba(236,72,153,.07)','--fg-link':'#db2777','--fg-shadow':'rgba(236,72,153,.2)' },
+    amethyst: { name:'Amethyst',  emoji:'&#x1F49C;', '--fg-bg':'#faf5ff','--fg-bg2':'#f3e8ff','--fg-bg3':'#ffffff','--fg-border':'#d8b4fe','--fg-accent':'#7c3aed','--fg-accent2':'#6d28d9','--fg-text':'#1f2937','--fg-text2':'#6b7280','--fg-hover':'rgba(124,58,237,.07)','--fg-link':'#7c3aed','--fg-shadow':'rgba(124,58,237,.2)' },
+    matrix:   { name:'Matrix',    emoji:'&#x1F7E2;', '--fg-bg':'#0a0f0a','--fg-bg2':'#0a1a0a','--fg-bg3':'#0f1a0f','--fg-border':'#1a3d1a','--fg-accent':'#00ff41','--fg-accent2':'#00cc34','--fg-text':'#ccffcc','--fg-text2':'#4dff77','--fg-hover':'rgba(0,255,65,.07)','--fg-link':'#00ff41','--fg-shadow':'rgba(0,255,65,.3)' },
+    midnight: { name:'Midnight',  emoji:'&#x1F319;', '--fg-bg':'#0f172a','--fg-bg2':'#1a2540','--fg-bg3':'#1e293b','--fg-border':'#334155','--fg-accent':'#3b82f6','--fg-accent2':'#2563eb','--fg-text':'#e2e8f0','--fg-text2':'#94a3b8','--fg-hover':'rgba(59,130,246,.09)','--fg-link':'#60a5fa','--fg-shadow':'rgba(0,0,0,.8)' },
+    crimson:  { name:'Crimson',   emoji:'&#x1F534;', '--fg-bg':'#1a0505','--fg-bg2':'#220808','--fg-bg3':'#2d0a0a','--fg-border':'#7f1d1d','--fg-accent':'#ef4444','--fg-accent2':'#dc2626','--fg-text':'#fecaca','--fg-text2':'#f87171','--fg-hover':'rgba(239,68,68,.09)','--fg-link':'#f87171','--fg-shadow':'rgba(0,0,0,.8)' },
+    arctic:   { name:'Arctic',    emoji:'&#x1F30A;', '--fg-bg':'#f0f9ff','--fg-bg2':'#e0f2fe','--fg-bg3':'#ffffff','--fg-border':'#bae6fd','--fg-accent':'#0ea5e9','--fg-accent2':'#0284c7','--fg-text':'#0c4a6e','--fg-text2':'#0369a1','--fg-hover':'rgba(14,165,233,.07)','--fg-link':'#0ea5e9','--fg-shadow':'rgba(14,165,233,.2)' },
+    obsidian: { name:'Obsidian',  emoji:'&#x1F5A4;', '--fg-bg':'#000000','--fg-bg2':'#0d0d0d','--fg-bg3':'#111111','--fg-border':'#1f1f1f','--fg-accent':'#06b6d4','--fg-accent2':'#0891b2','--fg-text':'#e2e8f0','--fg-text2':'#64748b','--fg-hover':'rgba(6,182,212,.07)','--fg-link':'#38bdf8','--fg-shadow':'rgba(0,0,0,.9)' },
+    tribal:   { name:'Tribal',    emoji:'&#x1F3F0;', '--fg-bg':'#f4e8c4','--fg-bg2':'#ecdca8','--fg-bg3':'#fdf5e0','--fg-border':'#9b7b3a','--fg-accent':'#7a9b2a','--fg-accent2':'#5a7a1a','--fg-text':'#3d2b0e','--fg-text2':'#7a5c2e','--fg-hover':'rgba(122,155,42,.09)','--fg-link':'#5a7a1a','--fg-shadow':'rgba(61,43,14,.3)' },
+};
+
+function applyRATheme(name) {
+    const th = RA_THEMES[name] || RA_THEMES.emerald;
+    const get = k => th[k] || '';
+    let el = document.getElementById('ra-theme-vars');
+    if (!el) { el = document.createElement('style'); el.id = 'ra-theme-vars'; document.head.appendChild(el); }
+    el.textContent = `:root {
+        --bg-base:       ${get('--fg-bg')};
+        --bg-card:       ${get('--fg-bg3')};
+        --bg-card-hover: ${get('--fg-hover')};
+        --bg-header:     ${get('--fg-accent2')};
+        --accent-gold:   ${get('--fg-accent')};
+        --accent-red:    ${get('--fg-accent')};
+        --accent-red-h:  ${get('--fg-accent2')};
+        --accent-green:  ${get('--fg-accent')};
+        --accent-blue:   ${get('--fg-accent')};
+        --color-text:    ${get('--fg-text')};
+        --color-muted:   ${get('--fg-text2')};
+        --color-border:  ${get('--fg-border')};
+        --color-selected:${get('--fg-hover')};
+        --ra-row-even:   ${get('--fg-bg2')};
+        --ra-row-hover:  ${get('--fg-hover')};
+        --ra-shadow:     ${get('--fg-shadow')};
+    }`;
+    localStorage.setItem('planificador_theme', name);
+}
+
+function getRACurrentTheme() {
+    return localStorage.getItem('planificador_theme') || 'emerald';
+}
+
+applyRATheme(getRACurrentTheme());
+
 // User Input
 if (typeof DEBUG !== 'boolean') DEBUG = false;
 
@@ -569,6 +615,7 @@ function renderUI(body) {
                 </div>
                 <div class="ra-header-controls">
                     <div class="ra-header-badge">LIVE</div>
+                    <button class="ra-ctrl-btn" id="raThemeBtn" title="Tema visual">🎨</button>
                     <button class="ra-ctrl-btn" id="raMinimizeBtn" title="Minimizar">─</button>
                     <button class="ra-ctrl-btn ra-ctrl-close" id="raCloseBtn" title="Cerrar">✕</button>
                 </div>
@@ -591,12 +638,29 @@ function renderUI(body) {
         <!-- Modals Container -->
         <div id="raModalsContainer"></div>
 
+        <!-- Theme Panel -->
+        <div class="ra-theme-panel" id="raThemePanel">
+            <div class="ra-theme-panel-head">
+                <span>🎨 Tema visual</span>
+                <button class="ra-theme-close" id="raThemeClose">✕</button>
+            </div>
+            <div class="ra-theme-list" id="raThemeList">
+                ${Object.entries(RA_THEMES).map(([k, t]) => {
+                    const active = k === getRACurrentTheme() ? ' active' : '';
+                    return `<div class="ra-theme-item${active}" data-ra-theme="${k}">
+                        <div class="ra-theme-dot" style="background:${t['--fg-accent']};border:2px solid ${t['--fg-accent2']};"></div>
+                        <span class="ra-theme-item-name">${t.emoji} ${t.name}</span>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>
+
         <style>
             :root {
                 --bg-base:       #F8FAF8;
                 --bg-card:       #FFFFFF;
                 --bg-card-hover: #F2F7F3;
-                --bg-header:     #16A34A;
+                --bg-header:     #15803D;
                 --accent-gold:   #16A34A;
                 --accent-red:    #16A34A;
                 --accent-red-h:  #15803D;
@@ -605,7 +669,10 @@ function renderUI(body) {
                 --color-text:    #1A2E1A;
                 --color-muted:   #5A7A5A;
                 --color-border:  #C8DFC8;
-                --color-selected:#16A34A18;
+                --color-selected:#EBF7ED;
+                --ra-row-even:   #EBF7ED;
+                --ra-row-hover:  #EBF7ED;
+                --ra-shadow:     rgba(0,0,0,.7);
                 --transition:    all 0.2s ease;
             }
 
@@ -669,7 +736,7 @@ function renderUI(body) {
                 background: var(--bg-base);
                 border-radius: 12px;
                 border: 1px solid var(--color-border);
-                box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(34,197,94,0.08);
+                box-shadow: 0 24px 80px var(--ra-shadow), 0 0 0 1px rgba(34,197,94,0.08);
                 overflow: hidden;
                 display: flex;
                 flex-direction: column;
@@ -941,10 +1008,10 @@ function renderUI(body) {
             .ra-table td:first-child { text-align: left; }
             .ra-table tbody tr { transition: var(--transition); }
             .ra-table tbody tr:nth-child(even) {
-                background: #F5FAF5;
+                background: var(--ra-row-even);
             }
             .ra-table tbody tr:hover {
-                background: #EBF7ED;
+                background: var(--ra-row-hover);
             }
             .ra-table tbody tr.ra-selected-village {
                 background: var(--color-selected);
@@ -986,12 +1053,12 @@ function renderUI(body) {
 
             /* Selected command row highlight */
             .ra-chosen-command td {
-                background: #dcfce7 !important;
-                border-top: 1px solid #16A34A !important;
-                border-bottom: 1px solid #16A34A !important;
+                background: var(--ra-row-hover) !important;
+                border-top: 1px solid var(--accent-gold) !important;
+                border-bottom: 1px solid var(--accent-gold) !important;
             }
             .ra-chosen-command td:first-child {
-                border-left: 3px solid #16A34A !important;
+                border-left: 3px solid var(--accent-gold) !important;
             }
 
             /* Village link */
@@ -1225,7 +1292,7 @@ function renderUI(body) {
             .ra-tab-active {
                 color: var(--accent-gold);
                 border-bottom-color: var(--accent-gold);
-                background: rgba(22,163,74,0.06);
+                background: var(--color-selected);
             }
 
             /* ── Export buttons ── */
@@ -1246,18 +1313,57 @@ function renderUI(body) {
             }
             .ra-preview-header strong { color: var(--color-text); }
             .ra-coord-link {
-                color: #4a7c2f;
+                color: var(--accent-gold);
                 font-weight: 700;
                 font-family: 'Courier New', monospace;
                 text-decoration: none;
-                background: #f0f7eb;
-                border: 1px solid #a8c97a;
+                background: var(--color-selected);
+                border: 1px solid var(--color-border);
                 border-radius: 3px;
                 padding: 1px 5px;
                 font-size: 11px;
                 white-space: nowrap;
             }
-            .ra-coord-link:hover { background: #dff0c8; }
+            .ra-coord-link:hover { background: var(--ra-row-hover); }
+
+            /* ── Theme Panel ── */
+            .ra-theme-panel {
+                position: absolute; top: 0; right: 0; bottom: 0;
+                width: 220px; background: var(--bg-card);
+                border-left: 1px solid var(--color-border);
+                z-index: 200; display: flex; flex-direction: column;
+                transform: translateX(100%); transition: transform .25s ease;
+                box-shadow: -6px 0 24px rgba(0,0,0,.15);
+            }
+            .ra-theme-panel.open { transform: translateX(0); }
+            .ra-theme-panel-head {
+                background: var(--bg-header); padding: 11px 14px;
+                display: flex; align-items: center; justify-content: space-between;
+                flex-shrink: 0;
+            }
+            .ra-theme-panel-head span { font-size: 12px; font-weight: 700; color: #fff; }
+            .ra-theme-close {
+                background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+                color: #fff; width: 22px; height: 22px; border-radius: 5px;
+                cursor: pointer; font-size: 11px; display: flex; align-items: center;
+                justify-content: center; line-height: 1;
+            }
+            .ra-theme-close:hover { background: rgba(255,255,255,.25); }
+            .ra-theme-list {
+                padding: 8px; display: flex; flex-direction: column; gap: 4px;
+                overflow-y: auto; flex: 1;
+            }
+            .ra-theme-item {
+                display: flex; align-items: center; gap: 8px; padding: 7px 9px;
+                border-radius: 7px; border: 1.5px solid transparent; cursor: pointer;
+                transition: border-color .15s, background .15s; background: var(--bg-base);
+            }
+            .ra-theme-item:hover { border-color: var(--color-border); }
+            .ra-theme-item.active { border-color: var(--accent-gold) !important; }
+            .ra-theme-dot {
+                width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0;
+            }
+            .ra-theme-item-name { font-size: 12px; font-weight: 600; color: var(--color-text); }
 
             /* ── Responsive ── */
             @media (max-width: 768px) {
@@ -1356,6 +1462,23 @@ function initPanelBehavior() {
     launcher.addEventListener('click', () => {
         panel.style.display = 'flex';
         launcher.style.display = 'none';
+    });
+
+    // ── Theme panel ──
+    const themePanel = document.getElementById('raThemePanel');
+    document.getElementById('raThemeBtn').addEventListener('click', () => {
+        themePanel.classList.toggle('open');
+    });
+    document.getElementById('raThemeClose').addEventListener('click', () => {
+        themePanel.classList.remove('open');
+    });
+    document.getElementById('raThemeList').addEventListener('click', (e) => {
+        const item = e.target.closest('.ra-theme-item');
+        if (!item) return;
+        const name = item.dataset.raTheme;
+        applyRATheme(name);
+        document.querySelectorAll('.ra-theme-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
     });
 
     // Panel oculto al inicio — el launcher lo abre
@@ -1584,23 +1707,23 @@ function renderVisualPreview(plans, destinationVillage, landingTimeString) {
             : `<span style="color:#9ca3af;font-size:11px;">Normal</span>`;
         const rowNote = `[unit]${unit}[/unit] [coord]${coords}[/coord] ${launchTimeFormatted}`;
         rows += `
-            <tr style="background:${i % 2 === 0 ? '#f9fafb' : '#ffffff'};">
-                <td style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;">
+            <tr style="background:${i % 2 === 0 ? 'var(--ra-row-even)' : 'var(--bg-card)'};">
+                <td style="padding:8px 12px;text-align:center;border-bottom:1px solid var(--color-border);">
                     <img src="/graphic/unit/unit_${unit}.webp" style="width:20px;height:20px;vertical-align:middle;" title="${unit}">
                 </td>
-                <td style="padding:8px 12px;font-size:12px;border-bottom:1px solid #e5e7eb;">
+                <td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--color-border);">
                     <a href="/game.php?village=${villageId}&screen=info_village&id=${villageId}" target="_blank"
                        class="ra-coord-link" title="Ver ficha del pueblo">${coords}</a>
                 </td>
-                <td style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;">${prioHtml}</td>
-                <td style="padding:8px 12px;font-family:monospace;font-size:12px;font-weight:600;border-bottom:1px solid #e5e7eb;">${launchTimeFormatted}</td>
-                <td style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;white-space:nowrap;display:flex;gap:6px;align-items:center;justify-content:center;">
+                <td style="padding:8px 12px;text-align:center;border-bottom:1px solid var(--color-border);">${prioHtml}</td>
+                <td style="padding:8px 12px;font-family:monospace;font-size:12px;font-weight:600;border-bottom:1px solid var(--color-border);color:var(--color-text);">${launchTimeFormatted}</td>
+                <td style="padding:8px 12px;text-align:center;border-bottom:1px solid var(--color-border);white-space:nowrap;display:flex;gap:6px;align-items:center;justify-content:center;">
                     <a href="${url}" target="_blank"
-                       style="background:#16A34A;color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;display:inline-block;">
+                       style="background:var(--accent-gold);color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;display:inline-block;">
                         Enviar
                     </a>
                     <button class="ra-row-note-btn" data-note="${rowNote.replace(/"/g,'&quot;')}"
-                        style="background:transparent;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:3px 7px;font-size:12px;color:#6b7280;transition:all .15s;"
+                        style="background:transparent;border:1px solid var(--color-border);border-radius:4px;cursor:pointer;padding:3px 7px;font-size:12px;color:var(--color-muted);transition:all .15s;"
                         title="Agregar esta orden como nota al pueblo">📝</button>
                 </td>
             </tr>`;
@@ -1615,7 +1738,7 @@ function renderVisualPreview(plans, destinationVillage, landingTimeString) {
             <div style="overflow:auto;">
                 <table style="width:100%;border-collapse:collapse;font-size:12px;font-family:'Segoe UI',system-ui,sans-serif;">
                     <thead>
-                        <tr style="background:#16A34A;">
+                        <tr style="background:var(--bg-header);">
                             <th style="padding:10px 12px;color:#fff;font-weight:700;text-align:center;white-space:nowrap;">Unidad</th>
                             <th style="padding:10px 12px;color:#fff;font-weight:700;white-space:nowrap;">Desde</th>
                             <th style="padding:10px 12px;color:#fff;font-weight:700;text-align:center;white-space:nowrap;">Prioridad</th>
@@ -2394,13 +2517,13 @@ function showWrongScreenError() {
             background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);
             animation:ra-fadeIn .25s ease;font-family:'Segoe UI',system-ui,sans-serif;">
             <div style="
-                background:#fff;border-radius:12px;
-                box-shadow:0 24px 80px rgba(0,0,0,0.5);
-                border:1px solid #C8DFC8;
+                background:var(--bg-card);border-radius:12px;
+                box-shadow:0 24px 80px var(--ra-shadow);
+                border:1px solid var(--color-border);
                 max-width:400px;width:92%;overflow:hidden;
                 animation:ra-scaleIn .25s ease;">
                 <!-- Header -->
-                <div style="background:#16A34A;padding:14px 18px;display:flex;align-items:center;gap:10px;">
+                <div style="background:var(--bg-header);padding:14px 18px;display:flex;align-items:center;gap:10px;">
                     <span style="font-size:22px;">⚔</span>
                     <div>
                         <div style="font-size:15px;font-weight:700;color:#fff;">Planificador de Ataques</div>
@@ -2408,25 +2531,25 @@ function showWrongScreenError() {
                     </div>
                 </div>
                 <!-- Body -->
-                <div style="padding:28px 24px;text-align:center;">
+                <div style="padding:28px 24px;text-align:center;background:var(--bg-card);">
                     <div style="font-size:40px;margin-bottom:14px;">🗺️</div>
-                    <div style="font-size:15px;font-weight:700;color:#1A2E1A;margin-bottom:8px;">
+                    <div style="font-size:15px;font-weight:700;color:var(--color-text);margin-bottom:8px;">
                         Pantalla incorrecta
                     </div>
-                    <div style="font-size:13px;color:#5A7A5A;line-height:1.6;margin-bottom:22px;">
+                    <div style="font-size:13px;color:var(--color-muted);line-height:1.6;margin-bottom:22px;">
                         Este script debe ejecutarse desde la <strong>ficha de un pueblo</strong>.<br>
                         Navega a la vista de información de un pueblo enemigo y vuelve a ejecutarlo.
                     </div>
-                    <div style="font-size:11px;color:#9ca3af;background:#f9fafb;border-radius:6px;padding:8px 12px;font-family:monospace;">
-                        screen=<strong style="color:#16A34A;">info_village</strong> &nbsp;·&nbsp; screen actual: <strong style="color:#dc2626;">${getParameterByName('screen') || '(ninguna)'}</strong>
+                    <div style="font-size:11px;color:var(--color-muted);background:var(--bg-base);border-radius:6px;padding:8px 12px;font-family:monospace;">
+                        screen=<strong style="color:var(--accent-gold);">info_village</strong> &nbsp;·&nbsp; screen actual: <strong style="color:#dc2626;">${getParameterByName('screen') || '(ninguna)'}</strong>
                     </div>
                 </div>
                 <!-- Footer -->
-                <div style="padding:12px 18px;background:#f0fdf4;border-top:1px solid #C8DFC8;display:flex;justify-content:flex-end;">
+                <div style="padding:12px 18px;background:var(--bg-base);border-top:1px solid var(--color-border);display:flex;justify-content:flex-end;">
                     <button id="ra-wrong-screen-close" style="
                         padding:8px 20px;border:none;border-radius:6px;cursor:pointer;
                         font-size:12px;font-weight:700;color:#fff;font-family:inherit;
-                        background:#16A34A;box-shadow:0 4px 12px rgba(22,163,74,.3);
+                        background:var(--accent-gold);box-shadow:0 4px 12px rgba(22,163,74,.3);
                         transition:all .15s;">
                         Entendido
                     </button>
