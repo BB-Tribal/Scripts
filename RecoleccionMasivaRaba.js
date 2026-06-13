@@ -292,6 +292,34 @@ var duration_factor = 0;
 var duration_exponent = 0;
 var duration_initial_seconds = 0;
 var categoryNames = JSON.parse("[" + $.find('script:contains("ScavengeMassScreen")')[0].innerHTML.match(/\{.*\:\{.*\:.*\}\}/g) + "]")[0];
+
+var MASIVA_THEMES = {
+    rose:     { name:'Rosa',       emoji:'&#x1F338;', '--fg-bg':'#fff0f6','--fg-bg2':'#fce4ec','--fg-bg3':'#ffffff','--fg-border':'#e8b4cb','--fg-accent':'#e91e8c','--fg-accent2':'#c2185b','--fg-text':'#880e4f','--fg-text2':'#c2185b','--fg-hover':'#fff5fb','--fg-link':'#f06292','--fg-shadow':'rgba(136,14,79,.22)' },
+    emerald:  { name:'Esmeralda',  emoji:'&#x1F49A;', '--fg-bg':'#f8faf8','--fg-bg2':'#ebf7ed','--fg-bg3':'#ffffff','--fg-border':'#c8dfc8','--fg-accent':'#16a34a','--fg-accent2':'#15803d','--fg-text':'#1a2e1a','--fg-text2':'#5a7a5a','--fg-hover':'#ebf7ed','--fg-link':'#4ade80','--fg-shadow':'rgba(0,0,0,.18)' },
+    navy:     { name:'Marino',     emoji:'&#x2693;',  '--fg-bg':'#0c1220','--fg-bg2':'#131d2e','--fg-bg3':'#091628','--fg-border':'#1e3a5f','--fg-accent':'#3b82f6','--fg-accent2':'#1a3fa0','--fg-text':'#e2e8f0','--fg-text2':'#94a3b8','--fg-hover':'rgba(59,130,246,.12)','--fg-link':'#60a5fa','--fg-shadow':'rgba(0,0,0,.8)' },
+    twilight: { name:'Crepúsculo', emoji:'&#x1F319;', '--fg-bg':'#1a0a2e','--fg-bg2':'#2d1b4e','--fg-bg3':'#12071f','--fg-border':'#5b21b6','--fg-accent':'#a855f7','--fg-accent2':'#7c3aed','--fg-text':'#e9d5ff','--fg-text2':'#c4b5fd','--fg-hover':'rgba(168,85,247,.15)','--fg-link':'#d8b4fe','--fg-shadow':'rgba(0,0,0,.9)' },
+    sunset:   { name:'Atardecer',  emoji:'&#x1F305;', '--fg-bg':'#fff7ed','--fg-bg2':'#fed7aa','--fg-bg3':'#ffffff','--fg-border':'#fdba74','--fg-accent':'#f97316','--fg-accent2':'#c2410c','--fg-text':'#7c2d12','--fg-text2':'#9a3412','--fg-hover':'#fff1e6','--fg-link':'#fb923c','--fg-shadow':'rgba(194,65,12,.25)' },
+    ocean:    { name:'Océano',     emoji:'&#x1F30A;', '--fg-bg':'#f0fdff','--fg-bg2':'#cffafe','--fg-bg3':'#ffffff','--fg-border':'#67e8f9','--fg-accent':'#06b6d4','--fg-accent2':'#0891b2','--fg-text':'#164e63','--fg-text2':'#0e7490','--fg-hover':'#ecfeff','--fg-link':'#22d3ee','--fg-shadow':'rgba(6,182,212,.22)' },
+    midnight: { name:'Medianoche', emoji:'&#x1F311;', '--fg-bg':'#111827','--fg-bg2':'#1f2937','--fg-bg3':'#0f172a','--fg-border':'#374151','--fg-accent':'#6366f1','--fg-accent2':'#4f46e5','--fg-text':'#f9fafb','--fg-text2':'#9ca3af','--fg-hover':'rgba(99,102,241,.12)','--fg-link':'#818cf8','--fg-shadow':'rgba(0,0,0,.9)' },
+    crimson:  { name:'Carmesí',    emoji:'&#x1F534;', '--fg-bg':'#fff5f5','--fg-bg2':'#fee2e2','--fg-bg3':'#ffffff','--fg-border':'#fca5a5','--fg-accent':'#ef4444','--fg-accent2':'#dc2626','--fg-text':'#7f1d1d','--fg-text2':'#991b1b','--fg-hover':'#fff1f1','--fg-link':'#f87171','--fg-shadow':'rgba(220,38,38,.22)' },
+    sage:     { name:'Salvia',     emoji:'&#x1FAB6;', '--fg-bg':'#f6f9f4','--fg-bg2':'#e8f2e4','--fg-bg3':'#ffffff','--fg-border':'#a3c4a0','--fg-accent':'#4a7c59','--fg-accent2':'#2d5a3d','--fg-text':'#1a3d25','--fg-text2':'#4a7c59','--fg-hover':'#eef5ec','--fg-link':'#6aaa7d','--fg-shadow':'rgba(45,90,61,.20)' },
+    violet:   { name:'Violeta',    emoji:'&#x1F49C;', '--fg-bg':'#fdf5ff','--fg-bg2':'#f3e5f5','--fg-bg3':'#ffffff','--fg-border':'#e1bee7','--fg-accent':'#9c27b0','--fg-accent2':'#7b1fa2','--fg-text':'#4a148c','--fg-text2':'#6a1b9a','--fg-hover':'#f9f0ff','--fg-link':'#ab47bc','--fg-shadow':'rgba(123,31,162,.22)' }
+};
+function applyMasivaTheme(name) {
+    var th = MASIVA_THEMES[name] || MASIVA_THEMES.rose;
+    var get = function(k) { return th[k] || ''; };
+    var el = document.getElementById('masiva-theme-vars');
+    if (!el) { el = document.createElement('style'); el.id = 'masiva-theme-vars'; document.head.appendChild(el); }
+    el.textContent = '#massScavengeSophie,#massScavengeFinal{' +
+        '--fg-bg:' + get('--fg-bg') + ';--fg-bg2:' + get('--fg-bg2') + ';--fg-bg3:' + get('--fg-bg3') + ';' +
+        '--fg-border:' + get('--fg-border') + ';--fg-accent:' + get('--fg-accent') + ';--fg-accent2:' + get('--fg-accent2') + ';' +
+        '--fg-text:' + get('--fg-text') + ';--fg-text2:' + get('--fg-text2') + ';--fg-hover:' + get('--fg-hover') + ';' +
+        '--fg-link:' + get('--fg-link') + ';--fg-shadow:' + get('--fg-shadow') + '}';
+    localStorage.setItem('masivaRaba_theme', name);
+}
+function getMasivaCurrentTheme() { return localStorage.getItem('masivaRaba_theme') || 'rose'; }
+applyMasivaTheme(getMasivaCurrentTheme());
+
 //basic setting, to be safe
 var time = {
     'off': 0,
@@ -314,11 +342,11 @@ if (typeof colors == 'undefined') {
 /* Ventana principal */
 #massScavengeSophie, #massScavengeFinal {
     font-family: 'Segoe UI', Tahoma, Geneva, sans-serif !important;
-    background: #ffffff !important;
+    background: var(--fg-bg3) !important;
     border-radius: 14px !important;
     overflow: hidden !important;
-    box-shadow: 0 10px 36px rgba(136,14,79,0.22), 0 2px 8px rgba(0,0,0,0.10) !important;
-    border: 1.5px solid #e8b4cb !important;
+    box-shadow: 0 10px 36px var(--fg-shadow), 0 2px 8px rgba(0,0,0,0.10) !important;
+    border: 1.5px solid var(--fg-border) !important;
     width: 620px !important;
 }
 
@@ -361,7 +389,7 @@ if (typeof colors == 'undefined') {
 /* Título principal – barra rosa intensa */
 #massScavengeSophieTitle,
 #massScavengeFinal #massScavengeSophieTitle {
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%) !important;
+    background: linear-gradient(135deg, var(--fg-accent) 0%, var(--fg-accent2) 100%) !important;
     padding: 14px 50px !important;
 }
 #massScavengeSophieTitle * { color: #ffffff !important; text-decoration: none !important; }
@@ -377,59 +405,59 @@ if (typeof colors == 'undefined') {
 #massScavengeSophie table td,
 #massScavengeFinal table tr,
 #massScavengeFinal table td {
-    border: 1px solid #e8b4cb !important;
+    border: 1px solid var(--fg-border) !important;
 }
 
 /* Cabeceras de sub-sección: rosa suave con texto oscuro */
 #massScavengeSophie td[style*="background-color:#fce4ec"],
 #massScavengeSophie tr[style*="background-color:#fce4ec"] {
-    background-color: #fce4ec !important;
+    background-color: var(--fg-bg2) !important;
 }
 #massScavengeSophie td[style*="background-color:#fce4ec"] font,
 #massScavengeSophie td[style*="background-color:#fce4ec"] * {
-    color: #880e4f !important;
+    color: var(--fg-text) !important;
     font-weight: 600 !important;
 }
 
 /* Filas de datos: blanco puro */
 #massScavengeSophie td[style*="background-color:#ffffff"],
 #massScavengeSophie tr td[style*="background-color:#ffffff"] {
-    background-color: #ffffff !important;
+    background-color: var(--fg-bg3) !important;
 }
 
 /* HR separadores */
 #massScavengeSophie hr {
     border: none !important;
-    border-top: 2px solid #fce4ec !important;
+    border-top: 2px solid var(--fg-bg2) !important;
     margin: 0 !important;
 }
 
 /* ---- Celdas de tropa individualmente con tarjeta ---- */
 #imgRow {
-    background: #fff8fc !important;
+    background: var(--fg-bg) !important;
 }
 #imgRow > td {
-    border: 1.5px solid #e8b4cb !important;
+    border: 1.5px solid var(--fg-border) !important;
     border-radius: 8px !important;
-    background: #ffffff !important;
+    background: var(--fg-bg3) !important;
     padding: 0 !important;
     margin: 3px !important;
     transition: border-color 0.15s, box-shadow 0.15s !important;
     vertical-align: top !important;
 }
 #imgRow > td:hover {
-    border-color: #e91e8c !important;
+    border-color: var(--fg-accent) !important;
     box-shadow: 0 2px 10px rgba(233,30,140,0.18) !important;
 }
 #imgRow > td > table { border: none !important; }
 #imgRow > td > table tr,
 #imgRow > td > table td { border: none !important; background: transparent !important; }
-#imgRow > td > table tr:nth-child(1) td { background: #fce4ec !important; border-radius: 6px 6px 0 0 !important; }
-#imgRow > td > table tr:nth-child(3) td { background: #fce4ec !important; font-weight: 600 !important; color: #880e4f !important; font-size: 11px !important; }
+#imgRow > td > table tr:nth-child(1) td { background: var(--fg-bg2) !important; border-radius: 6px 6px 0 0 !important; }
+#imgRow > td > table tr:nth-child(3) td { background: var(--fg-bg2) !important; font-weight: 600 !important; color: var(--fg-text) !important; font-size: 11px !important; }
 
 /* ---- Botones principales ---- */
 .btnSophie, input.btnSophie, .btn.btnSophie {
-    background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%) !important;
+    background: linear-gradient(135deg, var(--fg-accent) 0%, var(--fg-accent2) 100%) !important;
     color: #ffffff !important;
     border: none !important;
     border-radius: 8px !important;
@@ -437,19 +465,19 @@ if (typeof colors == 'undefined') {
     font-weight: 700 !important;
     font-size: 13px !important;
     letter-spacing: 0.5px !important;
-    box-shadow: 0 3px 12px rgba(194,24,91,0.35) !important;
+    box-shadow: 0 3px 12px var(--fg-shadow) !important;
     cursor: pointer !important;
     outline: none !important;
     transition: all 0.15s ease !important;
 }
 .btnSophie:hover, input.btnSophie:hover {
-    background: linear-gradient(135deg, #f06292 0%, #e91e8c 100%) !important;
-    box-shadow: 0 5px 18px rgba(194,24,91,0.50) !important;
+    background: linear-gradient(135deg, var(--fg-link) 0%, var(--fg-accent) 100%) !important;
+    box-shadow: 0 5px 18px var(--fg-shadow) !important;
     transform: translateY(-1px) !important;
 }
 .btnSophie:active, input.btnSophie:active {
     transform: translateY(0) !important;
-    box-shadow: 0 2px 6px rgba(194,24,91,0.35) !important;
+    box-shadow: 0 2px 6px var(--fg-shadow) !important;
 }
 
 /* ---- Checkboxes personalizados ---- */
@@ -458,9 +486,9 @@ if (typeof colors == 'undefined') {
     appearance: none !important;
     width: 20px !important;
     height: 20px !important;
-    border: 2px solid #e8b4cb !important;
+    border: 2px solid var(--fg-border) !important;
     border-radius: 5px !important;
-    background: #ffffff !important;
+    background: var(--fg-bg3) !important;
     cursor: pointer !important;
     position: relative !important;
     display: inline-block !important;
@@ -468,8 +496,8 @@ if (typeof colors == 'undefined') {
     transition: all 0.15s !important;
 }
 #massScavengeSophie input[type="checkbox"]:checked {
-    background: #e91e8c !important;
-    border-color: #c2185b !important;
+    background: var(--fg-accent) !important;
+    border-color: var(--fg-accent2) !important;
 }
 #massScavengeSophie input[type="checkbox"]:checked::after {
     content: "✓" !important;
@@ -481,7 +509,7 @@ if (typeof colors == 'undefined') {
     font-weight: 900 !important;
     line-height: 1 !important;
 }
-#massScavengeSophie input[type="checkbox"]:hover { border-color: #e91e8c !important; }
+#massScavengeSophie input[type="checkbox"]:hover { border-color: var(--fg-accent) !important; }
 
 /* ---- Radio buttons personalizados ---- */
 #massScavengeSophie input[type="radio"] {
@@ -489,37 +517,37 @@ if (typeof colors == 'undefined') {
     appearance: none !important;
     width: 18px !important;
     height: 18px !important;
-    border: 2px solid #e8b4cb !important;
+    border: 2px solid var(--fg-border) !important;
     border-radius: 50% !important;
-    background: #ffffff !important;
+    background: var(--fg-bg3) !important;
     cursor: pointer !important;
     position: relative !important;
     display: inline-block !important;
     vertical-align: middle !important;
     transition: all 0.15s !important;
 }
-#massScavengeSophie input[type="radio"]:checked { border-color: #e91e8c !important; }
+#massScavengeSophie input[type="radio"]:checked { border-color: var(--fg-accent) !important; }
 #massScavengeSophie input[type="radio"]:checked::after {
     content: "" !important;
     position: absolute !important;
     top: 50% !important; left: 50% !important;
     transform: translate(-50%, -50%) !important;
     width: 9px !important; height: 9px !important;
-    background: #e91e8c !important;
+    background: var(--fg-accent) !important;
     border-radius: 50% !important;
     display: block !important;
 }
-#massScavengeSophie input[type="radio"]:hover { border-color: #e91e8c !important; }
+#massScavengeSophie input[type="radio"]:hover { border-color: var(--fg-accent) !important; }
 
 /* ---- Inputs texto / fecha / hora ---- */
 #massScavengeSophie input[type="text"],
 #massScavengeSophie input[type="date"],
 #massScavengeSophie input[type="time"] {
-    border: 1.5px solid #e8b4cb !important;
+    border: 1.5px solid var(--fg-border) !important;
     border-radius: 6px !important;
     padding: 5px 10px !important;
-    background: #ffffff !important;
-    color: #5d0030 !important;
+    background: var(--fg-bg3) !important;
+    color: var(--fg-text) !important;
     font-size: 13px !important;
     font-family: 'Segoe UI', Tahoma, sans-serif !important;
     outline: none !important;
@@ -528,19 +556,19 @@ if (typeof colors == 'undefined') {
 #massScavengeSophie input[type="text"]:focus,
 #massScavengeSophie input[type="date"]:focus,
 #massScavengeSophie input[type="time"]:focus {
-    border-color: #e91e8c !important;
+    border-color: var(--fg-accent) !important;
     box-shadow: 0 0 0 3px rgba(233,30,140,0.12) !important;
 }
 
 /* ---- Botón X (cerrar) ---- */
 #x {
-    position: absolute !important; background: #c2185b !important; color: white !important;
+    position: absolute !important; background: var(--fg-accent2) !important; color: white !important;
     top: 0 !important; right: 0 !important; width: 36px !important; height: 36px !important;
     border: none !important; font-weight: 900 !important; font-size: 14px !important;
     cursor: pointer !important; transition: background 0.15s !important;
     line-height: 36px !important; text-align: center !important;
 }
-#x:hover { background: #880e4f !important; }
+#x:hover { background: var(--fg-text) !important; }
 
 /* ---- Botón engranaje ---- */
 #cog {
@@ -551,19 +579,48 @@ if (typeof colors == 'undefined') {
 }
 #cog:hover { background: rgba(255,255,255,0.38) !important; }
 
+/* ---- Botón de tema ---- */
+#masivaThemeBtn {
+    position: absolute !important; background: rgba(255,255,255,0.22) !important; color: white !important;
+    top: 0 !important; right: 72px !important; width: 36px !important; height: 36px !important;
+    border: none !important; font-size: 18px !important; cursor: pointer !important;
+    line-height: 36px !important; text-align: center !important; transition: background 0.15s !important;
+}
+#masivaThemeBtn:hover { background: rgba(255,255,255,0.38) !important; }
+
+/* ---- Panel de temas ---- */
+#masivaThemePanel {
+    display: none; position: absolute; top: 68px; right: 0;
+    width: 230px; background: var(--fg-bg3); border: 1.5px solid var(--fg-border);
+    border-radius: 0 0 12px 12px; box-shadow: 0 8px 24px var(--fg-shadow);
+    z-index: 99; overflow: hidden;
+}
+#masivaThemePanel .masiva-theme-hdr {
+    background: var(--fg-bg2); padding: 8px 14px;
+    font-size: 11px; font-weight: 700; color: var(--fg-text); text-transform: uppercase; letter-spacing: 0.8px;
+}
+.masiva-theme-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+    cursor: pointer; transition: background 0.12s; font-size: 13px; color: var(--fg-text);
+    border-bottom: 1px solid var(--fg-border);
+}
+.masiva-theme-item:last-child { border-bottom: none; }
+.masiva-theme-item:hover { background: var(--fg-hover); }
+.masiva-theme-item.masiva-active { background: var(--fg-bg2); font-weight: 700; }
+
 /* Filas alternas de tabla de lanzamiento final */
-#massScavengeSophieFinalTable tr:nth-child(odd) td { background: #fff8fc !important; }
-#massScavengeSophieFinalTable tr:nth-child(even) td { background: #ffffff !important; }
+#massScavengeSophieFinalTable tr:nth-child(odd) td { background: var(--fg-bg) !important; }
+#massScavengeSophieFinalTable tr:nth-child(even) td { background: var(--fg-bg3) !important; }
 
 /* ===== NUEVO LAYOUT MODERNO ===== */
 .raba-header {
-    background: linear-gradient(135deg, #f06292 0%, #e91e8c 45%, #c2185b 100%);
-    padding: 18px 56px 16px 20px;
+    background: linear-gradient(135deg, var(--fg-link) 0%, var(--fg-accent) 45%, var(--fg-accent2) 100%);
+    padding: 18px 110px 16px 20px;
     position: relative;
     display: flex;
     align-items: center;
     min-height: 68px;
-    box-shadow: 0 3px 12px rgba(194,24,91,0.30);
+    box-shadow: 0 3px 12px var(--fg-shadow);
 }
 .raba-title {
     font-size: 20px;
@@ -573,7 +630,7 @@ if (typeof colors == 'undefined') {
     flex: 1;
     text-align: center;
 }
-.raba-body { padding: 16px 18px; background: #ffffff; }
+.raba-body { padding: 16px 18px; background: var(--fg-bg3); }
 
 /* Título de sección */
 .raba-section-title {
@@ -581,9 +638,9 @@ if (typeof colors == 'undefined') {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1.2px;
-    color: #c2185b;
+    color: var(--fg-accent2);
     padding-bottom: 8px;
-    border-bottom: 2px solid #fce4ec;
+    border-bottom: 2px solid var(--fg-bg2);
     margin-bottom: 12px;
     margin-top: 0;
 }
@@ -602,9 +659,9 @@ if (typeof colors == 'undefined') {
     display: flex;
     flex-direction: column;
     align-items: center;
-    border: 1.5px solid #e8b4cb;
+    border: 1.5px solid var(--fg-border);
     border-radius: 10px;
-    background: #ffffff;
+    background: var(--fg-bg3);
     cursor: grab;
     min-width: 72px;
     flex-shrink: 0;
@@ -613,14 +670,14 @@ if (typeof colors == 'undefined') {
     user-select: none;
 }
 .raba-troop-card:hover {
-    border-color: #e91e8c;
+    border-color: var(--fg-accent);
     box-shadow: 0 2px 10px rgba(233,30,140,0.18);
 }
-.raba-troop-img { background: #fce4ec; width: 100%; text-align: center; padding: 8px 6px; }
+.raba-troop-img { background: var(--fg-bg2); width: 100%; text-align: center; padding: 8px 6px; }
 .raba-troop-check { padding: 6px 0; }
 .raba-troop-label {
-    background: #fce4ec; width: 100%; text-align: center;
-    font-size: 10px; font-weight: 700; color: #880e4f;
+    background: var(--fg-bg2); width: 100%; text-align: center;
+    font-size: 10px; font-weight: 700; color: var(--fg-text);
     padding: 4px 0; text-transform: uppercase; letter-spacing: 0.4px;
 }
 .raba-troop-input { padding: 5px 6px 6px; width: 100%; box-sizing: border-box; text-align: center; }
@@ -632,23 +689,23 @@ if (typeof colors == 'undefined') {
 .raba-right-col { flex: 1; min-width: 0; }
 
 /* Bloque de tiempo */
-.raba-time-block { display: flex; flex-direction: column; gap: 0; border: 1.5px solid #e8b4cb; border-radius: 10px; overflow: hidden; }
+.raba-time-block { display: flex; flex-direction: column; gap: 0; border: 1.5px solid var(--fg-border); border-radius: 10px; overflow: hidden; }
 .raba-time-row {
     display: grid;
     grid-template-columns: 34px 1fr 1fr;
     gap: 8px;
     align-items: center;
     padding: 8px 10px;
-    border-bottom: 1px solid #fce4ec;
-    background: #ffffff;
+    border-bottom: 1px solid var(--fg-bg2);
+    background: var(--fg-bg3);
     box-sizing: border-box;
     min-width: 0;
 }
-.raba-time-row:last-child { border-bottom: none; background: #fff8fc; }
+.raba-time-row:last-child { border-bottom: none; background: var(--fg-bg); }
 .raba-time-row > * { min-width: 0; }
 .raba-time-hdr {
-    font-size: 11px; font-weight: 700; color: #880e4f;
-    text-align: center; padding: 7px 4px; background: #fce4ec;
+    font-size: 11px; font-weight: 700; color: var(--fg-text);
+    text-align: center; padding: 7px 4px; background: var(--fg-bg2);
 }
 .raba-time-cell { display: flex; flex-direction: column; gap: 4px; align-items: stretch; min-width: 0; }
 .raba-time-cell input { width: 100% !important; box-sizing: border-box !important; min-width: 0 !important; font-size: 12px !important; padding: 5px 6px !important; }
@@ -660,7 +717,7 @@ if (typeof colors == 'undefined') {
     width: 14px !important; height: 14px !important;
     flex-shrink: 0; margin: 0 !important;
 }
-.raba-duration-txt { font-size: 10px; color: #c2185b; font-weight: 600; text-align: center; font-style: italic; line-height: 1.4; }
+.raba-duration-txt { font-size: 10px; color: var(--fg-accent2); font-weight: 600; text-align: center; font-style: italic; line-height: 1.4; }
 /* Inputs de horas en fila de texto */
 .raba-time-row input[type="text"].runTime_off,
 .raba-time-row input[type="text"].runTime_def {
@@ -683,46 +740,46 @@ if (typeof colors == 'undefined') {
 .raba-cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .raba-cat-toggle {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 12px 6px; border: 2px solid #e8b4cb; border-radius: 10px;
-    cursor: pointer; background: #ffffff; transition: all 0.15s;
+    padding: 12px 6px; border: 2px solid var(--fg-border); border-radius: 10px;
+    cursor: pointer; background: var(--fg-bg3); transition: all 0.15s;
     text-align: center; gap: 5px;
 }
-.raba-cat-toggle:hover { border-color: #e91e8c; background: #fff5fb; }
+.raba-cat-toggle:hover { border-color: var(--fg-accent); background: var(--fg-hover); }
 .raba-cat-toggle.raba-cat-active {
-    border-color: #e91e8c !important;
-    background: linear-gradient(135deg, #fce4ec, #fff0f6) !important;
+    border-color: var(--fg-accent) !important;
+    background: linear-gradient(135deg, var(--fg-bg2), var(--fg-bg)) !important;
     box-shadow: 0 2px 10px rgba(233,30,140,0.15);
 }
 .raba-cat-icon { font-size: 22px; line-height: 1; }
-.raba-cat-name { font-size: 11px; font-weight: 700; color: #880e4f; line-height: 1.2; }
-.raba-cat-active .raba-cat-name { color: #c2185b; }
+.raba-cat-name { font-size: 11px; font-weight: 700; color: var(--fg-text); line-height: 1.2; }
+.raba-cat-active .raba-cat-name { color: var(--fg-accent2); }
 
 /* Segmented control distribución */
 .raba-segment {
-    display: flex; border: 2px solid #e8b4cb; border-radius: 10px;
+    display: flex; border: 2px solid var(--fg-border); border-radius: 10px;
     overflow: hidden; margin-top: 4px;
 }
 .raba-seg-btn {
     flex: 1; text-align: center; padding: 10px 6px;
-    font-size: 11px; font-weight: 700; color: #880e4f;
-    cursor: pointer; transition: all 0.15s; background: #ffffff;
-    border-right: 1px solid #e8b4cb; line-height: 1.3;
+    font-size: 11px; font-weight: 700; color: var(--fg-text);
+    cursor: pointer; transition: all 0.15s; background: var(--fg-bg3);
+    border-right: 1px solid var(--fg-border); line-height: 1.3;
 }
 .raba-seg-btn:last-of-type { border-right: none; }
-.raba-seg-btn:hover { background: #fff0f6; }
+.raba-seg-btn:hover { background: var(--fg-hover); }
 .raba-seg-btn.raba-seg-active {
-    background: linear-gradient(135deg, #e91e8c, #c2185b) !important;
+    background: linear-gradient(135deg, var(--fg-accent), var(--fg-accent2)) !important;
     color: #ffffff !important;
 }
 
 /* Footer */
 .raba-footer {
-    background: #fff8fc; border-top: 1.5px solid #fce4ec;
+    background: var(--fg-bg); border-top: 1.5px solid var(--fg-bg2);
     padding: 14px 18px 12px; display: flex;
     flex-direction: column; align-items: center; gap: 8px;
 }
-.raba-creator { font-size: 11px; color: #c2185b; opacity: 0.8; font-style: italic; }
-.raba-creator strong { font-style: normal; color: #880e4f; }
+.raba-creator { font-size: 11px; color: var(--fg-accent2); opacity: 0.8; font-style: italic; }
+.raba-creator strong { font-style: normal; color: var(--fg-text); }
 </style>`
 }
 else {
@@ -1132,10 +1189,15 @@ html = `
   <!-- CABECERA -->
   <div class="raba-header">
     <button class="btn" id="x" onclick="closeWindow('massScavengeSophie')" style="background:rgba(0,0,0,0.20);color:#fff;border:none;width:36px;height:36px;font-size:16px;font-weight:900;cursor:pointer;position:absolute;right:0;top:0;bottom:0;height:100%;border-radius:0;line-height:1;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button id="masivaThemeBtn" title="Cambiar tema">🎨</button>
     <div style="flex:1;text-align:center;padding:4px 0;">
       <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:0.5px;line-height:1.2;">🌸 ${langShinko[0]} 🌸</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.82);margin-top:4px;letter-spacing:0.8px;font-weight:500;text-transform:uppercase;">Gestiona y lanza tu recolección masiva de recursos</div>
     </div>
+  </div>
+  <div id="masivaThemePanel">
+    <div class="masiva-theme-hdr">🎨 Tema visual</div>
+    ${(function(){return Object.keys(MASIVA_THEMES).map(function(k){return '<div class="masiva-theme-item" data-masiva-theme="'+k+'">'+MASIVA_THEMES[k].emoji+' '+MASIVA_THEMES[k].name+'</div>';}).join('');})()}
   </div>
 
   <!-- CUERPO PRINCIPAL -->
@@ -1161,7 +1223,7 @@ html = `
           <!-- Fila 1: por fecha -->
           <div class="raba-time-row">
             <label class="raba-radio-lbl" title="Seleccionar por fecha">
-              <input type="radio" id="timeSelectorDate" name="timeSelector" style="accent-color:#e91e8c;">
+              <input type="radio" id="timeSelectorDate" name="timeSelector" style="accent-color:var(--fg-accent);">
             </label>
             <div class="raba-time-cell">
               <input type="date" id="offDay" name="offDay" value="${setDayToField(runTimes.off)}">
@@ -1175,7 +1237,7 @@ html = `
           <!-- Fila 2: por horas -->
           <div class="raba-time-row">
             <label class="raba-radio-lbl" title="Seleccionar por horas">
-              <input type="radio" id="timeSelectorHours" name="timeSelector" style="accent-color:#e91e8c;">
+              <input type="radio" id="timeSelectorHours" name="timeSelector" style="accent-color:var(--fg-accent);">
             </label>
             <div style="display:flex;align-items:center;gap:5px;min-width:0;">
               <input type="text" class="runTime_off" value="${runTimes['off']}" onclick="this.select();" style="flex:1;min-width:0;">
@@ -1304,6 +1366,36 @@ document.getElementById('segBtnPriority').addEventListener('click', function() {
 syncCatToggles();
 syncSegBtns();
 
+// ---- Theme panel handlers ----
+document.getElementById('masivaThemeBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    var panel = document.getElementById('masivaThemePanel');
+    var isOpen = panel.style.display === 'block';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+        var curr = getMasivaCurrentTheme();
+        [].forEach.call(panel.querySelectorAll('.masiva-theme-item'), function(el) {
+            el.classList.toggle('masiva-active', el.getAttribute('data-masiva-theme') === curr);
+        });
+    }
+});
+document.getElementById('masivaThemePanel').addEventListener('click', function(e) {
+    var item = e.target.closest ? e.target.closest('.masiva-theme-item') : e.target;
+    if (!item || !item.getAttribute('data-masiva-theme')) return;
+    var name = item.getAttribute('data-masiva-theme');
+    applyMasivaTheme(name);
+    [].forEach.call(document.querySelectorAll('.masiva-theme-item'), function(el) {
+        el.classList.toggle('masiva-active', el.getAttribute('data-masiva-theme') === name);
+    });
+    document.getElementById('masivaThemePanel').style.display = 'none';
+});
+document.addEventListener('click', function(e) {
+    var t = e.target;
+    var inPanel = false;
+    while (t) { if (t.id === 'masivaThemePanel' || t.id === 'masivaThemeBtn') { inPanel = true; break; } t = t.parentElement; }
+    if (!inPanel) { var p = document.getElementById('masivaThemePanel'); if (p) p.style.display = 'none'; }
+});
+
 $("#offDisplay")[0].innerText = fancyTimeFormat(runTimes.off * 3600);
 $("#defDisplay")[0].innerText = fancyTimeFormat(runTimes.def * 3600);
 if (tempElementSelection == "Date") {
@@ -1361,7 +1453,7 @@ for (var i = 0; i < sendOrder.length; i++) {
       <div class="raba-troop-img"><img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_${sendOrder[i]}.png" title="${sendOrder[i]}" alt="" style="display:block;margin:auto;max-width:none;height:auto;image-rendering:auto;"></div>
       <div class="raba-troop-check"><input type="checkbox" id="${sendOrder[i]}" name="${sendOrder[i]}" style="width:18px;height:18px;accent-color:#e91e8c;cursor:pointer;"></div>
       <div class="raba-troop-label">Reserva</div>
-      <div class="raba-troop-input"><input type="text" id="${sendOrder[i]}Backup" name="${sendOrder[i]}" value="${keepHome[sendOrder[i]]}" size="4" style="width:52px;text-align:center;border:1.5px solid #e8b4cb;border-radius:6px;padding:3px;font-size:12px;"></div>
+      <div class="raba-troop-input"><input type="text" id="${sendOrder[i]}Backup" name="${sendOrder[i]}" value="${keepHome[sendOrder[i]]}" size="4" style="width:52px;text-align:center;border:1.5px solid var(--fg-border);border-radius:6px;padding:3px;font-size:12px;"></div>
     </div>`);
 }
 
