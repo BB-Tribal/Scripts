@@ -45,6 +45,44 @@ var priorityOrder  = (function () {
     return order;
 })();
 
+// === TEMA ===
+var RECO_THEMES = {
+    violet:   { name:'Violeta',   emoji:'&#x1F49C;', '--fg-bg':'#fdf5ff','--fg-bg2':'#f3e5f5','--fg-bg3':'#ffffff','--fg-border':'#e1bee7','--fg-accent':'#9c27b0','--fg-accent2':'#7b1fa2','--fg-text':'#6a1b9a','--fg-text2':'#37474f','--fg-hover':'#f3e5f5','--fg-link':'#ab47bc','--fg-shadow':'rgba(123,31,162,.25)' },
+    inferno:  { name:'Inferno',   emoji:'&#x1F525;', '--fg-bg':'#1c1f27','--fg-bg2':'#21242e','--fg-bg3':'#252831','--fg-border':'#2c2f3c','--fg-accent':'#f5a623','--fg-accent2':'#e8700a','--fg-text':'#e2e8f0','--fg-text2':'#8892a4','--fg-hover':'rgba(245,166,35,.08)','--fg-link':'#f5a623','--fg-shadow':'rgba(0,0,0,.5)' },
+    emerald:  { name:'Esmeralda', emoji:'&#x1F49A;', '--fg-bg':'#f0fdf4','--fg-bg2':'#dcfce7','--fg-bg3':'#ffffff','--fg-border':'#bbf7d0','--fg-accent':'#16a34a','--fg-accent2':'#15803d','--fg-text':'#14532d','--fg-text2':'#374151','--fg-hover':'#dcfce7','--fg-link':'#22c55e','--fg-shadow':'rgba(21,128,61,.25)' },
+    sakura:   { name:'Sakura',    emoji:'&#x1F338;', '--fg-bg':'#fdf2f8','--fg-bg2':'#fce7f3','--fg-bg3':'#ffffff','--fg-border':'#f9a8d4','--fg-accent':'#ec4899','--fg-accent2':'#db2777','--fg-text':'#831843','--fg-text2':'#6b7280','--fg-hover':'#fce7f3','--fg-link':'#f472b6','--fg-shadow':'rgba(219,39,119,.25)' },
+    amethyst: { name:'Amethyst',  emoji:'&#x1F538;', '--fg-bg':'#faf5ff','--fg-bg2':'#f3e8ff','--fg-bg3':'#ffffff','--fg-border':'#d8b4fe','--fg-accent':'#7c3aed','--fg-accent2':'#6d28d9','--fg-text':'#4c1d95','--fg-text2':'#6b7280','--fg-hover':'#f3e8ff','--fg-link':'#a78bfa','--fg-shadow':'rgba(109,40,217,.25)' },
+    matrix:   { name:'Matrix',    emoji:'&#x1F7E2;', '--fg-bg':'#0a0f0a','--fg-bg2':'#0a1a0a','--fg-bg3':'#0f1a0f','--fg-border':'#1a3d1a','--fg-accent':'#00ff41','--fg-accent2':'#00cc34','--fg-text':'#ccffcc','--fg-text2':'#4dff77','--fg-hover':'rgba(0,255,65,.07)','--fg-link':'#00ff41','--fg-shadow':'rgba(0,255,65,.3)' },
+    midnight: { name:'Midnight',  emoji:'&#x1F319;', '--fg-bg':'#0f172a','--fg-bg2':'#1a2540','--fg-bg3':'#1e293b','--fg-border':'#334155','--fg-accent':'#3b82f6','--fg-accent2':'#2563eb','--fg-text':'#e2e8f0','--fg-text2':'#94a3b8','--fg-hover':'rgba(59,130,246,.09)','--fg-link':'#60a5fa','--fg-shadow':'rgba(0,0,0,.6)' },
+    crimson:  { name:'Crimson',   emoji:'&#x1F534;', '--fg-bg':'#1a0505','--fg-bg2':'#220808','--fg-bg3':'#2d0a0a','--fg-border':'#7f1d1d','--fg-accent':'#ef4444','--fg-accent2':'#dc2626','--fg-text':'#fecaca','--fg-text2':'#f87171','--fg-hover':'rgba(239,68,68,.09)','--fg-link':'#f87171','--fg-shadow':'rgba(0,0,0,.6)' },
+    arctic:   { name:'Arctic',    emoji:'&#x1F30A;', '--fg-bg':'#f0f9ff','--fg-bg2':'#e0f2fe','--fg-bg3':'#ffffff','--fg-border':'#bae6fd','--fg-accent':'#0ea5e9','--fg-accent2':'#0284c7','--fg-text':'#0c4a6e','--fg-text2':'#0369a1','--fg-hover':'rgba(14,165,233,.07)','--fg-link':'#38bdf8','--fg-shadow':'rgba(14,165,233,.25)' },
+    tribal:   { name:'Tribal',    emoji:'&#x1F3F0;', '--fg-bg':'#f4e8c4','--fg-bg2':'#ecdca8','--fg-bg3':'#fdf5e0','--fg-border':'#9b7b3a','--fg-accent':'#7a9b2a','--fg-accent2':'#5a7a1a','--fg-text':'#3d2b0e','--fg-text2':'#7a5c2e','--fg-hover':'rgba(122,155,42,.09)','--fg-link':'#5a7a1a','--fg-shadow':'rgba(61,43,14,.3)' },
+};
+function applyRecoTheme(name) {
+    var th = RECO_THEMES[name] || RECO_THEMES.violet;
+    var get = function(k) { return th[k] || ''; };
+    var el = document.getElementById('reco-theme-vars');
+    if (!el) { el = document.createElement('style'); el.id = 'reco-theme-vars'; document.head.appendChild(el); }
+    el.textContent = '#recoPanel{' +
+        '--fg-bg:'      + get('--fg-bg')      + ';' +
+        '--fg-bg2:'     + get('--fg-bg2')     + ';' +
+        '--fg-bg3:'     + get('--fg-bg3')     + ';' +
+        '--fg-border:'  + get('--fg-border')  + ';' +
+        '--fg-accent:'  + get('--fg-accent')  + ';' +
+        '--fg-accent2:' + get('--fg-accent2') + ';' +
+        '--fg-text:'    + get('--fg-text')    + ';' +
+        '--fg-text2:'   + get('--fg-text2')   + ';' +
+        '--fg-hover:'   + get('--fg-hover')   + ';' +
+        '--fg-link:'    + get('--fg-link')    + ';' +
+        '--fg-shadow:'  + get('--fg-shadow')  + ';' +
+    '}';
+    localStorage.setItem('recolector_theme', name);
+}
+function getRecoCurrentTheme() {
+    return localStorage.getItem('recolector_theme') || 'violet';
+}
+applyRecoTheme(getRecoCurrentTheme());
+
 // === CSS ===
 $('head').append(`<style id="recoRabaCSS">
 #recoPanel {
@@ -53,9 +91,9 @@ $('head').append(`<style id="recoRabaCSS">
     z-index: 9999;
     width: fit-content;
     min-width: 280px;
-    background: #fffdf8;
+    background: var(--fg-bg3);
     border-radius: 6px;
-    box-shadow: 4px 4px 18px rgba(0,0,0,0.20), 0 1px 4px rgba(0,0,0,0.10);
+    box-shadow: 4px 4px 18px var(--fg-shadow), 0 1px 4px rgba(0,0,0,0.10);
     font-family: 'Segoe UI', Tahoma, sans-serif;
     user-select: none;
     cursor: default;
@@ -74,7 +112,7 @@ $('head').append(`<style id="recoRabaCSS">
 }
 /* Cabecera */
 #recoPanel .reco-head {
-    background: linear-gradient(135deg, #ab47bc 0%, #9c27b0 45%, #7b1fa2 100%);
+    background: linear-gradient(135deg, var(--fg-link) 0%, var(--fg-accent) 45%, var(--fg-accent2) 100%);
     padding: 8px 10px 10px 14px;
     display: flex; align-items: center; justify-content: space-between;
     cursor: move;
@@ -95,12 +133,12 @@ $('head').append(`<style id="recoRabaCSS">
 }
 /* Footer */
 #recoPanel .reco-footer {
-    background: #fdf5ff; border-top: 1.5px solid #f3e5f5;
+    background: var(--fg-bg); border-top: 1.5px solid var(--fg-border);
     padding: 7px 12px; text-align: center;
-    font-size: 10px; color: #7b1fa2; font-style: italic;
+    font-size: 10px; color: var(--fg-accent2); font-style: italic;
     border-radius: 0 0 6px 6px;
 }
-#recoPanel .reco-footer strong { font-style: normal; color: #6a1b9a; }
+#recoPanel .reco-footer strong { font-style: normal; color: var(--fg-text); }
 #recoPanel .reco-head-close {
     background: rgba(0,0,0,0.18); border: none; cursor: pointer;
     width: 24px; height: 24px; border-radius: 5px;
@@ -122,21 +160,21 @@ $('head').append(`<style id="recoRabaCSS">
 #recoHelpBox {
     display: none;
     position: absolute;
-    top: 38px; right: 10px;
+    top: 52px; right: 10px;
     width: 260px;
-    background: #fff;
-    border: 1.5px solid #e1bee7;
+    background: var(--fg-bg3);
+    border: 1.5px solid var(--fg-border);
     border-radius: 8px;
-    box-shadow: 0 6px 20px rgba(106,27,154,0.15);
+    box-shadow: 0 6px 20px var(--fg-shadow);
     z-index: 10000;
     padding: 12px 14px;
-    font-size: 11px; color: #444; line-height: 1.6;
+    font-size: 11px; color: var(--fg-text2); line-height: 1.6;
     cursor: default;
 }
 #recoHelpBox h4 {
     font-size: 10px; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.8px; color: #7b1fa2; margin: 10px 0 3px;
-    border-bottom: 1px solid #f3e5f5; padding-bottom: 3px;
+    letter-spacing: 0.8px; color: var(--fg-accent2); margin: 10px 0 3px;
+    border-bottom: 1px solid var(--fg-border); padding-bottom: 3px;
 }
 #recoHelpBox h4:first-child { margin-top: 0; }
 #recoHelpBox p { margin: 0 0 4px; }
@@ -145,16 +183,16 @@ $('head').append(`<style id="recoRabaCSS">
     background: none; border: none; cursor: pointer;
     font-size: 12px; color: #ccc;
 }
-#recoHelpBox .reco-help-close:hover { color: #9c27b0; }
+#recoHelpBox .reco-help-close:hover { color: var(--fg-accent); }
 
 /* Cuerpo */
-#recoPanel .reco-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+#recoPanel .reco-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; background: var(--fg-bg); }
 
 /* Separador de sección */
 #recoPanel .reco-sep {
     font-size: 9px; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 1px; color: #7b1fa2;
-    border-bottom: 1px solid #e8d5f0;
+    letter-spacing: 1px; color: var(--fg-accent2);
+    border-bottom: 1px solid var(--fg-border);
     padding-bottom: 4px; margin-bottom: 2px;
 }
 
@@ -164,17 +202,17 @@ $('head').append(`<style id="recoRabaCSS">
 }
 .reco-tc {
     display: flex; flex-direction: column; align-items: center;
-    background: #fff; border: 1.5px solid #e1bee7;
+    background: var(--fg-bg3); border: 1.5px solid var(--fg-border);
     border-radius: 7px; min-width: 44px; flex-shrink: 0;
     overflow: hidden; cursor: grab;
     transition: border-color 0.15s, box-shadow 0.15s;
 }
-.reco-tc:hover { border-color: #9c27b0; box-shadow: 0 2px 8px rgba(156,39,176,0.15); }
-.reco-tc-img { background: #f3e5f5; width: 100%; text-align: center; padding: 5px 3px; }
+.reco-tc:hover { border-color: var(--fg-accent); box-shadow: 0 2px 8px var(--fg-shadow); }
+.reco-tc-img { background: var(--fg-bg2); width: 100%; text-align: center; padding: 5px 3px; }
 .reco-tc-chk { padding: 3px 0; }
 .reco-tc-n {
-    background: #f3e5f5; width: 100%; text-align: center;
-    font-size: 10px; font-weight: 700; color: #6a1b9a; padding: 2px 0;
+    background: var(--fg-bg2); width: 100%; text-align: center;
+    font-size: 10px; font-weight: 700; color: var(--fg-text); padding: 2px 0;
 }
 .reco-drag-hint { font-size: 9px; color: #ccc; text-align: center; margin-top: 5px; }
 
@@ -186,62 +224,89 @@ $('head').append(`<style id="recoRabaCSS">
 .reco-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .reco-chip {
     padding: 5px 13px; border-radius: 50px;
-    border: 1.5px solid #f0a0c8; background: #fff;
-    font-size: 11px; font-weight: 700; color: #7b1fa2;
+    border: 1.5px solid var(--fg-border); background: var(--fg-bg3);
+    font-size: 11px; font-weight: 700; color: var(--fg-accent2);
     cursor: pointer; transition: all 0.15s; line-height: 1;
     user-select: none;
 }
-.reco-chip:hover { border-color: #9c27b0; background: #f3e5f5; }
+.reco-chip:hover { border-color: var(--fg-accent); background: var(--fg-bg2); }
 .reco-chip.reco-chip-active {
-    background: linear-gradient(135deg, #ab47bc 0%, #9c27b0 100%);
-    border-color: #9c27b0; color: #fff;
-    box-shadow: 0 2px 8px rgba(156,39,176,0.35);
+    background: linear-gradient(135deg, var(--fg-link) 0%, var(--fg-accent) 100%);
+    border-color: var(--fg-accent); color: #fff;
+    box-shadow: 0 2px 8px var(--fg-shadow);
 }
-.reco-duration { font-size: 10px; color: #7b1fa2; font-style: italic; text-align: center; }
+.reco-duration { font-size: 10px; color: var(--fg-accent2); font-style: italic; text-align: center; }
 
 /* Categorías */
 .reco-cat-list { display: contents; }
 .reco-cat-row {
     display: flex; align-items: center; gap: 6px;
-    background: #fff; border: 1.5px solid #e1bee7;
+    background: var(--fg-bg3); border: 1.5px solid var(--fg-border);
     border-radius: 7px; padding: 4px 8px;
     transition: all 0.15s;
 }
 .reco-cat-row.reco-active {
-    border-color: #9c27b0;
-    background: linear-gradient(135deg, #f3e5f5, #fff5fb);
+    border-color: var(--fg-accent);
+    background: var(--fg-bg2);
 }
 .reco-cat-row { flex-direction: column; align-items: stretch; gap: 4px; }
 .reco-cat-row-top { display: flex; align-items: center; gap: 6px; }
 .reco-cat-row-icon { font-size: 13px; line-height: 1; }
-.reco-cat-row-name { font-size: 10px; font-weight: 700; color: #6a1b9a; flex: 1; }
-.reco-cat-row-val { font-size: 11px; font-weight: 800; color: #7b1fa2; }
+.reco-cat-row-name { font-size: 10px; font-weight: 700; color: var(--fg-text); flex: 1; }
+.reco-cat-row-val { font-size: 11px; font-weight: 800; color: var(--fg-accent2); }
 .reco-cat-ok  { font-size: 11px; font-weight: 900; color: #388e3c; margin-left: 4px; }
 .reco-cat-err { font-size: 11px; font-weight: 900; color: #d32f2f; margin-left: 4px; }
 /* Botón enviar todo */
 #recoSendAll {
     width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer;
-    background: linear-gradient(135deg, #ab47bc 0%, #7b1fa2 100%);
+    background: linear-gradient(135deg, var(--fg-link) 0%, var(--fg-accent2) 100%);
     color: #fff; font-size: 13px; font-weight: 800; letter-spacing: 0.4px;
-    box-shadow: 0 3px 12px rgba(123,31,162,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+    box-shadow: 0 3px 12px var(--fg-shadow), inset 0 1px 0 rgba(255,255,255,0.15);
     transition: all 0.15s; position: relative; overflow: hidden;
 }
 #recoSendAll:hover {
-    background: linear-gradient(135deg, #ba68c8 0%, #8e24aa 100%);
-    box-shadow: 0 5px 18px rgba(123,31,162,0.55);
+    background: linear-gradient(135deg, var(--fg-accent) 0%, var(--fg-accent2) 100%);
+    box-shadow: 0 5px 18px var(--fg-shadow);
     transform: translateY(-1px);
 }
-#recoSendAll:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(123,31,162,0.4); }
+#recoSendAll:active { transform: translateY(0); box-shadow: 0 2px 6px var(--fg-shadow); }
 .reco-cat-troops { display: flex; flex-wrap: wrap; gap: 4px 8px; padding-top: 2px; min-height: 16px; }
-.reco-cat-troop { display: flex; align-items: center; gap: 2px; font-size: 10px; font-weight: 700; color: #37474f; }
+.reco-cat-troop { display: flex; align-items: center; gap: 2px; font-size: 10px; font-weight: 700; color: var(--fg-text2); }
 .reco-cat-troop img { width: 16px; height: 16px; image-rendering: auto; }
+
+/* Theme panel */
+#recoThemePanel {
+    display: none;
+    position: absolute;
+    top: 52px; left: 0;
+    width: 200px;
+    background: var(--fg-bg3);
+    border: 1.5px solid var(--fg-border);
+    border-radius: 0 8px 8px 8px;
+    box-shadow: 0 8px 24px var(--fg-shadow);
+    z-index: 10001;
+    padding: 6px;
+    flex-direction: column;
+    gap: 3px;
+}
+#recoThemePanel.open { display: flex; }
+.reco-theme-item {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 8px; border-radius: 6px;
+    border: 1.5px solid transparent; cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.reco-theme-item:hover { border-color: var(--fg-border); background: var(--fg-bg2); }
+.reco-theme-item.active { border-color: var(--fg-accent) !important; }
+.reco-theme-dot { width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0; }
+.reco-theme-name { font-size: 11px; font-weight: 700; color: var(--fg-text2); }
 </style>`);
 
 // === HTML UN SOLO PANEL ===
 var troopCards = worldUnits.map(function(unit) {
     return `<div class="reco-tc" data-unit="${unit}">
         <div class="reco-tc-img"><img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_${unit}.png" style="display:block;margin:auto;max-width:none;height:auto;image-rendering:auto;"></div>
-        <div class="reco-tc-chk"><input type="checkbox" id="recoChk_${unit}" style="width:16px;height:16px;accent-color:#9c27b0;cursor:pointer;"></div>
+        <div class="reco-tc-chk"><input type="checkbox" id="recoChk_${unit}" style="width:16px;height:16px;accent-color:var(--fg-accent);cursor:pointer;"></div>
         <div class="reco-tc-n" id="recoN_${unit}">${getUnitCount(unit)}</div>
     </div>`;
 }).join('');
@@ -268,9 +333,21 @@ $('body').append(`
             <div class="reco-head-subtitle">Calcula y rellena tus tropas automáticamente</div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:5px;align-self:flex-start;">
+            <button class="reco-head-help" id="recoThemeBtn" title="Tema visual" style="font-size:13px;">🎨</button>
             <button class="reco-head-help" id="recoHelpBtn" title="Ayuda">?</button>
             <button class="reco-head-close" id="recoCloseBtn">✕</button>
         </div>
+        <div id="recoThemePanel">${(function(){
+            var cur = getRecoCurrentTheme();
+            return Object.keys(RECO_THEMES).map(function(k){
+                var t = RECO_THEMES[k];
+                var a = k === cur ? ' active' : '';
+                return '<div class="reco-theme-item' + a + '" data-reco-theme="' + k + '">' +
+                    '<div class="reco-theme-dot" style="background:' + t['--fg-accent'] + ';border:2px solid ' + t['--fg-accent2'] + ';"></div>' +
+                    '<span class="reco-theme-name">' + t.emoji + ' ' + t.name + '</span>' +
+                '</div>';
+            }).join('');
+        })()}</div>
         <div id="recoHelpBox">
             <button class="reco-help-close" onclick="$('#recoHelpBox').hide()">✕</button>
             <h4>🎖️ Tropas</h4>
@@ -326,14 +403,31 @@ $('#recoCloseBtn').on('click', function() {
     $('input.unitsInput').val('').trigger('change');
 });
 
+// === TEMA ===
+$('#recoThemeBtn').on('click', function(e) {
+    e.stopPropagation();
+    $('#recoHelpBox').hide();
+    $('#recoThemePanel').toggleClass('open');
+});
+$('#recoThemePanel').on('click', '.reco-theme-item', function() {
+    var name = $(this).data('reco-theme');
+    applyRecoTheme(name);
+    $('.reco-theme-item').removeClass('active');
+    $(this).addClass('active');
+});
+
 // === AYUDA ===
 $('#recoHelpBtn').on('click', function(e) {
     e.stopPropagation();
+    $('#recoThemePanel').removeClass('open');
     $('#recoHelpBox').toggle();
 });
 $(document).on('click.recoFarm', function(e) {
     if (!$(e.target).closest('#recoHelpBox, #recoHelpBtn').length) {
         $('#recoHelpBox').hide();
+    }
+    if (!$(e.target).closest('#recoThemePanel, #recoThemeBtn').length) {
+        $('#recoThemePanel').removeClass('open');
     }
 });
 
