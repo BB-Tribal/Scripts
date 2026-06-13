@@ -582,7 +582,7 @@ if (typeof colors == 'undefined') {
 /* ---- Botón de tema ---- */
 #masivaThemeBtn {
     position: absolute !important; background: rgba(255,255,255,0.22) !important; color: white !important;
-    top: 0 !important; right: 72px !important; width: 36px !important; height: 36px !important;
+    top: 0 !important; right: 36px !important; width: 36px !important; height: 36px !important;
     border: none !important; font-size: 18px !important; cursor: pointer !important;
     line-height: 36px !important; text-align: center !important; transition: background 0.15s !important;
 }
@@ -615,7 +615,7 @@ if (typeof colors == 'undefined') {
 /* ===== NUEVO LAYOUT MODERNO ===== */
 .raba-header {
     background: linear-gradient(135deg, var(--fg-link) 0%, var(--fg-accent) 45%, var(--fg-accent2) 100%);
-    padding: 18px 110px 16px 20px;
+    padding: 18px 78px 16px 20px;
     position: relative;
     display: flex;
     align-items: center;
@@ -780,6 +780,9 @@ if (typeof colors == 'undefined') {
 }
 .raba-creator { font-size: 11px; color: var(--fg-accent2); opacity: 0.8; font-style: italic; }
 .raba-creator strong { font-style: normal; color: var(--fg-text); }
+/* Final dialog close button */
+#massScavengeFinal .masiva-x-final { background: var(--fg-accent2) !important; color: #fff !important; }
+#massScavengeFinal .masiva-x-final:hover { background: var(--fg-text) !important; }
 </style>`
 }
 else {
@@ -1128,18 +1131,18 @@ function getData() {
                         var totalGroups = Object.keys(squads).length;
                         var totalVillages = new Set(squad_requests.map(function(r){ return r.village_id; })).size;
                         htmlWithLaunchButtons = `
-                        <div id="massScavengeFinal" class="ui-widget-content" style="position:fixed;cursor:move;z-index:50;width:auto;min-width:280px;max-width:340px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 10px 36px rgba(136,14,79,0.28);border:1.5px solid #e8b4cb;font-family:'Segoe UI',Tahoma,sans-serif;">
+                        <div id="massScavengeFinal" class="ui-widget-content" style="position:fixed;cursor:move;z-index:50;width:auto;min-width:280px;max-width:340px;background:var(--fg-bg3);border-radius:14px;overflow:hidden;box-shadow:0 10px 36px var(--fg-shadow);border:1.5px solid var(--fg-border);font-family:'Segoe UI',Tahoma,sans-serif;">
                           <!-- Header -->
-                          <div style="background:linear-gradient(135deg,#f06292 0%,#e91e8c 45%,#c2185b 100%);padding:16px 48px 14px 20px;position:relative;min-height:62px;display:flex;align-items:center;">
-                            <button onclick="closeWindow('massScavengeFinal')" style="background:#c2185b;color:#fff;border:none;width:28px;height:28px;font-size:13px;font-weight:900;cursor:pointer;position:absolute;right:8px;top:50%;transform:translateY(-50%);border-radius:6px;line-height:28px;text-align:center;transition:background 0.15s;" onmouseover="this.style.background='#880e4f'" onmouseout="this.style.background='#c2185b'">✕</button>
+                          <div style="background:linear-gradient(135deg,var(--fg-link) 0%,var(--fg-accent) 45%,var(--fg-accent2) 100%);padding:16px 48px 14px 20px;position:relative;min-height:62px;display:flex;align-items:center;">
+                            <button class="masiva-x-final" onclick="closeWindow('massScavengeFinal')" style="border:none;width:28px;height:28px;font-size:13px;font-weight:900;cursor:pointer;position:absolute;right:8px;top:50%;transform:translateY(-50%);border-radius:6px;line-height:28px;text-align:center;transition:background 0.15s;">✕</button>
                             <div style="flex:1;text-align:center;">
                               <div style="font-size:17px;font-weight:800;color:#fff;letter-spacing:0.4px;">🌸 Lanzar Recolección</div>
                               <div style="font-size:10px;color:rgba(255,255,255,0.82);margin-top:3px;letter-spacing:0.8px;text-transform:uppercase;">${totalVillages} aldeas · ${totalGroups} grupo${totalGroups !== 1 ? 's' : ''}</div>
                             </div>
                           </div>
                           <!-- Descripción -->
-                          <div style="padding:10px 18px;background:#fff8fc;border-bottom:1.5px solid #fce4ec;">
-                            <p style="margin:0;font-size:12px;color:#880e4f;text-align:center;">Lanza cada grupo en orden · El servidor acepta máx. 200 aldeas por envío.</p>
+                          <div style="padding:10px 18px;background:var(--fg-hover);border-bottom:1.5px solid var(--fg-border);">
+                            <p style="margin:0;font-size:12px;color:var(--fg-text);text-align:center;">Lanza cada grupo en orden · El servidor acepta máx. 200 aldeas por envío.</p>
                           </div>
                           <!-- Botones de grupos -->
                           <div id="massScavengeSophieFinalTable" style="padding:14px 18px;display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;">`;
@@ -1147,10 +1150,10 @@ function getData() {
                             var fromV = s * 200 + 1;
                             var toV = Math.min((s + 1) * 200, totalVillages);
                             htmlWithLaunchButtons += `
-                            <div id="sendRow${s}" style="display:flex;align-items:center;gap:10px;background:#fff0f6;border:1.5px solid #e8b4cb;border-radius:10px;padding:10px 14px;">
+                            <div id="sendRow${s}" style="display:flex;align-items:center;gap:10px;background:var(--fg-bg);border:1.5px solid var(--fg-border);border-radius:10px;padding:10px 14px;">
                               <div style="flex:1;">
-                                <div style="font-size:13px;font-weight:700;color:#880e4f;">🚀 Grupo ${s + 1}</div>
-                                <div style="font-size:11px;color:#c2185b;margin-top:2px;">Aldeas ${fromV} – ${toV}</div>
+                                <div style="font-size:13px;font-weight:700;color:var(--fg-text);">🚀 Grupo ${s + 1}</div>
+                                <div style="font-size:11px;color:var(--fg-text2);margin-top:2px;">Aldeas ${fromV} – ${toV}</div>
                               </div>
                               <input type="button" class="btn btnSophie" id="sendMassGroup" onclick="sendGroup(${s},false)" value="Lanzar" style="padding:7px 18px;font-size:13px;">
                               <input type="button" class="btn btn-pp btn-send-premium" id="sendMassPremium" onclick="sendGroup(${s},true)" value="Premium" style="display:none;padding:7px 14px;font-size:12px;">
@@ -1184,7 +1187,7 @@ function getData() {
 
 //first UI, will always open as soon as you run the script.
 html = `
-<div id="massScavengeSophie" class="ui-widget-content" style="width:720px;background:#fff;cursor:move;z-index:50;border-radius:14px;overflow:hidden;box-shadow:0 10px 36px rgba(136,14,79,0.22);border:1.5px solid #e8b4cb;font-family:'Segoe UI',Tahoma,sans-serif;">
+<div id="massScavengeSophie" class="ui-widget-content" style="width:720px;background:var(--fg-bg3);cursor:move;z-index:50;border-radius:14px;overflow:hidden;box-shadow:0 10px 36px var(--fg-shadow);border:1.5px solid var(--fg-border);font-family:'Segoe UI',Tahoma,sans-serif;">
 
   <!-- CABECERA -->
   <div class="raba-header">
@@ -1215,7 +1218,7 @@ html = `
         <div class="raba-section-title">⏰ ${langShinko[3]}</div>
         <div class="raba-time-block">
           <!-- Fila 0: cabeceras de columna -->
-          <div style="display:grid;grid-template-columns:34px 1fr 1fr;gap:8px;background:#fce4ec;border-bottom:2px solid #e8b4cb;box-sizing:border-box;padding:0 10px;">
+          <div style="display:grid;grid-template-columns:34px 1fr 1fr;gap:8px;background:var(--fg-bg2);border-bottom:2px solid var(--fg-border);box-sizing:border-box;padding:0 10px;">
             <div></div>
             <div class="raba-time-hdr">⚔️ Ofensivas</div>
             <div class="raba-time-hdr">🛡️ Defensivas</div>
@@ -1241,11 +1244,11 @@ html = `
             </label>
             <div style="display:flex;align-items:center;gap:5px;min-width:0;">
               <input type="text" class="runTime_off" value="${runTimes['off']}" onclick="this.select();" style="flex:1;min-width:0;">
-              <span style="font-size:11px;font-weight:800;color:#c2185b;letter-spacing:0.5px;flex-shrink:0;">horas</span>
+              <span style="font-size:11px;font-weight:800;color:var(--fg-accent2);letter-spacing:0.5px;flex-shrink:0;">horas</span>
             </div>
             <div style="display:flex;align-items:center;gap:5px;min-width:0;">
               <input type="text" class="runTime_def" value="${runTimes['def']}" onclick="this.select();" style="flex:1;min-width:0;">
-              <span style="font-size:11px;font-weight:800;color:#c2185b;letter-spacing:0.5px;flex-shrink:0;">horas</span>
+              <span style="font-size:11px;font-weight:800;color:var(--fg-accent2);letter-spacing:0.5px;flex-shrink:0;">horas</span>
             </div>
           </div>
           <!-- Fila 3: duración calculada -->
