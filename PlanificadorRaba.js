@@ -31,7 +31,7 @@ function applyRATheme(name) {
     const get = k => th[k] || '';
     let el = document.getElementById('ra-theme-vars');
     if (!el) { el = document.createElement('style'); el.id = 'ra-theme-vars'; document.head.appendChild(el); }
-    el.textContent = `#raSingleVillagePlanner, #raPlannerLauncher {
+    el.textContent = `#raSingleVillagePlanner, #raPlannerLauncher, #ra-wrong-screen-overlay {
         --bg-base:       ${get('--fg-bg')};
         --bg-card:       ${get('--fg-bg3')};
         --bg-card-hover: ${get('--fg-hover')};
