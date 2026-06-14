@@ -792,7 +792,7 @@ window.FarmGod.Main = (function (Library, Translation) {
           <div class="fg-header-icon"><span class="icon header lc"> </span></div>
           <div class="fg-header-text">
             <div class="fg-header-title">${t.options.title}</div>
-            <div class="fg-header-sub">v1.4.5</div>
+            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo &mdash; v1.4.5</div>
           </div>
           <button class="fg-settings-btn" id="fg-settings-btn" type="button" title="Tema visual">&#9881;</button>
         </div>
