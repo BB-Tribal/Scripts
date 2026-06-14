@@ -1,6 +1,6 @@
 /*
  * Script Name: Timing Assist
- * Version: v1.8
+ * Version: v1.9
  * Modified by: Black_Lottus
  */
 
@@ -341,11 +341,15 @@ var c, ctx, circleReference,
                 + "<input id='offset_input' type='text' onchange='storeData(\"offset_ms\")' style='width:30px' value='" + calibrationTime + "'>"
                 + "<img id='offset_status' src='" + b + "' onclick='getInitialOffset()' style='cursor:pointer;vertical-align:middle;margin-left:4px'>";
 
-            // Arm auto-send button + countdown
+            // Arm auto-send button + target time input + countdown
             var armTd = document.createElement("TD");
             armTd.setAttribute('style','white-space:nowrap;padding-left:4px');
-            armTd.innerHTML = "<button id='ta-arm-btn' type='button' class='btn btn-recruit' onclick='armAutoSend()' style='width:80px'>⚡ Armar</button>"
-                + "<span id='ta-countdown' style='font-family:monospace;font-size:11px;color:var(--ta-accent,#c8982a);margin-left:4px;min-width:44px;display:inline-block'></span>";
+            armTd.innerHTML = "<input id='ta-target-time' type='text' placeholder='20:00:00.500'"
+                + " style='width:88px;font-family:monospace;font-size:11px' title='Hora exacta de llegada (HH:MM:SS.ms)'>"
+                + "<button id='ta-arm-btn' type='button' class='btn btn-recruit' onclick='armAutoSend()'"
+                + " style='width:76px;margin-left:3px'>⚡ Armar</button>"
+                + "<span id='ta-countdown' style='font-family:monospace;font-size:11px;"
+                + "color:var(--ta-accent,#c8982a);margin-left:4px;min-width:55px;display:inline-block'></span>";
 
             // Theme button
             var thTd = document.createElement("TD");
@@ -559,6 +563,28 @@ var c, ctx, circleReference,
         }
     }
 
+    function parseTargetTime(str){
+        // Accepts HH:MM:SS.ms or HH:MM:SS:ms
+        var m = str.trim().match(/^(\d{1,2}):(\d{2}):(\d{2})[.:](\d{1,3})$/);
+        if(!m) return null;
+        var hh=parseInt(m[1]), mm=parseInt(m[2]), ss=parseInt(m[3]);
+        var msStr=m[4];
+        // Pad right to 3 digits: "5" → 500, "50" → 500, "500" → 500
+        while(msStr.length < 3) msStr += '0';
+        var ms = parseInt(msStr);
+        var target = new Date();
+        target.setHours(hh, mm, ss, ms);
+        // If the time has already passed (> 5s ago), schedule for next day
+        if(target.getTime() < Date.now() - 5000) target.setDate(target.getDate() + 1);
+        return target.getTime();
+    }
+
+    function fmtCountdown(rem){
+        if(rem > 60000) return Math.floor(rem/60000)+'m '+((rem%60000)/1000).toFixed(1)+'s';
+        if(rem > 1000)  return (rem/1000).toFixed(2)+'s';
+        return rem+'ms';
+    }
+
     function armAutoSend(){
         var btn = document.getElementById('ta-arm-btn');
         var cd  = document.getElementById('ta-countdown');
@@ -571,24 +597,38 @@ var c, ctx, circleReference,
             if(cd)  cd.textContent  = '';
             return;
         }
-        // Refresh hitMs in case user changed the field
-        hitMs = Number(document.getElementById('hit_input').value) || hitMs;
+
+        var delay;
+        var targetStr = (document.getElementById('ta-target-time')||{}).value || '';
+
+        if(targetStr.trim()){
+            // ── Absolute time mode ─────────────────────────────────────────
+            var targetTs = parseTargetTime(targetStr.trim());
+            if(!targetTs){ showToast('Formato inválido. Usa HH:MM:SS.ms (ej: 20:00:00.500)', 'error'); return; }
+            var constOff = getStorage("const_offset");
+            // Fire calibrationTime ms early so the server processes it at targetTs
+            delay = targetTs - Date.now() - calibrationTime - constOff;
+            if(delay < 0){ showToast('La hora objetivo ya ha pasado', 'error'); return; }
+            if(delay > 7200000){ showToast('Hora objetivo demasiado lejana (máx 2h)', 'warn'); return; }
+        } else {
+            // ── Next hitMs boundary mode (fallback) ────────────────────────
+            hitMs = Number(document.getElementById('hit_input').value) || hitMs;
+            var now = Date.now();
+            var adjMs = (now + calibrationTime + constOffset) % 1000;
+            delay = ((hitMs - adjMs) % 1000 + 1000) % 1000;
+            if(delay < 30) delay += 1000;
+        }
+
         armed = true;
         if(btn) btn.textContent = '⬛ Cancelar';
-
-        // Calculate exact delay to the next hitMs boundary in adjusted time
-        var now = Date.now();
-        var adjMs = (now + calibrationTime + constOffset) % 1000;
-        var delay = ((hitMs - adjMs) % 1000 + 1000) % 1000;
-        if(delay < 30) delay += 1000; // safety: never fire in < 30ms
-
-        var fireAt = now + delay;
-        if(cd) cd.textContent = delay + 'ms';
+        var fireAt = Date.now() + delay;
+        if(cd) cd.textContent = fmtCountdown(delay);
+        var tickMs = delay > 2000 ? 100 : 25;
 
         countdownInterval = setInterval(function(){
             var rem = fireAt - Date.now();
-            if(cd) cd.textContent = rem > 0 ? rem + 'ms' : '⚡';
-        }, 25);
+            if(cd) cd.textContent = rem > 0 ? fmtCountdown(rem) : '⚡';
+        }, tickMs);
 
         autoSendTimeout = setTimeout(function(){
             clearInterval(countdownInterval);
@@ -596,7 +636,6 @@ var c, ctx, circleReference,
             armed = false;
             clearInterval(timerInterval);
             sendFunction();
-            // form.submit() is shadowed by a named input — click the submit button instead
             var submitBtn = document.querySelector('#ds_body input[type="submit"], #ds_body button[type="submit"]');
             if(submitBtn) submitBtn.click();
             else HTMLFormElement.prototype.submit.call(document.getElementById('ds_body'));
