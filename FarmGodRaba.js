@@ -736,7 +736,7 @@ window.FarmGod.Main = (function (Library, Translation) {
 .fg-empty-cards { padding:44px 20px; text-align:center; color:var(--fg-text2); font-size:13px; }
 
 /* === Mobile Hold-to-Farm FAB === */
-#fg-hold-fab { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:99999; display:flex; align-items:center; justify-content:center; }
+#fg-hold-fab { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); z-index:99999; display:flex; align-items:center; justify-content:center; }
 .fg-fab-ring { position:absolute; inset:-10px; border-radius:60px; border:2.5px solid var(--fg-accent); opacity:0; pointer-events:none; }
 #fg-hold-fab.active .fg-fab-ring { animation:fgFabRing .8s ease-out infinite; }
 @keyframes fgFabRing { 0%{opacity:.6;transform:scale(1)} 100%{opacity:0;transform:scale(1.2)} }
