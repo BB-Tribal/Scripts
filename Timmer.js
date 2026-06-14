@@ -1,6 +1,6 @@
 /*
  * Script Name: Timing Assist
- * Version: v1.5
+ * Version: v1.6
  * Modified by: Black_Lottus
  */
 
@@ -479,21 +479,73 @@ var c, ctx, circleReference,
     function promptCalibration(){
         if(null==localStorage.timeAssistant) return;
         try{
-            var e=getStorage("last_hit"),t=e.split(":");
-            e=1e3*Number(t[0])+Number(t[1]);
-            1==t[0].length&&(t[0]="0"+t[0]);
-            1==t[1].length?t[1]="00"+t[1]:2==t[1].length&&(t[1]="0"+t[1]);
-            t=t[0]+":"+t[1];
-            showPrompt(_taLang.promptEstimated+"<b>"+t+"</b><br>"+_taLang.promptInput, t, function(i){
-                if(null!=i){
-                    var n=i.split(":");
-                    e-15e3>(n=1e3*Number(n[0])+Number(n[1]))?n+=6e4:n-15e3>e&&(e+=6e4);
-                    var s=n-e;
-                    s=0==runTimes?Number(s+calibrationTime):Number(s);
-                    isNaN(s)?(storeData("offset",0),showToast(_taLang.errorOffset,'error')):(runTimes++,storeData("offset",s));
+            var estRaw=getStorage("last_hit"), tParts=estRaw.split(":");
+            var estimatedMs=1e3*Number(tParts[0])+Number(tParts[1]);
+            1==tParts[0].length&&(tParts[0]="0"+tParts[0]);
+            1==tParts[1].length?tParts[1]="00"+tParts[1]:2==tParts[1].length&&(tParts[1]="0"+tParts[1]);
+            var estimatedStr=tParts[0]+":"+tParts[1];
+
+            injectStyles();
+
+            // Persistent banner at top of page
+            var banner=document.createElement('div');
+            banner.id='ta-calib-banner';
+            banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;'
+                +'background:linear-gradient(90deg,var(--ta-bg2,#2a1f0e),var(--ta-bg,#1a1208));'
+                +'border-bottom:2px solid var(--ta-accent,#c8982a);padding:10px 16px;'
+                +'display:flex;align-items:center;gap:10px;font-family:Arial,sans-serif;'
+                +'font-size:13px;color:var(--ta-text,#e8c87a);box-shadow:0 2px 12px rgba(0,0,0,.6)';
+            banner.innerHTML='<span style="font-size:16px">🎯</span>'
+                +'<span>Hit estimado: <b>'+estimatedStr+'</b> &mdash; haz clic en el ataque que acabas de enviar</span>'
+                +'<button id="ta-calib-cancel" type="button" style="margin-left:auto;background:transparent;'
+                +'border:1px solid var(--ta-border,#8a6a2a);color:var(--ta-text2,#d4b87a);'
+                +'border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px">Cancelar</button>';
+            document.body.appendChild(banner);
+
+            // Highlight clickable rows
+            var $rows=$('tr.command-row');
+            $rows.css({'outline':'2px solid var(--ta-accent,#c8982a)','cursor':'pointer'});
+            $rows.on('mouseenter.tacalib',function(){$(this).css('background','rgba(200,152,42,.12)');});
+            $rows.on('mouseleave.tacalib',function(){$(this).css('background','');});
+
+            function cleanup(){
+                var b=document.getElementById('ta-calib-banner');
+                if(b) b.remove();
+                $rows.css({'outline':'','cursor':'','background':''}).off('.tacalib');
+            }
+
+            document.getElementById('ta-calib-cancel').onclick=cleanup;
+
+            $rows.on('click.tacalib',function(){
+                // Parse arrival time from second TD: "hoy a las 22:57:54:" + <span class="grey small">162</span>
+                var $td=$(this).find('td').eq(1);
+                var realMs=parseInt($td.find('.grey.small').text().trim());
+                var rawText=$td[0].childNodes[0]?$td[0].childNodes[0].nodeValue:'';
+                var match=rawText.match(/(\d{1,2}):(\d{2}):(\d{2})/);
+                var realSec=match?parseInt(match[3]):NaN;
+
+                cleanup();
+
+                if(isNaN(realSec)||isNaN(realMs)){
+                    showToast('No se pudo leer el tiempo de llegada','error');
+                    return;
+                }
+
+                var n=realSec*1000+realMs;
+                estimatedMs-15e3>n?n+=6e4:n-15e3>estimatedMs&&(estimatedMs+=6e4);
+                var s=n-estimatedMs;
+                s=0==runTimes?Number(s+calibrationTime):Number(s);
+                if(isNaN(s)){
+                    storeData("offset",0);
+                    showToast(_taLang.errorOffset,'error');
+                }else{
+                    runTimes++;
+                    storeData("offset",s);
+                    showToast('Calibrado: offset '+(s>=0?'+':'')+s+' ms','info');
                 }
             });
-        }catch(e){
+
+        }catch(err){
             console.log(_taLang.errConsoleInput);
             showToast(_taLang.errorManual,'error');
         }
