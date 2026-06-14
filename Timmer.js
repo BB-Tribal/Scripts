@@ -340,10 +340,10 @@ var c, ctx, circleReference,
                 + "<input id='offset_input' type='text' onchange='storeData(\"offset_ms\")' style='width:30px' value='" + calibrationTime + "'>"
                 + "<img id='offset_status' src='" + b + "' onclick='getInitialOffset()' style='cursor:pointer;vertical-align:middle;margin-left:4px'>";
 
-            // Time display (auto-updates with estimated hit time)
+            // Server time display — shows current calibrated server time so you can verify sync
             var ts = document.createElement("TD");
             ts.setAttribute('style','white-space:nowrap');
-            ts.innerHTML = "<span>" + _taLang.labelTime + "</span><input style='width:90px' id='date_input' title='Estimated hit time' type='text' readonly>";
+            ts.innerHTML = "<span>" + _taLang.labelTime + "</span><input style='width:72px;font-family:monospace' id='date_input' title='Hora actual del servidor (calibrada)' type='text' readonly>";
 
             // Theme button
             var thTd = document.createElement("TD");
@@ -393,11 +393,12 @@ var c, ctx, circleReference,
             $("#second_display")[0].innerHTML = (sec<10?'0':'')+sec;
         }
 
-        // Auto-update estimated hit time field
-        var hitDate = new Date(e.getTime() + (hitMs - t + (t>hitMs?0:0)));
-        var hh = hitDate.getHours(), mm = hitDate.getMinutes(), ss = hitDate.getSeconds(), ms = hitDate.getMilliseconds();
-        var dateInput = document.getElementById('date_input');
-        if(dateInput) dateInput.value = (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm+':'+(ss<10?'0':'')+ss+':'+(ms<100?(ms<10?'00':'0'):'')+ms;
+        // Show calibrated server time — updates every ~200ms to avoid thrashing
+        if(t % 200 < 5){
+            var hh=e.getHours(), mm=e.getMinutes(), ss=e.getSeconds();
+            var dateInput = document.getElementById('date_input');
+            if(dateInput) dateInput.value = (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm+':'+(ss<10?'0':'')+ss;
+        }
 
         if(i < lastTimingMillis){
             ctx.clearRect(0,0,160,160);
