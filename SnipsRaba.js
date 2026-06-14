@@ -5,6 +5,8 @@
  * Base: RedAlert (twscripts.dev)
  */
 
+(function () {
+
 var scriptData = {
     prefix: 'singleVillageSnipe',
     name: 'Single Village Snipe',
@@ -1821,3 +1823,5 @@ async function countAPI() {
         }, 500);
     }
 })();
+
+})(); // end outer IIFE

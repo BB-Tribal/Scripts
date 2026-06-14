@@ -7,6 +7,8 @@
 
 /* Copyright (c) 2026 - Modernized Version */
 
+(function () {
+
 const scriptData = {
     name: 'Planificador de Ataques',
     version: 'v2.1.1',
@@ -2575,3 +2577,5 @@ function showWrongScreenError() {
         showWrongScreenError();
     }
 })();
+
+})(); // end outer IIFE
