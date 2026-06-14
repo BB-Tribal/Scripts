@@ -1,6 +1,6 @@
 /*
  * Script Name: Timing Assist
- * Version: v1.9
+ * Version: v2.0
  * Modified by: Black_Lottus
  */
 
@@ -282,12 +282,21 @@ var c, ctx, circleReference,
     }else null==runTimes&&(runTimes=0), promptCalibration();
 
     function getArrivalSeconds() {
-        var $cell = $('#date_arrival').closest('td');
-        var $rel = $cell.find('.relative_time');
-        var text = ($rel.length ? $rel.text() : $cell[0].childNodes[0] ? $cell[0].childNodes[0].nodeValue : '').trim();
-        var parts = text.split(':');
-        var sec = Number((parts[parts.length - 1] || '0').replace(/\D.*/, ''));
-        return isNaN(sec) ? 0 : sec * 1000;
+        // Read #date_arrival's own text — skip .relative_time siblings (they show countdown, not arrival)
+        var el = document.getElementById('date_arrival');
+        if(!el) return 0;
+        var m = el.textContent.match(/(\d{1,2}):(\d{2}):(\d{2})/);
+        return m ? parseInt(m[3]) * 1000 : 0;
+    }
+
+    function getTravelMs() {
+        // Find the duration cell: a TD whose trimmed text is exactly H+:MM:SS
+        var tds = document.querySelectorAll('#ds_body td');
+        for(var i=0; i<tds.length; i++){
+            var m = tds[i].textContent.trim().match(/^(\d+):(\d{2}):(\d{2})$/);
+            if(m) return (parseInt(m[1])*3600 + parseInt(m[2])*60 + parseInt(m[3])) * 1000;
+        }
+        return 0;
     }
 
     function addDisplay() {
@@ -364,6 +373,18 @@ var c, ctx, circleReference,
             n.appendChild(armTd);
             n.appendChild(thTd);
 
+            // Auto-populate arrival time field: "HH:MM:SS.ms" from #date_arrival + current hitMs
+            (function(){
+                var inp = document.getElementById('ta-target-time');
+                var arrEl = document.getElementById('date_arrival');
+                if(!inp || !arrEl) return;
+                var tm = arrEl.textContent.match(/(\d{1,2}):(\d{2}):(\d{2})/);
+                if(!tm) return;
+                var ms = String(Number(getStorage("hit_ms")) || 500);
+                while(ms.length < 3) ms = '0' + ms;
+                inp.value = tm[0] + '.' + ms;
+            })();
+
             $("#ds_body")[0].setAttribute("onsubmit","sendFunction()");
             timerInterval = setInterval(drawCircle, 5);
 
@@ -384,9 +405,9 @@ var c, ctx, circleReference,
             var th = TA_THEMES[getCurrentTATheme()] || TA_THEMES.classic;
             ctx.strokeStyle = th.stroke;
             ctx.lineWidth = 3;
-            // Init second display
-            var p = $('#date_arrival').closest('td').find('.relative_time').text().trim().split(':');
-            $("#second_display")[0].innerHTML = (p[p.length-1]||'00').replace(/\D.*/,'');
+            // Init second display with the real arrival second
+            var arrSec = getArrivalSeconds() / 1000;
+            $("#second_display")[0].innerHTML = arrSec < 10 ? '0'+arrSec : String(arrSec);
         }
 
         var e = new Date,
@@ -602,14 +623,16 @@ var c, ctx, circleReference,
         var targetStr = (document.getElementById('ta-target-time')||{}).value || '';
 
         if(targetStr.trim()){
-            // ── Absolute time mode ─────────────────────────────────────────
-            var targetTs = parseTargetTime(targetStr.trim());
-            if(!targetTs){ showToast('Formato inválido. Usa HH:MM:SS.ms (ej: 20:00:00.500)', 'error'); return; }
+            // ── Absolute arrival time mode ──────────────────────────────────
+            var arrivalTs = parseTargetTime(targetStr.trim());
+            if(!arrivalTs){ showToast('Formato inválido. Usa HH:MM:SS.ms (ej: 23:46:35.500)', 'error'); return; }
+            var travelMs = getTravelMs();
+            var sendTs   = arrivalTs - travelMs;          // when the form must be submitted
             var constOff = getStorage("const_offset");
-            // Fire calibrationTime ms early so the server processes it at targetTs
-            delay = targetTs - Date.now() - calibrationTime - constOff;
-            if(delay < 0){ showToast('La hora objetivo ya ha pasado', 'error'); return; }
-            if(delay > 7200000){ showToast('Hora objetivo demasiado lejana (máx 2h)', 'warn'); return; }
+            delay = sendTs - Date.now() - calibrationTime - constOff;
+            if(delay < -500){ showToast('La hora de llegada ya ha pasado', 'error'); return; }
+            if(delay < 0) delay = 0;
+            if(delay > 86400000){ showToast('Hora objetivo demasiado lejana (máx 24h)', 'warn'); return; }
         } else {
             // ── Next hitMs boundary mode (fallback) ────────────────────────
             hitMs = Number(document.getElementById('hit_input').value) || hitMs;
@@ -643,10 +666,16 @@ var c, ctx, circleReference,
     }
 
     function getInitialOffset(){
-        var t=new Date;
-        var sTime=Timing.getCurrentServerTime();
-        storeData("const_offset",Math.round(sTime-t.getTime()));
-        updateColor();
-        var e = getArrivalSeconds();
-        constOffset = e + (sTime-t.getTime());
+        try{
+            var t=new Date;
+            var sTime=Timing.getCurrentServerTime();
+            var off=Math.round(sTime-t.getTime());
+            storeData("const_offset",off);
+            updateColor();
+            var e = getArrivalSeconds();
+            constOffset = e + off;
+            showToast('Sincronizado con servidor (' + (off>=0?'+':'') + off + ' ms)', 'info');
+        }catch(ex){
+            showToast('Error al sincronizar: '+ex.message, 'error');
+        }
     }
