@@ -18,7 +18,7 @@ if(getParameterByName('screen') == "info_village"){
 }
 
 //var content = document.getElementsByClassName("quickedit-content");
-var lang = {
+var _rnLang = {
     spear: " 𝐋𝐚𝐧𝐳𝐚𝐬 🔱▸",
     sword: " 𝐄𝐬𝐩𝐚𝐝𝐚𝐬 🗡️▸",
     axe: " 𝐇𝐚𝐜𝐡𝐚𝐬 🪓▸",
@@ -90,27 +90,27 @@ async function calculateAsync(link){
     troopsValue = spear + sword + axe + archer + (spy*2) + (light*4) + (marcher*5) + (ram*5) + (catapult*8) + (knight*10) + (snob*100);
     var atackName = "";
     if(snob >= 1){
-        atackName = lang.snob;
+        atackName = _rnLang.snob;
     }else if(spy >= valor/2){
-        atackName = lang.fakeSpy;
+        atackName = _rnLang.fakeSpy;
     }else if(troopsValue >= 0 && troopsValue <= 300){
-        atackName = lang.fake;
+        atackName = _rnLang.fake;
     }else if(troopsValue >= 1000 && troopsValue <= 2000){
-        atackName = lang.miniOff;
+        atackName = _rnLang.miniOff;
     }else if(troopsValue > 2000){
-        atackName = lang.off;
+        atackName = _rnLang.off;
     }else{
-        if(spear != 0) atackName = atackName + spear + lang.spear;
-        if(sword != 0) atackName = atackName + sword + lang.sword;
-        if(axe != 0) atackName = atackName + axe + lang.axe;
-        if(archer != 0) atackName = atackName + archer + lang.archer;
-        if(spy != 0) atackName = atackName + spy + lang.spy;
-        if(light != 0) atackName = atackName + light + lang.light;
-        if(marcher != 0) atackName = atackName + marcher + lang.marcher;
-        if(ram != 0) atackName = atackName + ram + lang.ram;
-        if(catapult != 0) atackName = atackName + catapult + lang.catapult;
-        if(knight != 0) atackName = atackName + knight + lang.knight;
-        if(snob != 0) atackName = atackName + snob + lang.snob;
+        if(spear != 0) atackName = atackName + spear + _rnLang.spear;
+        if(sword != 0) atackName = atackName + sword + _rnLang.sword;
+        if(axe != 0) atackName = atackName + axe + _rnLang.axe;
+        if(archer != 0) atackName = atackName + archer + _rnLang.archer;
+        if(spy != 0) atackName = atackName + spy + _rnLang.spy;
+        if(light != 0) atackName = atackName + light + _rnLang.light;
+        if(marcher != 0) atackName = atackName + marcher + _rnLang.marcher;
+        if(ram != 0) atackName = atackName + ram + _rnLang.ram;
+        if(catapult != 0) atackName = atackName + catapult + _rnLang.catapult;
+        if(knight != 0) atackName = atackName + knight + _rnLang.knight;
+        if(snob != 0) atackName = atackName + snob + _rnLang.snob;
     }
     return atackName;
 }
