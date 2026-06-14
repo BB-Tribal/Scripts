@@ -4,7 +4,7 @@ javascript:
 // ╔══════════════════════════════════════════════════════╗
 //  LANG
 // ╚══════════════════════════════════════════════════════╝
-var lang = {
+var _fcLang = {
     title:       'Fake Coordinado',
     badge:       '⚔️ HERRAMIENTA',
     subtitle:    'Calcula los lanzamientos exactos',
@@ -503,7 +503,7 @@ function subHeaderHTML(logo, title, subtitle, leftBtnHTML) {
         '</div>' +
         '<div class="fc-head-btns">' +
             (leftBtnHTML || '') +
-            '<button class="fc-icon-btn fc-close-btn">' + lang.close + '</button>' +
+            '<button class="fc-icon-btn fc-close-btn">' + _fcLang.close + '</button>' +
         '</div>' +
     '</div>';
 }
@@ -520,7 +520,7 @@ function headerHTML(title, subtitle) {
         '<div class="fc-head-btns">' +
             '<button class="fc-icon-btn" id="fcHelpBtn" title="Ayuda">?</button>' +
             '<button class="fc-icon-btn" id="fcSettBtn" title="Ajustes">⚙️</button>' +
-            '<button class="fc-icon-btn fc-close-btn">' + lang.close + '</button>' +
+            '<button class="fc-icon-btn fc-close-btn">' + _fcLang.close + '</button>' +
         '</div>' +
     '</div>';
 }
@@ -530,8 +530,8 @@ function headerHTML(title, subtitle) {
 // ╚══════════════════════════════════════════════════════╝
 function timeInputHTML() {
     var fmtBtns = '<div class="fc-fmt-row">' +
-        '<button class="fc-fmt-btn' + (timeFmt==='text'   ? ' active' : '') + '" data-fmt="text">'   + lang.fmtText   + '</button>' +
-        '<button class="fc-fmt-btn' + (timeFmt==='picker' ? ' active' : '') + '" data-fmt="picker">' + lang.fmtPicker + '</button>' +
+        '<button class="fc-fmt-btn' + (timeFmt==='text'   ? ' active' : '') + '" data-fmt="text">'   + _fcLang.fmtText   + '</button>' +
+        '<button class="fc-fmt-btn' + (timeFmt==='picker' ? ' active' : '') + '" data-fmt="picker">' + _fcLang.fmtPicker + '</button>' +
     '</div>';
     var inp = timeFmt === 'picker'
         ? '<input class="fc-input" id="fcTime" type="datetime-local" value="' + toDatetimeLocal(defDate) + '">'
@@ -543,18 +543,18 @@ $('.fc-overlay#fcMainOverlay').remove();
 $('body').append(
     '<div class="fc-overlay" id="fcMainOverlay">' +
     '<div class="fc-box" style="width:460px;max-width:96vw;max-height:90vh;overflow-y:auto;">' +
-    headerHTML(lang.title, lang.subtitle) +
+    headerHTML(_fcLang.title, _fcLang.subtitle) +
     '<div class="fc-body">' +
         '<div class="fc-card">' +
-            '<div class="fc-card-label">🎯 ' + lang.targetLabel + '</div>' +
-            '<textarea class="fc-textarea" id="fcCoords" placeholder="' + lang.targetPH + '"></textarea>' +
+            '<div class="fc-card-label">🎯 ' + _fcLang.targetLabel + '</div>' +
+            '<textarea class="fc-textarea" id="fcCoords" placeholder="' + _fcLang.targetPH + '"></textarea>' +
             '<div class="fc-error-msg" id="fcCoordsErr">⚠️ Introduce al menos una coordenada objetivo.</div>' +
         '</div>' +
         '<div class="fc-card">' +
-            '<div class="fc-card-label">⏰ ' + lang.hitLabel + '</div>' +
+            '<div class="fc-card-label">⏰ ' + _fcLang.hitLabel + '</div>' +
             '<div id="fcTimeWrap">' + timeInputHTML() + '</div>' +
         '</div>' +
-        '<button class="fc-btn" id="fcCalc">⚡ ' + lang.calcBtn + '</button>' +
+        '<button class="fc-btn" id="fcCalc">⚡ ' + _fcLang.calcBtn + '</button>' +
     '</div>' +
     '<div class="fc-footer">💚 Creado por <strong style="font-style:normal;">rabagalan73</strong> para la reina <strong style="font-style:normal;">M0bscene</strong> 💚</div>' +
     '</div></div>'
@@ -614,7 +614,7 @@ function openHelp() {
     $('body').append(
         '<div class="fc-overlay" id="fcHelpOverlay">' +
         '<div class="fc-box" id="fcHelpBox">' +
-        subHeaderHTML('?', lang.helpTitle, lang.helpSub) +
+        subHeaderHTML('?', _fcLang.helpTitle, _fcLang.helpSub) +
         '<div class="fc-help-body">' + html + '</div>' +
         '<div class="fc-footer">💚 Creado por <strong style="font-style:normal;">rabagalan73</strong> para la reina <strong style="font-style:normal;">M0bscene</strong> 💚</div>' +
         '</div></div>'
@@ -655,21 +655,21 @@ function openSettings() {
     $('body').append(
         '<div class="fc-overlay" id="fcSettOverlay">' +
         '<div class="fc-box" id="fcSettBox">' +
-        subHeaderHTML('⚙️', lang.settTitle, lang.settSub) +
+        subHeaderHTML('⚙️', _fcLang.settTitle, _fcLang.settSub) +
         '<div class="fc-sett-body">' +
             '<div class="fc-card">' +
                 '<div class="fc-card-label">🎨 Tema visual</div>' +
                 '<div class="fc-theme-grid" id="fcsTheme">' + themeChips + '</div>' +
             '</div>' +
             '<div class="fc-card">' +
-                '<div class="fc-card-label">🔤 ' + lang.fontLabel + '</div>' +
+                '<div class="fc-card-label">🔤 ' + _fcLang.fontLabel + '</div>' +
                 '<div class="fc-font-row" id="fcsFont">' + fontBtns + '</div>' +
             '</div>' +
             '<div class="fc-card">' +
-                '<div class="fc-card-label"><span class="icon header lc"> </span>&nbsp;' + lang.troopsLabel + '</div>' +
+                '<div class="fc-card-label"><span class="icon header lc"> </span>&nbsp;' + _fcLang.troopsLabel + '</div>' +
                 '<div class="fc-troop-grid">' + troopCards + '</div>' +
             '</div>' +
-            '<button class="fc-btn" id="fcSettSave">✅ ' + lang.save + '</button>' +
+            '<button class="fc-btn" id="fcSettSave">✅ ' + _fcLang.save + '</button>' +
         '</div>' +
         '<div class="fc-footer">💚 Creado por <strong style="font-style:normal;">rabagalan73</strong> para la reina <strong style="font-style:normal;">M0bscene</strong> 💚</div>' +
         '</div></div>'
@@ -887,21 +887,21 @@ function showResults(targetIdMap, targetNameMap) {
                     '<tr id="fcCard_' + i + '" class="fc-target-row">' +
                     '<td><span class="fc-res-num">' + (n+1) + '</span></td>' +
                     '<td><div class="fc-res-route">' + tgtHTML + '</div></td>' +
-                    '<td><span class="fc-res-dist-pill">📏 ' + Math.round(item.distance) + ' ' + lang.fields + '</span></td>' +
+                    '<td><span class="fc-res-dist-pill">📏 ' + Math.round(item.distance) + ' ' + _fcLang.fields + '</span></td>' +
                     '<td>' +
                         '<div class="fc-res-timer-wrap">' +
-                            '<div class="fc-res-timer-lbl">' + lang.launchIn + '</div>' +
+                            '<div class="fc-res-timer-lbl">' + _fcLang.launchIn + '</div>' +
                             '<div class="fc-res-timer timer" id="fcTimer_' + i + '" style="color:' + (item.ttl < 30000 ? '#ef4444' : item.ttl < 1800000 ? '#d97706' : '') + '">' + msToHMS(item.ttl) + '</div>' +
                         '</div>' +
                     '</td>' +
                     '<td><span class="fc-res-localtime">🕐 ' + timeStr + '</span></td>' +
-                    '<td style="text-align:right"><button class="fc-rally-btn" onclick="fcGoRally(' + i + ',' + src.ID + ',' + tx[1] + ',' + tx[2] + ')">🏹 ' + lang.rallyBtn + '</button></td>' +
+                    '<td style="text-align:right"><button class="fc-rally-btn" onclick="fcGoRally(' + i + ',' + src.ID + ',' + tx[1] + ',' + tx[2] + ')">🏹 ' + _fcLang.rallyBtn + '</button></td>' +
                     '</tr>';
             });
         });
     }
 
-    var subTitle = lang.resSub.replace('{n}', timedFakeList.length);
+    var subTitle = _fcLang.resSub.replace('{n}', timedFakeList.length);
     if (timedFakeList.length && timedFakeList[0].refUnit) {
         var ru = timedFakeList[0].refUnit;
         subTitle += ' · Ref: <img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + ru + '.png" style="width:13px;height:13px;vertical-align:-2px;margin:0 2px;"> ' + (unitNames[ru] || ru);
@@ -909,7 +909,7 @@ function showResults(targetIdMap, targetNameMap) {
     $('body').append(
         '<div class="fc-overlay" id="fcResOverlay">' +
         '<div class="fc-box" id="fcResBox">' +
-        subHeaderHTML('🏹', lang.resTitle, subTitle, '<button class="fc-icon-btn" id="fcResBack" title="' + lang.back + '">←</button>') +
+        subHeaderHTML('🏹', _fcLang.resTitle, subTitle, '<button class="fc-icon-btn" id="fcResBack" title="' + _fcLang.back + '">←</button>') +
         '<div class="fc-res-body">' +
             (!timedFakeList.length
             ? '<div class="fc-empty-state">' +
@@ -926,10 +926,10 @@ function showResults(targetIdMap, targetNameMap) {
             : '<table class="fc-res-table">' +
                 '<thead><tr>' +
                     '<th>#</th>' +
-                    '<th>' + lang.target + '</th>' +
-                    '<th>' + lang.dist + '</th>' +
-                    '<th>' + lang.launchIn + '</th>' +
-                    '<th>' + lang.launchAt + '</th>' +
+                    '<th>' + _fcLang.target + '</th>' +
+                    '<th>' + _fcLang.dist + '</th>' +
+                    '<th>' + _fcLang.launchIn + '</th>' +
+                    '<th>' + _fcLang.launchAt + '</th>' +
                     '<th></th>' +
                 '</tr></thead>' +
                 '<tbody>' + rows + '</tbody>' +
@@ -978,18 +978,18 @@ function openMain() {
     $('body').append(
         '<div class="fc-overlay" id="fcMainOverlay">' +
         '<div class="fc-box" style="width:460px;max-width:96vw;max-height:90vh;overflow-y:auto;">' +
-        headerHTML(lang.title, lang.subtitle) +
+        headerHTML(_fcLang.title, _fcLang.subtitle) +
         '<div class="fc-body">' +
             '<div class="fc-card">' +
-                '<div class="fc-card-label">🎯 ' + lang.targetLabel + '</div>' +
-                '<textarea class="fc-textarea" id="fcCoords" placeholder="' + lang.targetPH + '">' + (savedCoords || '') + '</textarea>' +
+                '<div class="fc-card-label">🎯 ' + _fcLang.targetLabel + '</div>' +
+                '<textarea class="fc-textarea" id="fcCoords" placeholder="' + _fcLang.targetPH + '">' + (savedCoords || '') + '</textarea>' +
                 '<div class="fc-error-msg" id="fcCoordsErr">⚠️ Introduce al menos una coordenada objetivo.</div>' +
             '</div>' +
             '<div class="fc-card">' +
-                '<div class="fc-card-label">⏰ ' + lang.hitLabel + '</div>' +
+                '<div class="fc-card-label">⏰ ' + _fcLang.hitLabel + '</div>' +
                 '<div id="fcTimeWrap">' + timeInputHTML() + '</div>' +
             '</div>' +
-            '<button class="fc-btn" id="fcCalc">⚡ ' + lang.calcBtn + '</button>' +
+            '<button class="fc-btn" id="fcCalc">⚡ ' + _fcLang.calcBtn + '</button>' +
         '</div>' +
         '<div class="fc-footer">💚 Creado por <strong style="font-style:normal;">rabagalan73</strong> para la reina <strong style="font-style:normal;">M0bscene</strong> 💚</div>' +
         '</div></div>'
