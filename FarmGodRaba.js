@@ -530,6 +530,56 @@ window.FarmGod.Main = (function (Library, Translation) {
         }
       });
 
+    // === Mobile Hold-to-Farm FAB ===
+    // Only on mobile (no physical keyboard). Tap: fires once. Hold: fires continuously
+    // while finger is pressed — same behavior as holding Enter on desktop. Not automation:
+    // requires continuous manual contact.
+    if ($('#mobileHeader').length > 0) {
+      if (window._fgFabTimer) { clearInterval(window._fgFabTimer); window._fgFabTimer = null; }
+      $('#fg-hold-fab').remove();
+      $('body').append(
+        '<div id="fg-hold-fab">' +
+          '<div class="fg-fab-ring"></div>' +
+          '<button class="fg-fab-btn" id="fg-hold-btn" aria-label="Mantener pulsado para granjear">' +
+            '<span class="fg-fab-icon">&#x2694;&#xFE0F;</span>' +
+            '<div class="fg-fab-text">' +
+              '<span class="fg-fab-label">MANTENER PULSADO</span>' +
+              '<span class="fg-fab-sub">para enviar granja</span>' +
+            '</div>' +
+            '<span class="fg-fab-counter" id="fg-fab-counter">0</span>' +
+          '</button>' +
+        '</div>'
+      );
+      var _fabBtn = document.getElementById('fg-hold-btn');
+      var _fabNode = document.getElementById('fg-hold-fab');
+      _fabBtn.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        var _count = 0;
+        _fabBtn.classList.add('fg-fab-active');
+        _fabNode.classList.add('active');
+        function _fire() {
+          var icon = document.querySelector('.farmGod_icon');
+          if (icon) {
+            $(icon).trigger('click');
+            _count++;
+            var c = document.getElementById('fg-fab-counter');
+            if (c) c.textContent = _count;
+            if (navigator.vibrate) navigator.vibrate(18);
+          }
+        }
+        _fire();
+        window._fgFabTimer = setInterval(_fire, 220);
+      }, { passive: false });
+      function _fabStop() {
+        _fabBtn.classList.remove('fg-fab-active');
+        _fabNode.classList.remove('active');
+        clearInterval(window._fgFabTimer);
+        window._fgFabTimer = null;
+      }
+      _fabBtn.addEventListener('touchend', _fabStop);
+      _fabBtn.addEventListener('touchcancel', _fabStop);
+    }
+
     $('.switchVillage')
       .off('click')
       .on('click', function () {
@@ -556,7 +606,7 @@ window.FarmGod.Main = (function (Library, Translation) {
     let vars = Object.entries(th).filter(([k]) => k.startsWith('--')).map(([k,v]) => `${k}:${v}`).join(';');
     let el = document.getElementById('fg-theme-vars');
     if (!el) { el = document.createElement('style'); el.id = 'fg-theme-vars'; document.head.appendChild(el); }
-    el.textContent = `#popup_box_FarmGod, #popup_box_FarmGod .popup_box_content, .fgRabaContent { ${vars} }`;
+    el.textContent = `#popup_box_FarmGod, #popup_box_FarmGod .popup_box_content, .fgRabaContent, #fg-hold-fab { ${vars} }`;
     localStorage.setItem('farmGod_theme', themeName);
   };
 
@@ -684,6 +734,22 @@ window.FarmGod.Main = (function (Library, Translation) {
 .fg-card-send-label { font-size:10px; font-weight:600; color:var(--fg-text2); pointer-events:none; transition:color .15s; }
 .fg-farm-card:hover .fg-card-send-label { color:var(--fg-bg2); }
 .fg-empty-cards { padding:44px 20px; text-align:center; color:var(--fg-text2); font-size:13px; }
+
+/* === Mobile Hold-to-Farm FAB === */
+#fg-hold-fab { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:99999; display:flex; align-items:center; justify-content:center; }
+.fg-fab-ring { position:absolute; inset:-10px; border-radius:60px; border:2.5px solid var(--fg-accent); opacity:0; pointer-events:none; }
+#fg-hold-fab.active .fg-fab-ring { animation:fgFabRing .8s ease-out infinite; }
+@keyframes fgFabRing { 0%{opacity:.6;transform:scale(1)} 100%{opacity:0;transform:scale(1.2)} }
+.fg-fab-btn { display:flex; align-items:center; gap:13px; padding:15px 30px; background:linear-gradient(135deg,var(--fg-accent) 0%,var(--fg-accent2) 100%); border:none; border-radius:50px; box-shadow:0 8px 32px var(--fg-shadow),0 2px 10px rgba(0,0,0,.3); cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; position:relative; overflow:hidden; transition:transform .12s,box-shadow .12s; }
+.fg-fab-btn::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,0); transition:background .15s; pointer-events:none; }
+.fg-fab-btn.fg-fab-active { transform:scale(.96); box-shadow:0 3px 12px var(--fg-shadow); }
+.fg-fab-btn.fg-fab-active::after { background:rgba(255,255,255,.1); }
+.fg-fab-icon { font-size:26px; line-height:1; flex-shrink:0; filter:drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
+.fg-fab-text { display:flex; flex-direction:column; align-items:flex-start; }
+.fg-fab-label { font-size:13px; font-weight:800; color:#fff; letter-spacing:.5px; white-space:nowrap; text-shadow:0 1px 3px rgba(0,0,0,.22); line-height:1.3; }
+.fg-fab-sub { font-size:10px; color:rgba(255,255,255,.68); font-weight:500; letter-spacing:.2px; white-space:nowrap; margin-top:2px; }
+.fg-fab-counter { min-width:24px; height:24px; border-radius:12px; background:rgba(255,255,255,.22); color:#fff; font-size:11px; font-weight:800; display:none; align-items:center; justify-content:center; padding:0 7px; margin-left:4px; flex-shrink:0; box-shadow:inset 0 1px 3px rgba(0,0,0,.2); }
+.fg-fab-btn.fg-fab-active .fg-fab-counter { display:flex; }
     `;
     document.head.appendChild(s);
   };
