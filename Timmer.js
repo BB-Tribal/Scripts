@@ -1,6 +1,6 @@
 /*
  * Script Name: Timing Assist
- * Version: v1.6
+ * Version: v1.7
  * Modified by: Black_Lottus
  */
 
@@ -257,6 +257,7 @@ function toggleTutorial(){
 var c, ctx, circleReference,
     lastMillis, lastTimingMillis,
     timerInterval, constOffset, runTimes,
+    armed=false, hasFired=false, autoSendTimeout, countdownInterval,
     hitMs=getStorage("hit_ms"),
     milliPiFraction=.00628319, calibrationTime=getStorage("offset_ms"),
     imgSrc = {
@@ -340,6 +341,12 @@ var c, ctx, circleReference,
                 + "<input id='offset_input' type='text' onchange='storeData(\"offset_ms\")' style='width:30px' value='" + calibrationTime + "'>"
                 + "<img id='offset_status' src='" + b + "' onclick='getInitialOffset()' style='cursor:pointer;vertical-align:middle;margin-left:4px'>";
 
+            // Arm auto-send button + countdown
+            var armTd = document.createElement("TD");
+            armTd.setAttribute('style','white-space:nowrap;padding-left:4px');
+            armTd.innerHTML = "<button id='ta-arm-btn' type='button' class='btn btn-recruit' onclick='armAutoSend()' style='width:80px'>⚡ Armar</button>"
+                + "<span id='ta-countdown' style='font-family:monospace;font-size:11px;color:var(--ta-accent,#c8982a);margin-left:4px;min-width:44px;display:inline-block'></span>";
+
             // Theme button
             var thTd = document.createElement("TD");
             thTd.setAttribute('style','white-space:nowrap;padding-left:4px');
@@ -350,6 +357,7 @@ var c, ctx, circleReference,
             n.appendChild(p);
             n.appendChild(u);
             n.appendChild(g);
+            n.appendChild(armTd);
             n.appendChild(thTd);
 
             $("#ds_body")[0].setAttribute("onsubmit","sendFunction()");
@@ -549,6 +557,47 @@ var c, ctx, circleReference,
             console.log(_taLang.errConsoleInput);
             showToast(_taLang.errorManual,'error');
         }
+    }
+
+    function armAutoSend(){
+        var btn = document.getElementById('ta-arm-btn');
+        var cd  = document.getElementById('ta-countdown');
+        if(hasFired) return;
+        if(armed){
+            clearTimeout(autoSendTimeout);
+            clearInterval(countdownInterval);
+            armed = false;
+            if(btn) btn.textContent = '⚡ Armar';
+            if(cd)  cd.textContent  = '';
+            return;
+        }
+        // Refresh hitMs in case user changed the field
+        hitMs = Number(document.getElementById('hit_input').value) || hitMs;
+        armed = true;
+        if(btn) btn.textContent = '⬛ Cancelar';
+
+        // Calculate exact delay to the next hitMs boundary in adjusted time
+        var now = Date.now();
+        var adjMs = (now + calibrationTime + constOffset) % 1000;
+        var delay = ((hitMs - adjMs) % 1000 + 1000) % 1000;
+        if(delay < 30) delay += 1000; // safety: never fire in < 30ms
+
+        var fireAt = now + delay;
+        if(cd) cd.textContent = delay + 'ms';
+
+        countdownInterval = setInterval(function(){
+            var rem = fireAt - Date.now();
+            if(cd) cd.textContent = rem > 0 ? rem + 'ms' : '⚡';
+        }, 25);
+
+        autoSendTimeout = setTimeout(function(){
+            clearInterval(countdownInterval);
+            hasFired = true;
+            armed = false;
+            clearInterval(timerInterval);
+            sendFunction();
+            document.getElementById('ds_body').submit();
+        }, delay);
     }
 
     function getInitialOffset(){
