@@ -1,6 +1,6 @@
 /*
  * Script Name: Timing Assist
- * Version: v2.0
+ * Version: v2.1
  * Modified by: Black_Lottus
  */
 
@@ -282,11 +282,17 @@ var c, ctx, circleReference,
     }else null==runTimes&&(runTimes=0), promptCalibration();
 
     function getArrivalSeconds() {
-        // Read #date_arrival's own text — skip .relative_time siblings (they show countdown, not arrival)
-        var el = document.getElementById('date_arrival');
-        if(!el) return 0;
-        var m = el.textContent.match(/(\d{1,2}):(\d{2}):(\d{2})/);
-        return m ? parseInt(m[3]) * 1000 : 0;
+        // Original approach: loop tbody rows from index 2, find first cell with ":", extract [2]
+        var tbody = $("#date_arrival").parent().parent()[0];
+        for(var t=2; t<tbody.children.length; t++){
+            try{
+                var cell = tbody.children[t].children[1];
+                if(cell && cell.innerHTML.match(":")){
+                    return 1e3 * Number(cell.innerHTML.split(":")[2]);
+                }
+            }catch(ex){ console.log(_taLang.errConsoleArrival+ex); }
+        }
+        return 0;
     }
 
     function getTravelMs() {
@@ -330,9 +336,10 @@ var c, ctx, circleReference,
             l.setAttribute('style', 'height:1px;text-align:center');
             l.innerHTML = "<img src='" + imgSrc.watchtower + "'>";
 
-            // Test button
+            // Test button + miss display
             var p = document.createElement("TD");
-            p.innerHTML = "<button id='practice_button' type='button' class='btn btn-recruit' onclick='practiceFunction()' style='width:80px'>" + _taLang.btnTest + "</button>";
+            p.innerHTML = "<button id='practice_button' type='button' class='btn btn-recruit' onclick='practiceFunction()' style='width:80px'>" + _taLang.btnTest + "</button>"
+                + "<span id='miss_display' style='width:34px;display:inline-block;font-size:11px;vertical-align:middle;margin-left:3px;font-family:monospace' title='Desfase ms'>0</span>";
 
             // Hit input
             var u = document.createElement("TD");
@@ -405,9 +412,9 @@ var c, ctx, circleReference,
             var th = TA_THEMES[getCurrentTATheme()] || TA_THEMES.classic;
             ctx.strokeStyle = th.stroke;
             ctx.lineWidth = 3;
-            // Init second display with the real arrival second
-            var arrSec = getArrivalSeconds() / 1000;
-            $("#second_display")[0].innerHTML = arrSec < 10 ? '0'+arrSec : String(arrSec);
+            // Init second display — original approach: first .relative_time on the page
+            var relTime = $(".relative_time")[0];
+            $("#second_display")[0].innerHTML = relTime ? (relTime.innerHTML.split(":")[2]||'00') : '00';
         }
 
         var e = new Date,
@@ -672,10 +679,18 @@ var c, ctx, circleReference,
             var off=Math.round(sTime-t.getTime());
             storeData("const_offset",off);
             updateColor();
-            var e = getArrivalSeconds();
-            constOffset = e + off;
-            showToast('Sincronizado con servidor (' + (off>=0?'+':'') + off + ' ms)', 'info');
+            // Same loop as original: find first tbody row (from index 2) with ":" in second column
+            var tbody=$("#date_arrival").parent().parent()[0];
+            var arrSec=0;
+            for(var n=2;n<tbody.children.length;n++){
+                try{
+                    var cell=tbody.children[n].children[1];
+                    if(cell&&cell.innerHTML.match(":")){arrSec=1e3*Number(cell.innerHTML.split(":")[2]);break;}
+                }catch(ex){}
+            }
+            constOffset=arrSec+off;
+            showToast('Sincronizado con servidor ('+(off>=0?'+':'')+off+' ms)','info');
         }catch(ex){
-            showToast('Error al sincronizar: '+ex.message, 'error');
+            showToast('Error al sincronizar: '+ex.message,'error');
         }
     }
