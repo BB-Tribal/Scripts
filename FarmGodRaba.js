@@ -744,6 +744,10 @@ window.FarmGod.Main = (function (Library, Translation) {
 
 /* === Mobile compact layout === */
 @media (max-width:900px) {
+    #popup_box_FarmGod { width:calc(100vw - 16px) !important; left:8px !important; margin-left:0 !important; }
+    #fg-theme-overlay { position:fixed !important; inset:0 !important; z-index:99998 !important; }
+    #fg-theme-panel { position:fixed !important; top:0 !important; right:0 !important; bottom:0 !important; left:auto !important; width:80vw !important; max-width:300px !important; z-index:99999 !important; transform:translateX(100%) !important; border-radius:0 !important; }
+    #fg-theme-panel.open { transform:translateX(0) !important; }
     .fg-card-grid { grid-template-columns:repeat(auto-fill,minmax(78px,1fr)) !important; gap:5px !important; }
     .fg-card-top { padding:6px 7px 5px !important; }
     .fg-card-target { font-size:10px !important; }
@@ -804,7 +808,7 @@ window.FarmGod.Main = (function (Library, Translation) {
           <div class="fg-header-icon"><span class="icon header lc"> </span></div>
           <div class="fg-header-text">
             <div class="fg-header-title">${t.options.title}</div>
-            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo &mdash; v1.5.3</div>
+            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo &mdash; v1.5.4</div>
           </div>
           <button class="fg-settings-btn" id="fg-settings-btn" type="button" title="Tema visual">&#9881;</button>
         </div>
