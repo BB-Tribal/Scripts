@@ -752,10 +752,8 @@ window.FarmGod.Main = (function (Library, Translation) {
     .fg-card-origin { font-size:9px !important; }
     .fg-card-dist-val { font-size:9px !important; }
     .fg-card-dist-dot { width:3px !important; height:3px !important; }
-    .fg-card-foot { padding:4px 6px !important; gap:3px !important; }
-    .fg-card-foot .farmGod_icon,
-    .fg-card-foot .farm_icon { transform:scale(0.72) !important; transform-origin:center !important; }
-    .fg-card-send-label { font-size:9px !important; }
+    .fg-card-foot { padding:5px 4px !important; gap:0 !important; justify-content:center !important; }
+    .fg-card-send-label { display:none !important; }
     .fg-cards-wrap { padding:8px 10px !important; gap:8px !important; }
     .fg-village-group { gap:5px !important; }
     .fg-village-group-head { padding:5px 8px 5px 10px !important; }
@@ -806,7 +804,7 @@ window.FarmGod.Main = (function (Library, Translation) {
           <div class="fg-header-icon"><span class="icon header lc"> </span></div>
           <div class="fg-header-text">
             <div class="fg-header-title">${t.options.title}</div>
-            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo &mdash; v1.5.2</div>
+            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo &mdash; v1.5.3</div>
           </div>
           <button class="fg-settings-btn" id="fg-settings-btn" type="button" title="Tema visual">&#9881;</button>
         </div>
