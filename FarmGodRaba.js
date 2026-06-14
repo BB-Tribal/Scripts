@@ -550,15 +550,11 @@ window.FarmGod.Main = (function (Library, Translation) {
       var _fabBtn = document.getElementById('fg-hold-btn');
       _fabBtn.addEventListener('touchstart', function (e) {
         e.preventDefault();
-        var _count = 0;
         _fabBtn.classList.add('fg-fab-active');
         function _fire() {
           var icon = document.querySelector('.farmGod_icon');
           if (icon) {
             $(icon).trigger('click');
-            _count++;
-            var c = document.getElementById('fg-fab-counter');
-            if (c) c.textContent = _count;
             if (navigator.vibrate) navigator.vibrate(18);
           }
         }
@@ -698,12 +694,19 @@ window.FarmGod.Main = (function (Library, Translation) {
 @keyframes fgSpin { to{transform:rotate(360deg)} }
 .fg-progress-label { font-size:10px; color:var(--fg-text2); margin-top:4px; text-align:right; }
 .fg-cards-wrap { padding:12px 14px; display:flex; flex-direction:column; gap:12px; }
-.fg-village-group { display:flex; flex-direction:column; gap:7px; }
-.fg-village-group-head { display:flex; align-items:center; gap:8px; padding:6px 10px 6px 12px; background:var(--fg-bg2); border-radius:8px; border:1px solid var(--fg-border); border-left:3px solid var(--fg-accent); }
-.fg-village-group-name { font-size:11px; font-weight:700; color:var(--fg-text); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.fg-village-count { font-size:10px; font-weight:700; color:var(--fg-bg2); background:var(--fg-accent); padding:1px 7px; border-radius:9px; flex-shrink:0; }
-.fg-switch-btn { padding:3px 9px; border-radius:5px; background:transparent; border:1px solid var(--fg-border); color:var(--fg-text2); font-size:10px; font-weight:600; cursor:pointer; flex-shrink:0; transition:border-color .15s, color .15s; }
-.fg-switch-btn:hover { border-color:var(--fg-accent); color:var(--fg-accent); }
+/* === Summary screen === */
+.fg-summary { display:flex; flex-direction:column; align-items:center; padding:36px 20px 28px; gap:18px; }
+.fg-summary-anim { font-size:52px; line-height:1; animation:fgSumPop .45s cubic-bezier(.17,.67,.3,1.3) both; }
+@keyframes fgSumPop { from{transform:scale(0) rotate(-20deg);opacity:0} to{transform:scale(1) rotate(0deg);opacity:1} }
+.fg-summary-title { font-size:17px; font-weight:800; color:var(--fg-text); letter-spacing:.4px; text-align:center; }
+.fg-summary-sub { font-size:11px; color:var(--fg-text2); text-align:center; }
+.fg-summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:100%; max-width:340px; }
+.fg-summary-stat { display:flex; flex-direction:column; align-items:center; gap:5px; padding:14px 8px 12px; border-radius:10px; border:1px solid var(--fg-border); background:var(--fg-bg2); }
+.fg-summary-num { font-size:26px; font-weight:900; line-height:1; }
+.fg-summary-lbl { font-size:9px; font-weight:700; color:var(--fg-text2); letter-spacing:.6px; text-transform:uppercase; }
+.fg-summary-ok .fg-summary-num { color:var(--fg-accent); }
+.fg-summary-er .fg-summary-num { color:#ef4444; }
+.fg-summary-tot .fg-summary-num { color:var(--fg-text); }
 .fg-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:7px; }
 .fg-farm-card { background:var(--fg-bg3); border:1.5px solid var(--fg-border); border-radius:9px; overflow:hidden; display:flex; flex-direction:column; transition:border-color .18s, transform .15s, box-shadow .18s; }
 .fg-farm-card:hover { border-color:var(--fg-accent); transform:translateY(-2px); box-shadow:0 6px 18px var(--fg-shadow); }
@@ -808,7 +811,7 @@ window.FarmGod.Main = (function (Library, Translation) {
           <div class="fg-header-icon"><span class="icon header lc"> </span></div>
           <div class="fg-header-text">
             <div class="fg-header-title">${t.options.title}</div>
-            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo &mdash; v1.5.4</div>
+            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo &mdash; v1.6.0</div>
           </div>
           <button class="fg-settings-btn" id="fg-settings-btn" type="button" title="Tema visual">&#9881;</button>
         </div>
@@ -895,10 +898,9 @@ window.FarmGod.Main = (function (Library, Translation) {
     let content = '';
 
     if (!$.isEmptyObject(plan)) {
+      let allCards = '';
       for (let prop in plan) {
-        let groupFarms = plan[prop];
-
-        let cards = groupFarms.map((val) => {
+        allCards += plan[prop].map((val) => {
           let isB = val.template.name === 'b';
           return `<div class="fg-farm-card ${isB ? 'fg-tmpl-b' : 'fg-tmpl-a'}">
             <div class="fg-card-top">
@@ -918,20 +920,8 @@ window.FarmGod.Main = (function (Library, Translation) {
             </div>
           </div>`;
         }).join('');
-
-        let switchBtn = game_data.market == 'nl'
-          ? `<button class="fg-switch-btn switchVillage" data-id="${groupFarms[0].origin.id}">&#8644;</button>`
-          : '';
-
-        content += `<div class="fg-village-group">
-          <div class="fg-village-group-head">
-            <span class="fg-village-group-name">&#9876; ${groupFarms[0].origin.name} <span style="opacity:.45">(${groupFarms[0].origin.coord})</span></span>
-            <span class="fg-village-count">${groupFarms.length}</span>
-            ${switchBtn}
-          </div>
-          <div class="fg-card-grid">${cards}</div>
-        </div>`;
       }
+      content = `<div class="fg-card-grid">${allCards}</div>`;
     } else {
       content = `<div class="fg-empty-cards">${t.table.noFarmsPlanned}</div>`;
     }
@@ -1307,6 +1297,31 @@ window.FarmGod.Main = (function (Library, Translation) {
     return plan;
   };
 
+  const showFarmSummary = function (ok, err, total) {
+    $('#fg-hold-fab').slideUp(200);
+    $('.fg-cards-wrap').html(`
+      <div class="fg-summary">
+        <div class="fg-summary-anim">&#x2694;&#xFE0F;</div>
+        <div class="fg-summary-title">&#x1F3C6; &#xA1;Farmeo completado!</div>
+        <div class="fg-summary-sub">Todos los ataques han sido procesados</div>
+        <div class="fg-summary-grid">
+          <div class="fg-summary-stat fg-summary-ok">
+            <span class="fg-summary-num">${ok}</span>
+            <span class="fg-summary-lbl">Enviados</span>
+          </div>
+          <div class="fg-summary-stat fg-summary-er">
+            <span class="fg-summary-num">${err}</span>
+            <span class="fg-summary-lbl">Errores</span>
+          </div>
+          <div class="fg-summary-stat fg-summary-tot">
+            <span class="fg-summary-num">${total}</span>
+            <span class="fg-summary-lbl">Total</span>
+          </div>
+        </div>
+      </div>
+    `);
+  };
+
   const sendFarm = function ($this) {
     let n = Timing.getElapsedTimeSinceLoad();
     if (
@@ -1318,13 +1333,19 @@ window.FarmGod.Main = (function (Library, Translation) {
     ) {
       farmBusy = true;
       Accountmanager.farm.last_click = n;
-      const updateFGProgress = function () {
+      const updateFGProgress = function (isOk) {
         let $bar = $('#FarmGodProgessbar');
         let cur = parseInt($bar.data('current') || 0) + 1;
         let max = parseInt($bar.data('max') || 1);
-        $bar.data('current', cur);
+        let ok  = parseInt($bar.data('ok')  || 0) + (isOk ? 1 : 0);
+        let err = parseInt($bar.data('err') || 0) + (isOk ? 0 : 1);
+        $bar.data('current', cur).data('ok', ok).data('err', err);
         $bar.css('width', Math.min(100, Math.round(cur / max * 100)) + '%');
         $('#fg-progress-label').text(cur + ' / ' + max);
+        // Sync FAB counter with real sent count
+        var fabC = document.getElementById('fg-fab-counter');
+        if (fabC) fabC.textContent = cur;
+        if (cur >= max) setTimeout(function () { showFarmSummary(ok, err, max); }, 400);
       };
 
       TribalWars.post(
@@ -1340,13 +1361,13 @@ window.FarmGod.Main = (function (Library, Translation) {
         },
         function (r) {
           UI.SuccessMessage(r.success);
-          updateFGProgress();
+          updateFGProgress(true);
           $this.closest('.fg-farm-card').remove();
           farmBusy = false;
         },
         function (r) {
           UI.ErrorMessage(r || t.messages.sendError);
-          updateFGProgress();
+          updateFGProgress(false);
           $this.closest('.fg-farm-card').remove();
           farmBusy = false;
         }
