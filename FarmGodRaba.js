@@ -534,7 +534,7 @@ window.FarmGod.Main = (function (Library, Translation) {
     // Only on mobile (no physical keyboard). Tap: fires once. Hold: fires continuously
     // while finger is pressed — same behavior as holding Enter on desktop. Not automation:
     // requires continuous manual contact.
-    if ($('#mobileHeader').length > 0) {
+    if ($('#mobileHeader').length > 0 || window.innerWidth <= 900) {
       if (window._fgFabTimer) { clearInterval(window._fgFabTimer); window._fgFabTimer = null; }
       $('#fg-hold-fab').remove();
       $('body').append(
@@ -750,6 +750,28 @@ window.FarmGod.Main = (function (Library, Translation) {
 .fg-fab-sub { font-size:10px; color:rgba(255,255,255,.68); font-weight:500; letter-spacing:.2px; white-space:nowrap; margin-top:2px; }
 .fg-fab-counter { min-width:24px; height:24px; border-radius:12px; background:rgba(255,255,255,.22); color:#fff; font-size:11px; font-weight:800; display:none; align-items:center; justify-content:center; padding:0 7px; margin-left:4px; flex-shrink:0; box-shadow:inset 0 1px 3px rgba(0,0,0,.2); }
 .fg-fab-btn.fg-fab-active .fg-fab-counter { display:flex; }
+
+/* === Mobile compact layout === */
+@media (max-width:900px) {
+    .fg-card-grid { grid-template-columns:repeat(auto-fill,minmax(78px,1fr)) !important; gap:5px !important; }
+    .fg-card-top { padding:6px 7px 5px !important; }
+    .fg-card-target { font-size:10px !important; }
+    .fg-card-tmpl { width:12px !important; height:12px !important; font-size:7px !important; top:4px !important; right:4px !important; }
+    .fg-card-body { padding:4px 7px 3px !important; gap:2px !important; }
+    .fg-card-origin { font-size:9px !important; }
+    .fg-card-dist-val { font-size:9px !important; }
+    .fg-card-dist-dot { width:3px !important; height:3px !important; }
+    .fg-card-foot { padding:4px 6px !important; gap:3px !important; }
+    .fg-card-foot .farmGod_icon { width:28px !important; height:28px !important; }
+    .fg-card-send-label { font-size:9px !important; }
+    .fg-cards-wrap { padding:8px 10px !important; gap:8px !important; }
+    .fg-village-group { gap:5px !important; }
+    .fg-village-group-head { padding:5px 8px 5px 10px !important; }
+    .fg-village-group-name { font-size:10px !important; }
+    .fg-results-header { padding:10px 14px !important; }
+    .fg-results-title { font-size:12px !important; }
+    .fg-results-badge { font-size:9px !important; min-width:18px !important; height:15px !important; }
+}
     `;
     document.head.appendChild(s);
   };
