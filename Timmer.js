@@ -156,22 +156,31 @@ var c, ctx, circleReference,
         }
     }else null==runTimes&&(runTimes=0), promptCalibration();
     
+    function getArrivalSeconds() {
+        // Use textContent to avoid colons inside HTML attributes breaking split
+        var $cell = $('#date_arrival').closest('td');
+        var $rel = $cell.find('.relative_time');
+        var text = ($rel.length ? $rel.text() : $cell[0].childNodes[0] ? $cell[0].childNodes[0].nodeValue : '').trim();
+        var parts = text.split(':');
+        // Last segment is seconds, strip any non-digit suffix
+        var sec = Number((parts[parts.length - 1] || '0').replace(/\D.*/, ''));
+        return isNaN(sec) ? 0 : sec * 1000;
+    }
+
     function addDisplay() {
         try {
-            for(var e=$("#date_arrival").parent().parent()[0],t=2;t<e.children.length;t++)
-                try {
-                    if(null!=e.children[t].children[1].innerHTML.match(":")) {
-                        var i=1e3*Number(e.children[t].children[1].innerHTML.split(":")[2]);
-                        break
-                    }
-                }catch(e) {
-                    console.log(lang.errConsoleArrival+e)
-                }
-                
+            var e=$("#date_arrival").closest('tbody')[0] || $("#date_arrival").parent().parent()[0];
+
                 var n=e.children[e.children.length-1];
-                constOffset=i+getStorage("const_offset"), e.children[0].innerHTML+="<th colspan='4'>    "
-                + "    <span style='white-space:nowrap'>"+lang.titleAssist+"</span><span>    "
-                + "    <img src='"+imgSrc.questionmark+"' onclick='toggleTutorial()' style='float:right;display:inline;height:15px;width:15px;cursor:pointer'></span></th>";
+                var i = getArrivalSeconds();
+                constOffset=i+getStorage("const_offset");
+
+                // Use appendChild instead of innerHTML+= to avoid destroying TW's relative_time references
+                var newTh=document.createElement('th');
+                newTh.setAttribute('colspan','4');
+                newTh.innerHTML="    <span style='white-space:nowrap'>"+lang.titleAssist+"</span><span>    "
+                    + "    <img src='"+imgSrc.questionmark+"' onclick='toggleTutorial()' style='float:right;display:inline;height:15px;width:15px;cursor:pointer'></span>";
+                e.children[0].appendChild(newTh);
                 
                 var s=document.createElement("TD"), 
                     a=document.createAttribute("rowspan"),
@@ -247,7 +256,7 @@ var c, ctx, circleReference,
     function drawCircle(){
         null==c&&(c=document.getElementById("millis_canvas"),
             ctx=c.getContext("2d"),circleReference=-Math.PI/2,lastMillis=0,lastTimingMillis=0,
-            hitMs=$("#hit_input")[0].value,$("#second_display")[0].innerHTML=$(".relative_time")[0].innerHTML.split(":")[2]);
+            hitMs=$("#hit_input")[0].value,(function(){var p=$('#date_arrival').closest('td').find('.relative_time').text().trim().split(':');$("#second_display")[0].innerHTML=(p[p.length-1]||'00').replace(/\D.*/,'');}()));
             
         var e=new Date,
             t=(e=new Date(e.getTime()+calibrationTime+constOffset)).getMilliseconds(),
@@ -354,14 +363,6 @@ var c, ctx, circleReference,
     
     function getInitialOffset(){
         var e,t=new Date;sTime=Timing.getCurrentServerTime(),storeData("const_offset",Math.round(sTime-t.getTime())),updateColor();
-        for(var i=$("#date_arrival").parent().parent()[0],n=2;n<i.children.length;n++)
-        try{
-            if(null!=i.children[n].children[1].innerHTML.match(":")){
-                e=1e3*Number(i.children[n].children[1].innerHTML.split(":")[2]);
-                break
-            }
-        }catch(e){
-            console.log(lang.errConsoleArrival+e)
-        }
+        e = getArrivalSeconds();
         constOffset=e+(sTime-t.getTime())           
     }
