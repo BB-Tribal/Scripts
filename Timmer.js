@@ -1,6 +1,6 @@
 /*
  * Script Name: Timing Assist
- * Version: v1.4
+ * Version: v1.5
  * Modified by: Black_Lottus
  */
 
@@ -340,11 +340,6 @@ var c, ctx, circleReference,
                 + "<input id='offset_input' type='text' onchange='storeData(\"offset_ms\")' style='width:30px' value='" + calibrationTime + "'>"
                 + "<img id='offset_status' src='" + b + "' onclick='getInitialOffset()' style='cursor:pointer;vertical-align:middle;margin-left:4px'>";
 
-            // Server time display — shows current calibrated server time so you can verify sync
-            var ts = document.createElement("TD");
-            ts.setAttribute('style','white-space:nowrap');
-            ts.innerHTML = "<span>" + _taLang.labelTime + "</span><input style='width:72px;font-family:monospace' id='date_input' title='Hora actual del servidor (calibrada)' type='text' readonly>";
-
             // Theme button
             var thTd = document.createElement("TD");
             thTd.setAttribute('style','white-space:nowrap;padding-left:4px');
@@ -355,7 +350,6 @@ var c, ctx, circleReference,
             n.appendChild(p);
             n.appendChild(u);
             n.appendChild(g);
-            n.appendChild(ts);
             n.appendChild(thTd);
 
             $("#ds_body")[0].setAttribute("onsubmit","sendFunction()");
@@ -391,13 +385,6 @@ var c, ctx, circleReference,
             lastMillis = t;
             var sec = e.getSeconds();
             $("#second_display")[0].innerHTML = (sec<10?'0':'')+sec;
-        }
-
-        // Show calibrated server time — updates every ~200ms to avoid thrashing
-        if(t % 200 < 5){
-            var hh=e.getHours(), mm=e.getMinutes(), ss=e.getSeconds();
-            var dateInput = document.getElementById('date_input');
-            if(dateInput) dateInput.value = (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm+':'+(ss<10?'0':'')+ss;
         }
 
         if(i < lastTimingMillis){
