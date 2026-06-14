@@ -4,7 +4,7 @@
  * Modified by: Black_Lottus
  */
 
-var lang = {
+var _taLang = {
     mustRunFromRally:   "Este script debe ejecutarse desde el punto de reunión."
                       + "\nEjecutarlo durante un envío de comando añadirá asistencia de milisegundos."
                       + "\nEjecutarlo después del envío mostrará cuántos milisegundos fallaste y te permitirá recalibrar.",
@@ -103,11 +103,11 @@ function showModal(msg, onConfirm){
     var ov=document.createElement('div');
     ov.className='ta-ov';
     ov.innerHTML="<div class='ta-modal'>"
-        +"<div class='ta-mhd'><span class='ta-mic'>⚠️</span><span class='ta-mtt'>"+lang.titleAssist+"</span></div>"
+        +"<div class='ta-mhd'><span class='ta-mic'>⚠️</span><span class='ta-mtt'>"+_taLang.titleAssist+"</span></div>"
         +"<div class='ta-mbd'>"+msg+"</div>"
         +"<div class='ta-mft'>"
-        +"<button type='button' class='ta-btn ta-cn'>"+lang.btnCancel+"</button>"
-        +"<button type='button' class='ta-btn ta-ok'>"+lang.btnConfirm+"</button>"
+        +"<button type='button' class='ta-btn ta-cn'>"+_taLang.btnCancel+"</button>"
+        +"<button type='button' class='ta-btn ta-ok'>"+_taLang.btnConfirm+"</button>"
         +"</div></div>";
     document.body.appendChild(ov);
     ov.querySelectorAll('.ta-btn')[1].onclick=function(){ov.remove();onConfirm();};
@@ -119,11 +119,11 @@ function showPrompt(msg, defaultVal, callback){
     var ov=document.createElement('div');
     ov.className='ta-ov';
     ov.innerHTML="<div class='ta-modal'>"
-        +"<div class='ta-mhd'><span class='ta-mic'>🎯</span><span class='ta-mtt'>"+lang.titleAssist+"</span></div>"
+        +"<div class='ta-mhd'><span class='ta-mic'>🎯</span><span class='ta-mtt'>"+_taLang.titleAssist+"</span></div>"
         +"<div class='ta-mbd'>"+msg+"<br><input class='ta-inp' id='ta-pi' type='text' value='"+defaultVal+"'></div>"
         +"<div class='ta-mft'>"
-        +"<button type='button' class='ta-btn ta-cn'>"+lang.btnCancel+"</button>"
-        +"<button type='button' class='ta-btn ta-ok'>"+lang.btnAccept+"</button>"
+        +"<button type='button' class='ta-btn ta-cn'>"+_taLang.btnCancel+"</button>"
+        +"<button type='button' class='ta-btn ta-ok'>"+_taLang.btnAccept+"</button>"
         +"</div></div>";
     document.body.appendChild(ov);
     var inp=ov.querySelector('#ta-pi');
@@ -148,11 +148,11 @@ var c, ctx, circleReference,
     };
 
     if("place" != game_data.screen) {
-        showToast(lang.mustRunFromRally,'warn');
+        showToast(_taLang.mustRunFromRally,'warn');
     }else if(2 == window.location.href.split("try=").length){
         if(null == runTimes ? runTimes = 1:runTimes++, 1 == runTimes) setTimeout(function(){addDisplay()},50);
         else {
-            showModal(lang.alreadyRunning, function(){ clearStorage(); });
+            showModal(_taLang.alreadyRunning, function(){ clearStorage(); });
         }
     }else null==runTimes&&(runTimes=0), promptCalibration();
     
@@ -178,7 +178,7 @@ var c, ctx, circleReference,
                 // Use appendChild instead of innerHTML+= to avoid destroying TW's relative_time references
                 var newTh=document.createElement('th');
                 newTh.setAttribute('colspan','4');
-                newTh.innerHTML="    <span style='white-space:nowrap'>"+lang.titleAssist+"</span><span>    "
+                newTh.innerHTML="    <span style='white-space:nowrap'>"+_taLang.titleAssist+"</span><span>    "
                     + "    <img src='"+imgSrc.questionmark+"' onclick='toggleTutorial()' style='float:right;display:inline;height:15px;width:15px;cursor:pointer'></span>";
                 e.children[0].appendChild(newTh);
                 
@@ -218,13 +218,13 @@ var c, ctx, circleReference,
                         td.innerHTML="<img src='"+imgSrc.watchtower+"'>";
                     
                     var p=document.createElement("TD");
-                    p.innerHTML="<button id='practice_button' type='button' class='btn btn-recruit' onclick='practiceFunction()' style='width:80px'>"+lang.btnTest+"</button>";
+                    p.innerHTML="<button id='practice_button' type='button' class='btn btn-recruit' onclick='practiceFunction()' style='width:80px'>"+_taLang.btnTest+"</button>";
                     
                     var u=document.createElement("TD"),
                         h=document.createAttribute("style");
                         h.value="white-space:nowrap",
                         u.setAttributeNode(h),
-                        u.innerHTML="<span>"+lang.labelHit+"</span><input style='width:30px' id='hit_input' title='Millisecond to hit' type='text' onchange='storeData(\"hit_ms\")' value='"+hitMs+"'></input>";
+                        u.innerHTML="<span>"+_taLang.labelHit+"</span><input style='width:30px' id='hit_input' title='Millisecond to hit' type='text' onchange='storeData(\"hit_ms\")' value='"+hitMs+"'></input>";
                     
                     var g=document.createElement("TD"),
                         f=document.createAttribute("style");
@@ -232,24 +232,24 @@ var c, ctx, circleReference,
                         g.setAttributeNode(f);
                     
                     var b,y,T,v=new Date;
-                    y=v.getTime()-getStorage("last_set_offset")<42e4,T=v.getTime()-getStorage("last_set_const")<36e5,b=y&&T?imgSrc.green:y||T?imgSrc.yellow:imgSrc.red,g.innerHTML="<span>"+lang.labelOffset+"</span><input id='offset_input' type='text' onchange='storeData(\"offset_ms\")' style='width:30px' value='"+calibrationTime+"'></input>                            <img id='offset_status' src='"+b+"' onclick = getInitialOffset() style='cursor:pointer'>";
+                    y=v.getTime()-getStorage("last_set_offset")<42e4,T=v.getTime()-getStorage("last_set_const")<36e5,b=y&&T?imgSrc.green:y||T?imgSrc.yellow:imgSrc.red,g.innerHTML="<span>"+_taLang.labelOffset+"</span><input id='offset_input' type='text' onchange='storeData(\"offset_ms\")' style='width:30px' value='"+calibrationTime+"'></input>                            <img id='offset_status' src='"+b+"' onclick = getInitialOffset() style='cursor:pointer'>";
                     
                     var ts=document.createElement("TD"),
                         st=document.createAttribute("style");
                         st.value="white-space:nowrap",
                         ts.setAttributeNode(st),
-                        ts.innerHTML="<span>"+lang.labelTime+"</span><input style='width:120px' id='date_input' title='Time' type='text'></input>";
+                        ts.innerHTML="<span>"+_taLang.labelTime+"</span><input style='width:120px' id='date_input' title='Time' type='text'></input>";
                     
                     
                     var _=document.createElement("TD");
-                    _.innerHTML="<span id='miss_display' style='width:34px;display:block' title='"+lang.tooltipMissed+"'>0</span>",
+                    _.innerHTML="<span id='miss_display' style='width:34px;display:block' title='"+_taLang.tooltipMissed+"'>0</span>",
                         $(".village_anchor").parent().parent()[0].appendChild(s),
                         $(".village_anchor").parent().parent()[0].appendChild(l),
                         n.appendChild(p), n.appendChild(u), n.appendChild(g) ,n.appendChild(ts),
                         $("#ds_body")[0].setAttribute("onsubmit","sendFunction()"),
                         timerInterval=setInterval(drawCircle,5)
         }catch(e){
-            console.log(lang.errConsoleTable+e)
+            console.log(_taLang.errConsoleTable+e)
         }
     }
     
@@ -266,7 +266,7 @@ var c, ctx, circleReference,
     
     function practiceFunction(){
         var e=new Date,
-            t=(e=new Date(e.getTime()+calibrationTime+constOffset)).getMilliseconds();buttonText=[lang.btnTest,lang.btnStart],
+            t=(e=new Date(e.getTime()+calibrationTime+constOffset)).getMilliseconds();buttonText=[_taLang.btnTest,_taLang.btnStart],
             buttonDOM=$("#practice_button")[0],hitMs=$("#hit_input")[0].value,buttonDOM.innerHTML==buttonText[0]?(clearInterval(timerInterval),
             buttonDOM.innerHTML=buttonText[1],Math.abs(t-hitMs)<=500?$("#miss_display")[0].innerHTML=String(t-hitMs):$("#miss_display")[0].innerHTML=-(1e3-(t-hitMs))):(buttonDOM.innerHTML=buttonText[0],timerInterval=setInterval(drawCircle,5)),lastTimingMillis=1200
     }
@@ -293,18 +293,18 @@ var c, ctx, circleReference,
                 t.setAttributeNode(n),s.value="fader",i.setAttributeNode(s),
                 e="<div class='popup_box mobile show' id='timing_tutorial' style='width:"+a+"px;top:12%'>"
                     + "<div class='popup_box_content' style='max-height:70%;overflow:auto'><a class='popup_box_close tooltip-delayed' onclick='toggleTutorial()' style='cursor:pointer'>&nbsp;</a>"
-                    + "<h2 class='popup_box_header'>"+lang.tutorialTitle+"</h2>"
-                    + "<p>"+lang.tutorialBody+"</p>"
-                    + "<h5>"+lang.calibTitle+"</h5><p>"+lang.calibBody+"</p>"
-                    + "<p style='display:inline'><b>"+lang.step1Title+"</b></p><br><p style='display:inline'>"+lang.step1Body+"</p><br><br>"
-                    + "<p style='display:inline'><b>"+lang.step2Title+"</b></p><br><p style='display:inline'>"+lang.step2Body+"</p><br><br>"
-                    + "<p style='display:inline'><b>"+lang.step3Title+"</b></p><br><p style='display:inline'>"+lang.step3Body+"</p>"
-                    + "<p>"+lang.calibNote+"</p>"
-                    + "<h5>"+lang.colorTitle+"</h5><p>"+lang.colorBody+"</p>"
-                    + "<img src='"+imgSrc.red+"'><p style='display:inline'>"+lang.colorRed+"</p><br>"
-                    + "<img src='"+imgSrc.yellow+"'><p style='display:inline'>"+lang.colorYellow+"</p><br>"
-                    + "<img src='"+imgSrc.green+"'><p style='display:inline'>"+lang.colorGreen+"</p>"
-                    + "<p>"+lang.colorNote+"</p>"
+                    + "<h2 class='popup_box_header'>"+_taLang.tutorialTitle+"</h2>"
+                    + "<p>"+_taLang.tutorialBody+"</p>"
+                    + "<h5>"+_taLang.calibTitle+"</h5><p>"+_taLang.calibBody+"</p>"
+                    + "<p style='display:inline'><b>"+_taLang.step1Title+"</b></p><br><p style='display:inline'>"+_taLang.step1Body+"</p><br><br>"
+                    + "<p style='display:inline'><b>"+_taLang.step2Title+"</b></p><br><p style='display:inline'>"+_taLang.step2Body+"</p><br><br>"
+                    + "<p style='display:inline'><b>"+_taLang.step3Title+"</b></p><br><p style='display:inline'>"+_taLang.step3Body+"</p>"
+                    + "<p>"+_taLang.calibNote+"</p>"
+                    + "<h5>"+_taLang.colorTitle+"</h5><p>"+_taLang.colorBody+"</p>"
+                    + "<img src='"+imgSrc.red+"'><p style='display:inline'>"+_taLang.colorRed+"</p><br>"
+                    + "<img src='"+imgSrc.yellow+"'><p style='display:inline'>"+_taLang.colorYellow+"</p><br>"
+                    + "<img src='"+imgSrc.green+"'><p style='display:inline'>"+_taLang.colorGreen+"</p>"
+                    + "<p>"+_taLang.colorNote+"</p>"
                     + "</div></div>",
                 
                 t.innerHTML=e,document.body.appendChild(t),
@@ -346,18 +346,18 @@ var c, ctx, circleReference,
             1==t[0].length&&(t[0]="0"+t[0]);
             1==t[1].length?t[1]="00"+t[1]:2==t[1].length&&(t[1]="0"+t[1]);
             t=t[0]+":"+t[1];
-            showPrompt(lang.promptEstimated+"<b>"+t+"</b><br>"+lang.promptInput, t, function(i){
+            showPrompt(_taLang.promptEstimated+"<b>"+t+"</b><br>"+_taLang.promptInput, t, function(i){
                 if(null!=i){
                     var n=i.split(":");
                     e-15e3>(n=1e3*Number(n[0])+Number(n[1]))?n+=6e4:n-15e3>e&&(e+=6e4);
                     var s=n-e;
                     s=0==runTimes?Number(s+calibrationTime):Number(s);
-                    isNaN(s)?(storeData("offset",0),showToast(lang.errorOffset,'error')):(runTimes++,storeData("offset",s));
+                    isNaN(s)?(storeData("offset",0),showToast(_taLang.errorOffset,'error')):(runTimes++,storeData("offset",s));
                 }
             });
         }catch(e){
-            console.log(lang.errConsoleInput);
-            showToast(lang.errorManual,'error');
+            console.log(_taLang.errConsoleInput);
+            showToast(_taLang.errorManual,'error');
         }
     }
     
