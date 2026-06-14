@@ -1,6 +1,6 @@
 /*
  * Script Name: Timing Assist
- * Version: v1.7
+ * Version: v1.8
  * Modified by: Black_Lottus
  */
 
@@ -596,7 +596,10 @@ var c, ctx, circleReference,
             armed = false;
             clearInterval(timerInterval);
             sendFunction();
-            document.getElementById('ds_body').submit();
+            // form.submit() is shadowed by a named input — click the submit button instead
+            var submitBtn = document.querySelector('#ds_body input[type="submit"], #ds_body button[type="submit"]');
+            if(submitBtn) submitBtn.click();
+            else HTMLFormElement.prototype.submit.call(document.getElementById('ds_body'));
         }, delay);
     }
 
