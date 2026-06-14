@@ -753,7 +753,8 @@ window.FarmGod.Main = (function (Library, Translation) {
     .fg-card-dist-val { font-size:9px !important; }
     .fg-card-dist-dot { width:3px !important; height:3px !important; }
     .fg-card-foot { padding:4px 6px !important; gap:3px !important; }
-    .fg-card-foot .farmGod_icon { max-width:32px !important; max-height:32px !important; }
+    .fg-card-foot .farmGod_icon,
+    .fg-card-foot .farm_icon { width:28px !important; height:28px !important; background-size:28px 28px !important; }
     .fg-card-send-label { font-size:9px !important; }
     .fg-cards-wrap { padding:8px 10px !important; gap:8px !important; }
     .fg-village-group { gap:5px !important; }
