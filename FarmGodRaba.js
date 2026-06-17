@@ -169,9 +169,6 @@ window.FarmGod.Library = (function () {
       .closest('td')
       .find('select')
       .first();
-    // Commented out the old version of the code, updated in April 2024
-    // The old version did not count the number of pages in the loot assistant properly when there were more than 15 or so due to the way the UI changes to not show all pages
-    // let navLength = ($html.find('#am_widget_Farm').length > 0) ? $html.find('#plunder_list_nav').first().find('a.paged-nav-item').length : ((navSelect.length > 0) ? navSelect.find('option').length - 1 : $html.find('.paged-nav-item').not('[href*="page=-1"]').length);
     let navLength =
       $html.find('#am_widget_Farm').length > 0
         ? parseInt(
@@ -233,11 +230,25 @@ window.FarmGod.Library = (function () {
     return processPage(url, page, wrapFn);
   };
 
-  const getDistance = function (origin, target) {
-    let a = origin.toCoord(true).x - target.toCoord(true).x;
-    let b = origin.toCoord(true).y - target.toCoord(true).y;
+  // Cache de coordenadas parseadas: evita repetir el regex+split de toCoord()
+  // por cada combinacion pueblo x granja (antes O(V*F), ahora O(V+F)).
+  const coordCache = new Map();
 
-    return Math.hypot(a, b);
+  const parseCoord = function (str) {
+    let cached = coordCache.get(str);
+    if (cached === undefined) {
+      let c = str.toCoord(true);
+      cached = { x: +c.x, y: +c.y };
+      coordCache.set(str, cached);
+    }
+    return cached;
+  };
+
+  const getDistance = function (origin, target) {
+    let o = parseCoord(origin);
+    let d = parseCoord(target);
+
+    return Math.hypot(o.x - d.x, o.y - d.y);
   };
 
   const subtractArrays = function (array1, array2) {
@@ -453,19 +464,30 @@ window.FarmGod.Main = (function (Library, Translation) {
                 optionLosses
               ).then((data) => {
                 Dialog.close();
+                $('.fgRabaContent').remove();
+                $('#am_widget_Farm')
+                  .first()
+                  .before(
+                    '<div class="fgRabaContent fg-calculating">' +
+                    '<div class="fg-empty-cards">' +
+                    '<div style="width:28px;height:28px;margin:0 auto 12px;border:3px solid var(--fg-border);border-top:3px solid var(--fg-accent);border-radius:50%;animation:fgSpin .8s linear infinite;"></div>' +
+                    'Calculando planificacion...' +
+                    '</div></div>'
+                  );
 
-                let plan = createPlanning(
+                createPlanning(
                   optionDistance,
                   optionTime,
                   optionMaxloot,
                   data
-                );
-                $('.fgRabaContent').remove();
-                $('#am_widget_Farm')
-                  .first()
-                  .before(buildTable(plan.farms));
+                ).then((plan) => {
+                  $('.fgRabaContent').remove();
+                  $('#am_widget_Farm')
+                    .first()
+                    .before(buildTable(plan.farms));
 
-                bindEventHandlers();
+                  bindEventHandlers();
+                });
               });
             });
 
@@ -811,7 +833,7 @@ window.FarmGod.Main = (function (Library, Translation) {
           <div class="fg-header-icon"><span class="icon header lc"> </span></div>
           <div class="fg-header-text">
             <div class="fg-header-title">${t.options.title}</div>
-            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo &mdash; v1.6.0</div>
+            <div class="fg-header-sub">Tribal Wars &mdash; Automatizaci&oacute;n de farmeo &mdash; v1.7.0</div>
           </div>
           <button class="fg-settings-btn" id="fg-settings-btn" type="button" title="Tema visual">&#9881;</button>
         </div>
@@ -1221,7 +1243,11 @@ window.FarmGod.Main = (function (Library, Translation) {
       });
   };
 
-  const createPlanning = function (
+  // createPlanning es asincrono: cada cierto numero de ms cede el hilo al
+  // navegador (await + setTimeout) para que la pestana no se quede "congelada"
+  // cuando hay miles de pueblos x granjas que comparar (antes corria 100%
+  // sincrono y bloqueaba la UI entera hasta terminar).
+  const createPlanning = async function (
     optionDistance,
     optionTime,
     optionMaxloot,
@@ -1229,6 +1255,7 @@ window.FarmGod.Main = (function (Library, Translation) {
   ) {
     let plan = { counter: 0, farms: {} };
     let serverTime = Math.round(lib.getCurrentServerTime() / 1000);
+    let lastYield = performance.now();
 
     for (let prop in data.villages) {
       let orderedFarms = Object.keys(data.farms.farms)
@@ -1251,7 +1278,8 @@ window.FarmGod.Main = (function (Library, Translation) {
           template.units
         );
 
-        let distance = lib.getDistance(prop, el.coord);
+        // dis ya viene calculado del map de arriba: no recalcular.
+        let distance = el.dis;
         let arrival = Math.round(
           serverTime +
           distance * template.speed * 60 +
@@ -1292,6 +1320,11 @@ window.FarmGod.Main = (function (Library, Translation) {
           data.commands[el.coord].push(arrival);
         }
       });
+
+      if (performance.now() - lastYield > 16) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        lastYield = performance.now();
+      }
     }
 
     return plan;
