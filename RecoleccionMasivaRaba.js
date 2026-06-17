@@ -294,31 +294,63 @@ var duration_initial_seconds = 0;
 var categoryNames = JSON.parse("[" + $.find('script:contains("ScavengeMassScreen")')[0].innerHTML.match(/\{.*\:\{.*\:.*\}\}/g) + "]")[0];
 
 var MASIVA_THEMES = {
-    rose:     { name:'Rosa',       emoji:'&#x1F338;', '--fg-bg':'#fff0f6','--fg-bg2':'#fce4ec','--fg-bg3':'#ffffff','--fg-border':'#e8b4cb','--fg-accent':'#e91e8c','--fg-accent2':'#c2185b','--fg-text':'#880e4f','--fg-text2':'#c2185b','--fg-hover':'#fff5fb','--fg-link':'#f06292','--fg-shadow':'rgba(136,14,79,.22)' },
-    emerald:  { name:'Esmeralda',  emoji:'&#x1F49A;', '--fg-bg':'#f8faf8','--fg-bg2':'#ebf7ed','--fg-bg3':'#ffffff','--fg-border':'#c8dfc8','--fg-accent':'#16a34a','--fg-accent2':'#15803d','--fg-text':'#1a2e1a','--fg-text2':'#5a7a5a','--fg-hover':'#ebf7ed','--fg-link':'#4ade80','--fg-shadow':'rgba(0,0,0,.18)' },
-    navy:     { name:'Marino',     emoji:'&#x2693;',  '--fg-bg':'#0c1220','--fg-bg2':'#131d2e','--fg-bg3':'#091628','--fg-border':'#1e3a5f','--fg-accent':'#3b82f6','--fg-accent2':'#1a3fa0','--fg-text':'#e2e8f0','--fg-text2':'#94a3b8','--fg-hover':'rgba(59,130,246,.12)','--fg-link':'#60a5fa','--fg-shadow':'rgba(0,0,0,.8)' },
-    twilight: { name:'Crepúsculo', emoji:'&#x1F319;', '--fg-bg':'#1a0a2e','--fg-bg2':'#2d1b4e','--fg-bg3':'#12071f','--fg-border':'#5b21b6','--fg-accent':'#a855f7','--fg-accent2':'#7c3aed','--fg-text':'#e9d5ff','--fg-text2':'#c4b5fd','--fg-hover':'rgba(168,85,247,.15)','--fg-link':'#d8b4fe','--fg-shadow':'rgba(0,0,0,.9)' },
-    sunset:   { name:'Atardecer',  emoji:'&#x1F305;', '--fg-bg':'#fff7ed','--fg-bg2':'#fed7aa','--fg-bg3':'#ffffff','--fg-border':'#fdba74','--fg-accent':'#f97316','--fg-accent2':'#c2410c','--fg-text':'#7c2d12','--fg-text2':'#9a3412','--fg-hover':'#fff1e6','--fg-link':'#fb923c','--fg-shadow':'rgba(194,65,12,.25)' },
-    ocean:    { name:'Océano',     emoji:'&#x1F30A;', '--fg-bg':'#f0fdff','--fg-bg2':'#cffafe','--fg-bg3':'#ffffff','--fg-border':'#67e8f9','--fg-accent':'#06b6d4','--fg-accent2':'#0891b2','--fg-text':'#164e63','--fg-text2':'#0e7490','--fg-hover':'#ecfeff','--fg-link':'#22d3ee','--fg-shadow':'rgba(6,182,212,.22)' },
-    midnight: { name:'Medianoche', emoji:'&#x1F311;', '--fg-bg':'#111827','--fg-bg2':'#1f2937','--fg-bg3':'#0f172a','--fg-border':'#374151','--fg-accent':'#6366f1','--fg-accent2':'#4f46e5','--fg-text':'#f9fafb','--fg-text2':'#9ca3af','--fg-hover':'rgba(99,102,241,.12)','--fg-link':'#818cf8','--fg-shadow':'rgba(0,0,0,.9)' },
-    crimson:  { name:'Carmesí',    emoji:'&#x1F534;', '--fg-bg':'#fff5f5','--fg-bg2':'#fee2e2','--fg-bg3':'#ffffff','--fg-border':'#fca5a5','--fg-accent':'#ef4444','--fg-accent2':'#dc2626','--fg-text':'#7f1d1d','--fg-text2':'#991b1b','--fg-hover':'#fff1f1','--fg-link':'#f87171','--fg-shadow':'rgba(220,38,38,.22)' },
-    sage:     { name:'Salvia',     emoji:'&#x1F33F;', '--fg-bg':'#f6f9f4','--fg-bg2':'#e8f2e4','--fg-bg3':'#ffffff','--fg-border':'#a3c4a0','--fg-accent':'#4a7c59','--fg-accent2':'#2d5a3d','--fg-text':'#1a3d25','--fg-text2':'#4a7c59','--fg-hover':'#eef5ec','--fg-link':'#6aaa7d','--fg-shadow':'rgba(45,90,61,.20)' },
-    violet:   { name:'Violeta',    emoji:'&#x1F49C;', '--fg-bg':'#fdf5ff','--fg-bg2':'#f3e5f5','--fg-bg3':'#ffffff','--fg-border':'#e1bee7','--fg-accent':'#9c27b0','--fg-accent2':'#7b1fa2','--fg-text':'#4a148c','--fg-text2':'#6a1b9a','--fg-hover':'#f9f0ff','--fg-link':'#ab47bc','--fg-shadow':'rgba(123,31,162,.22)' }
+    rose:     { name:'Rosa',       emoji:'&#x1F338;', '--fg-bg':'#fff0f6','--fg-bg2':'#fce4ec','--fg-bg3':'#ffffff','--fg-border':'#e8b4cb','--fg-accent':'#e91e8c','--fg-accent2':'#c2185b','--fg-text':'#880e4f','--fg-text2':'#c2185b','--fg-hover':'#fff5fb','--fg-link':'#f06292','--fg-shadow':'rgba(136,14,79,.22)','--fg-bg-image':"url('https://i.imgur.com/FMiLDaZ.png')" },
+    emerald:  { name:'Esmeralda',  emoji:'&#x1F49A;', '--fg-bg':'#f8faf8','--fg-bg2':'#ebf7ed','--fg-bg3':'#ffffff','--fg-border':'#c8dfc8','--fg-accent':'#16a34a','--fg-accent2':'#15803d','--fg-text':'#1a2e1a','--fg-text2':'#5a7a5a','--fg-hover':'#ebf7ed','--fg-link':'#4ade80','--fg-shadow':'rgba(0,0,0,.18)','--fg-bg-image':"url('https://i.imgur.com/1fxpfGO.png')" },
+    navy:     { name:'Marino',     emoji:'&#x2693;',  dark:true, '--fg-bg':'#0c1220','--fg-bg2':'#131d2e','--fg-bg3':'#091628','--fg-border':'#1e3a5f','--fg-accent':'#3b82f6','--fg-accent2':'#1a3fa0','--fg-text':'#e2e8f0','--fg-text2':'#94a3b8','--fg-hover':'rgba(59,130,246,.12)','--fg-link':'#60a5fa','--fg-shadow':'rgba(0,0,0,.8)','--fg-bg-image':"url('https://i.imgur.com/Q1U8zoZ.png')" },
+    twilight: { name:'Crepúsculo', emoji:'&#x1F319;', dark:true, '--fg-bg':'#1a0a2e','--fg-bg2':'#2d1b4e','--fg-bg3':'#12071f','--fg-border':'#5b21b6','--fg-accent':'#a855f7','--fg-accent2':'#7c3aed','--fg-text':'#e9d5ff','--fg-text2':'#c4b5fd','--fg-hover':'rgba(168,85,247,.15)','--fg-link':'#d8b4fe','--fg-shadow':'rgba(0,0,0,.9)','--fg-bg-image':"url('https://i.imgur.com/Zmsl8cu.png')" },
+    sunset:   { name:'Atardecer',  emoji:'&#x1F305;', '--fg-bg':'#fff7ed','--fg-bg2':'#fed7aa','--fg-bg3':'#ffffff','--fg-border':'#fdba74','--fg-accent':'#f97316','--fg-accent2':'#c2410c','--fg-text':'#7c2d12','--fg-text2':'#9a3412','--fg-hover':'#fff1e6','--fg-link':'#fb923c','--fg-shadow':'rgba(194,65,12,.25)','--fg-bg-image':"url('https://i.imgur.com/5AUZJbg.png')" },
+    ocean:    { name:'Océano',     emoji:'&#x1F30A;', '--fg-bg':'#f0fdff','--fg-bg2':'#cffafe','--fg-bg3':'#ffffff','--fg-border':'#67e8f9','--fg-accent':'#06b6d4','--fg-accent2':'#0891b2','--fg-text':'#164e63','--fg-text2':'#0e7490','--fg-hover':'#ecfeff','--fg-link':'#22d3ee','--fg-shadow':'rgba(6,182,212,.22)','--fg-bg-image':"url('https://i.imgur.com/KoPlIAG.png')" },
+    midnight: { name:'Medianoche', emoji:'&#x1F311;', dark:true, '--fg-bg':'#111827','--fg-bg2':'#1f2937','--fg-bg3':'#0f172a','--fg-border':'#374151','--fg-accent':'#6366f1','--fg-accent2':'#4f46e5','--fg-text':'#f9fafb','--fg-text2':'#9ca3af','--fg-hover':'rgba(99,102,241,.12)','--fg-link':'#818cf8','--fg-shadow':'rgba(0,0,0,.9)','--fg-bg-image':"url('https://i.imgur.com/Q1U8zoZ.png')" },
+    crimson:  { name:'Carmesí',    emoji:'&#x1F534;', '--fg-bg':'#fff5f5','--fg-bg2':'#fee2e2','--fg-bg3':'#ffffff','--fg-border':'#fca5a5','--fg-accent':'#ef4444','--fg-accent2':'#dc2626','--fg-text':'#7f1d1d','--fg-text2':'#991b1b','--fg-hover':'#fff1f1','--fg-link':'#f87171','--fg-shadow':'rgba(220,38,38,.22)','--fg-bg-image':"url('https://i.imgur.com/5AUZJbg.png')" },
+    sage:     { name:'Salvia',     emoji:'&#x1F33F;', '--fg-bg':'#f6f9f4','--fg-bg2':'#e8f2e4','--fg-bg3':'#ffffff','--fg-border':'#a3c4a0','--fg-accent':'#4a7c59','--fg-accent2':'#2d5a3d','--fg-text':'#1a3d25','--fg-text2':'#4a7c59','--fg-hover':'#eef5ec','--fg-link':'#6aaa7d','--fg-shadow':'rgba(45,90,61,.20)','--fg-bg-image':"url('https://i.imgur.com/1fxpfGO.png')" },
+    violet:   { name:'Violeta',    emoji:'&#x1F49C;', '--fg-bg':'#fdf5ff','--fg-bg2':'#f3e5f5','--fg-bg3':'#ffffff','--fg-border':'#e1bee7','--fg-accent':'#9c27b0','--fg-accent2':'#7b1fa2','--fg-text':'#4a148c','--fg-text2':'#6a1b9a','--fg-hover':'#f9f0ff','--fg-link':'#ab47bc','--fg-shadow':'rgba(123,31,162,.22)','--fg-bg-image':"url('https://i.imgur.com/Zmsl8cu.png')" }
 };
 function applyMasivaTheme(name) {
     var th = MASIVA_THEMES[name] || MASIVA_THEMES.rose;
     var get = function(k) { return th[k] || ''; };
     var el = document.getElementById('masiva-theme-vars');
     if (!el) { el = document.createElement('style'); el.id = 'masiva-theme-vars'; document.head.appendChild(el); }
-    el.textContent = '#massScavengeSophie,#massScavengeFinal{' +
+    var hasImage = !!th['--fg-bg-image'];
+    var overlayRgb = th.dark ? '0,0,0' : '255,255,255';
+    var css = '#massScavengeSophie,#massScavengeFinal{' +
         '--fg-bg:' + get('--fg-bg') + ';--fg-bg2:' + get('--fg-bg2') + ';--fg-bg3:' + get('--fg-bg3') + ';' +
         '--fg-border:' + get('--fg-border') + ';--fg-accent:' + get('--fg-accent') + ';--fg-accent2:' + get('--fg-accent2') + ';' +
         '--fg-text:' + get('--fg-text') + ';--fg-text2:' + get('--fg-text2') + ';--fg-hover:' + get('--fg-hover') + ';' +
-        '--fg-link:' + get('--fg-link') + ';--fg-shadow:' + get('--fg-shadow') + '}';
+        '--fg-link:' + get('--fg-link') + ';--fg-shadow:' + get('--fg-shadow') + ';' +
+        '--fg-bg-image:' + (th['--fg-bg-image'] || 'none') + ';--fg-overlay-rgb:' + overlayRgb + '}';
+    if (hasImage) {
+        css += '#massScavengeSophie .raba-troop-card,#massScavengeSophie .raba-time-row,#massScavengeSophie .raba-cat-toggle{background:rgba(' + overlayRgb + ',.8) !important}'
+            + '#massScavengeSophie .raba-troop-img,#massScavengeSophie .raba-troop-label,#massScavengeSophie .raba-time-hdr{background:rgba(' + overlayRgb + ',.65) !important}'
+            + '#massScavengeSophie .raba-time-row:last-child{background:rgba(' + overlayRgb + ',.8) !important}';
+    }
+    el.textContent = css;
     localStorage.setItem('masivaRaba_theme', name);
 }
 function getMasivaCurrentTheme() { return localStorage.getItem('masivaRaba_theme') || 'rose'; }
 applyMasivaTheme(getMasivaCurrentTheme());
+
+function toggleRabaSection(id) {
+    var content = document.getElementById('content-' + id);
+    var chev = document.getElementById('chev-' + id);
+    if (!content) return;
+    var collapsing = content.style.display !== 'none';
+    content.style.display = collapsing ? 'none' : '';
+    if (chev) chev.classList.toggle('raba-collapsed', collapsing);
+    localStorage.setItem('masivaRaba_collapse_' + id, collapsing ? '1' : '0');
+    if (!collapsing && id === 'troops' && $.fn.sortable) {
+        try { $('#imgRow').sortable('refresh'); } catch(e) {}
+    }
+}
+function initRabaCollapseState() {
+    ['troops', 'time', 'cats', 'dist'].forEach(function(id) {
+        if (localStorage.getItem('masivaRaba_collapse_' + id) !== '0') {
+            var content = document.getElementById('content-' + id);
+            var chev = document.getElementById('chev-' + id);
+            if (content) content.style.display = 'none';
+            if (chev) chev.classList.add('raba-collapsed');
+        }
+    });
+}
 
 //basic setting, to be safe
 var time = {
@@ -342,7 +374,11 @@ if (typeof colors == 'undefined') {
 /* Ventana principal */
 #massScavengeSophie, #massScavengeFinal {
     font-family: 'Segoe UI', Tahoma, Geneva, sans-serif !important;
-    background: var(--fg-bg3) !important;
+    background-color: var(--fg-bg3) !important;
+    background-image: linear-gradient(rgba(var(--fg-overlay-rgb,255,255,255),.45), rgba(var(--fg-overlay-rgb,255,255,255),.45)), var(--fg-bg-image, none) !important;
+    background-size: cover !important;
+    background-position: top center !important;
+    background-repeat: no-repeat !important;
     border-radius: 14px !important;
     overflow: hidden !important;
     box-shadow: 0 10px 36px var(--fg-shadow), 0 2px 8px rgba(0,0,0,0.10) !important;
@@ -630,7 +666,11 @@ if (typeof colors == 'undefined') {
     flex: 1;
     text-align: center;
 }
-.raba-body { padding: 16px 18px; background: var(--fg-bg3); }
+.raba-body {
+    padding: 16px 18px;
+    min-height: 480px;
+    background: transparent;
+}
 
 /* Título de sección */
 .raba-section-title {
@@ -644,6 +684,30 @@ if (typeof colors == 'undefined') {
     margin-bottom: 12px;
     margin-top: 0;
 }
+.raba-section-title.raba-collapsible-title {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+.raba-chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--fg-accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+}
+.raba-chevron.raba-collapsed { transform: rotate(-90deg); }
+.raba-collapsible-content { overflow: hidden; }
 
 /* Contenedor de tropas (drag) */
 .raba-troops {
@@ -774,7 +838,8 @@ if (typeof colors == 'undefined') {
 
 /* Footer */
 .raba-footer {
-    background: var(--fg-bg); border-top: 1.5px solid var(--fg-bg2);
+    background: transparent;
+    border-top: 1.5px solid var(--fg-bg2);
     padding: 14px 18px 12px; display: flex;
     flex-direction: column; align-items: center; gap: 8px;
 }
@@ -1195,7 +1260,7 @@ html = `
     <button id="masivaThemeBtn" title="Cambiar tema">🎨</button>
     <div style="flex:1;text-align:center;padding:4px 0;">
       <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:0.5px;line-height:1.2;">🌸 ${langShinko[0]} 🌸</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.82);margin-top:4px;letter-spacing:0.8px;font-weight:500;text-transform:uppercase;">Gestiona y lanza tu recolección masiva de recursos</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.82);margin-top:4px;letter-spacing:0.8px;font-weight:500;text-transform:uppercase;">Gestiona y lanza tu recolección masiva de recursos &middot; v1.5.1</div>
     </div>
   </div>
   <div id="masivaThemePanel">
@@ -1207,15 +1272,18 @@ html = `
   <div class="raba-body">
 
     <!-- SECCIÓN TROPAS -->
-    <div class="raba-section-title">🎖️ SELECCIONA LAS TROPAS Y ORDEN PARA RECOLECTAR (ARRASTRA PARA ORDENAR)</div>
+    <div class="raba-section-title raba-collapsible-title" onclick="toggleRabaSection('troops')"><span class="raba-chevron" id="chev-troops">▾</span> 🎖️ SELECCIONA LAS TROPAS Y ORDEN PARA RECOLECTAR (ARRASTRA PARA ORDENAR)</div>
+    <div class="raba-collapsible-content" id="content-troops">
     <div id="imgRow" class="raba-troops"></div>
+    </div>
 
     <!-- DOS COLUMNAS -->
     <div class="raba-main-cols">
 
       <!-- COLUMNA IZQUIERDA: TIEMPO DE RETORNO -->
       <div class="raba-left-col">
-        <div class="raba-section-title">⏰ ${langShinko[3]}</div>
+        <div class="raba-section-title raba-collapsible-title" onclick="toggleRabaSection('time')"><span class="raba-chevron" id="chev-time">▾</span> ⏰ ${langShinko[3]}</div>
+        <div class="raba-collapsible-content" id="content-time">
         <div class="raba-time-block">
           <!-- Fila 0: cabeceras de columna -->
           <div style="display:grid;grid-template-columns:34px 1fr 1fr;gap:8px;background:var(--fg-bg2);border-bottom:2px solid var(--fg-border);box-sizing:border-box;padding:0 10px;">
@@ -1258,18 +1326,20 @@ html = `
             <div class="raba-duration-txt" id="defDisplay"></div>
           </div>
         </div>
+        </div><!-- /content-time -->
       </div>
 
       <!-- COLUMNA DERECHA: CATEGORÍAS + DISTRIBUCIÓN -->
       <div class="raba-right-col">
 
-        <div class="raba-section-title">📦 ${langShinko[2]}</div>
+        <div class="raba-section-title raba-collapsible-title" onclick="toggleRabaSection('cats')"><span class="raba-chevron" id="chev-cats">▾</span> 📦 ${langShinko[2]}</div>
         <!-- Inputs ocultos (lógica intacta) -->
         <input type="checkbox" id="category1" name="cat1" style="display:none">
         <input type="checkbox" id="category2" name="cat2" style="display:none">
         <input type="checkbox" id="category3" name="cat3" style="display:none">
         <input type="checkbox" id="category4" name="cat4" style="display:none">
         <!-- Toggle cards -->
+        <div class="raba-collapsible-content" id="content-cats">
         <div class="raba-cat-grid">
           <div class="raba-cat-toggle" id="catTog1">
             <span class="raba-cat-icon">🐢</span>
@@ -1288,15 +1358,18 @@ html = `
             <span class="raba-cat-name">${categoryNames[4].name}</span>
           </div>
         </div>
+        </div><!-- /content-cats -->
 
         <!-- Distribución: segmented control -->
-        <div class="raba-section-title" style="margin-top:16px;">⚖️ Distribución de tropas</div>
+        <div class="raba-section-title raba-collapsible-title" style="margin-top:16px;" onclick="toggleRabaSection('dist')"><span class="raba-chevron" id="chev-dist">▾</span> ⚖️ Distribución de tropas</div>
+        <div class="raba-collapsible-content" id="content-dist">
         <div class="raba-segment">
           <input type="radio" id="settingPriorityBalanced" name="prio" style="display:none">
           <div class="raba-seg-btn" id="segBtnBalanced">⚖️ Equilibrado</div>
           <input type="radio" id="settingPriorityPriority" name="prio" style="display:none">
           <div class="raba-seg-btn" id="segBtnPriority">🎯 Prioridad alta</div>
         </div>
+        </div><!-- /content-dist -->
 
       </div>
     </div><!-- /raba-main-cols -->
@@ -1312,6 +1385,7 @@ html = `
 `;
 $(".maincell").eq(0).prepend(html);
 $("#mobileContent").eq(0).prepend(html);
+initRabaCollapseState();
 if (game_data.locale == "ar_AE") {
     $("#sophieImg").attr("src", "https://media2.giphy.com/media/qYr8p3Dzbet5S/giphy.gif");
 }

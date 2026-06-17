@@ -403,6 +403,17 @@ function showRabaResults(list_launches, obj_stats, list_production, list_cluster
             </div>
             <div class="raba-results-body">
                 <div id="table_stats" class="raba-stats-wrap"></div>
+                ${n > 0 ? `
+                <div class="raba-hold-bar" id="raba_hold_bar">
+                    <button class="raba-hold-btn" id="raba_hold_btn" type="button">
+                        <span class="raba-hold-icon">🚀</span>
+                        <span class="raba-hold-text">
+                            <span class="raba-hold-label">MANTÉN PULSADO</span>
+                            <span class="raba-hold-sub">para enviar todos los envíos</span>
+                        </span>
+                        <span class="raba-hold-counter" id="raba_hold_counter">0</span>
+                    </button>
+                </div>` : ""}
                 <div id="table_view" class="raba-table-wrap"></div>
             </div>
             <div class="raba-footer">💖 Creado por <strong>rabagalan73</strong> para la reina <strong>M0bscene</strong> 💖</div>
@@ -416,9 +427,13 @@ function showRabaResults(list_launches, obj_stats, list_production, list_cluster
         $("#raba-results-overlay").hide();
         $("#rml-show-panel-btn").show();
     });
-    $("#raba-results-close").on("click", ()=> $("#raba-results-overlay").remove());
-    $("#raba-results-overlay").on("mousedown",(e)=>{ if(e.target.id==="raba-results-overlay") $("#raba-results-overlay").remove(); });
+    function stopRabaHold(){
+        if(window._rabaHoldTimer){ clearInterval(window._rabaHoldTimer); window._rabaHoldTimer = null; }
+    }
+    $("#raba-results-close").on("click", ()=>{ stopRabaHold(); $("#raba-results-overlay").remove(); });
+    $("#raba-results-overlay").on("mousedown",(e)=>{ if(e.target.id==="raba-results-overlay"){ stopRabaHold(); $("#raba-results-overlay").remove(); } });
     $("#raba-results-back").on("click", ()=>{
+        stopRabaHold();
         $("#raba-results-overlay").remove();
         createMainInterface();
     });
@@ -875,6 +890,83 @@ input.raba-step-val:focus{border-color:#e84393;box-shadow:0 0 0 2px rgba(232,67,
 .rml-show-btn{padding:5px 14px;border:none;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;
     background:linear-gradient(135deg,#ff6fae,#c850c0);color:#fff;font-family:inherit;transition:opacity .15s;}
 .rml-show-btn:hover{opacity:.85;}
+
+/* ===== Hold-to-send (mantener pulsado) ===== */
+.raba-hold-bar{display:flex;justify-content:center;padding:0 0 2px;}
+.raba-hold-btn{display:flex;align-items:center;gap:12px;padding:12px 26px;width:100%;max-width:440px;justify-content:center;
+    background:linear-gradient(135deg,#ff6fae 0%,#e84393 50%,#c850c0 100%);border:none;border-radius:14px;cursor:pointer;
+    box-shadow:0 5px 18px rgba(232,67,147,.40);-webkit-tap-highlight-color:transparent;user-select:none;
+    position:relative;overflow:hidden;transition:transform .12s,box-shadow .12s;font-family:inherit;}
+.raba-hold-btn::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .15s;pointer-events:none;}
+.raba-hold-btn.raba-hold-active{transform:scale(.97);box-shadow:0 2px 10px rgba(232,67,147,.5);}
+.raba-hold-btn.raba-hold-active::after{background:rgba(255,255,255,.14);}
+.raba-hold-btn:disabled{opacity:.45;cursor:not-allowed;}
+.raba-hold-icon{font-size:20px;line-height:1;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));}
+.raba-hold-text{display:flex;flex-direction:column;align-items:flex-start;}
+.raba-hold-label{font-size:13px;font-weight:800;color:#fff;letter-spacing:.4px;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.18);line-height:1.3;}
+.raba-hold-sub{font-size:10px;color:rgba(255,255,255,.78);font-weight:600;white-space:nowrap;margin-top:1px;}
+.raba-hold-counter{min-width:26px;height:26px;border-radius:14px;background:rgba(255,255,255,.22);color:#fff;font-size:12px;font-weight:800;
+    display:none;align-items:center;justify-content:center;padding:0 8px;flex-shrink:0;box-shadow:inset 0 1px 3px rgba(0,0,0,.18);}
+.raba-hold-btn.raba-hold-active .raba-hold-counter{display:flex;}
+
+/* ============================================================
+   📱 MODO COMPACTO MÓVIL / APP  (pantallas estrechas)
+   ============================================================ */
+@media(max-width:760px){
+    .raba-overlay{padding:0;}
+    .raba-modal,.raba-modal-narrow,.raba-modal-wide{width:100vw;max-width:100vw;max-height:100vh;border-radius:0;}
+
+    .raba-header{padding:9px 11px 8px;gap:8px;}
+    .raba-head-logo{width:30px;height:30px;font-size:15px;border-radius:8px;}
+    .raba-head-title{font-size:14.5px;}
+    .raba-head-sub{font-size:10px;margin-top:2px;}
+    .raba-icon-btn{width:25px;height:25px;font-size:12px;border-radius:7px;}
+
+    .raba-body{padding:10px 12px;gap:8px;}
+    .raba-cfg-list{grid-template-columns:1fr;gap:6px;}
+    .raba-cfg-row{padding:8px 10px;gap:8px;}
+    .raba-cfg-icon{font-size:15px;}
+    .raba-cfg-title{font-size:12px;gap:4px;}
+    .raba-cfg-desc{font-size:10px;line-height:1.4;margin-top:2px;}
+    .raba-tag{font-size:8px;padding:1px 6px;}
+
+    .raba-cfg-slider-card{padding:8px 10px;gap:5px;}
+    .raba-slider-num{font-size:16px;}
+    .raba-range::-webkit-slider-thumb{width:17px;height:17px;}
+
+    .raba-stepper{gap:4px;}
+    .raba-step-btn{width:24px;height:24px;font-size:14px;}
+    input.raba-step-val{width:38px;font-size:12px;padding:3px 2px;}
+    .raba-cap-btn{padding:4px 10px;font-size:11px;}
+    .raba-switch{transform:scale(.92);}
+
+    .raba-btn-primary{padding:10px;font-size:13px;}
+    .raba-footer{padding:6px 10px;font-size:9.5px;}
+
+    .raba-help-body,.raba-results-body{padding:10px 12px;gap:8px;}
+    .raba-help-section{padding:9px 11px;}
+    .raba-help-stitle{font-size:11.5px;}
+    .raba-help-p,.raba-help-list li{font-size:10.5px;}
+
+    .raba-stat-cards{grid-template-columns:1fr;gap:7px;}
+    .raba-stat-card{padding:11px 13px;}
+    .raba-stat-big{font-size:19px;}
+    .raba-leg-grid{grid-template-columns:1fr;gap:5px;}
+
+    .raba-table-wrap table,#raba-results-overlay table,.raba-dlg-body table{font-size:11px;min-width:0!important;}
+    .raba-table-wrap table thead td{padding:7px 8px;}
+    .raba-table-wrap table tbody tr td{padding:7px 8px;}
+    .raba-send-btn{padding:5px 11px;font-size:11px;}
+    .raba-nr-badge{font-size:10px;padding:2px 7px;}
+
+    .raba-hold-btn{padding:10px 16px;border-radius:12px;}
+    .raba-hold-label{font-size:11.5px;}
+    .raba-hold-sub{font-size:9px;}
+    .raba-hold-icon{font-size:18px;}
+
+    .raba-font-grid{grid-template-columns:1fr;}
+    .raba-sett-label{font-size:11.5px;}
+}
 `;
     let style = document.createElement("style");
     style.id = "raba-css";
@@ -2094,6 +2186,8 @@ async function createTable(list_launches,obj_stats,list_production,list_clusters
                         <div class="raba-empty-title">¡Todo en equilibrio!</div>
                         <div class="raba-empty-desc">Todos los envíos completados. Tus aldeas ya están perfectamente equilibradas.</div>
                     </div>`);
+                    if(window._rabaHoldTimer){ clearInterval(window._rabaHoldTimer); window._rabaHoldTimer = null; }
+                    $("#raba_hold_bar").slideUp(150);
                 }
             }, 200 - diff);
         });
@@ -2107,6 +2201,39 @@ async function createTable(list_launches,obj_stats,list_production,list_clusters
         };
     }
     bindSortAndSend();
+
+    ///////////////////////////////////////////mantener pulsado para enviar todo/////////////////////////////////////////
+    function bindHoldSend(){
+        let holdBtn = document.getElementById("raba_hold_btn");
+        if(!holdBtn) return;
+        let counterEl = document.getElementById("raba_hold_counter");
+        let sentCount = 0;
+
+        function fireSend(){
+            let btn = document.querySelector(".btn_send:not(:disabled)");
+            if(!btn){ stopHold(); return; }
+            btn.click();
+            sentCount++;
+            if(counterEl) counterEl.textContent = sentCount;
+            if(navigator.vibrate) navigator.vibrate(15);
+        }
+        function startHold(e){
+            e.preventDefault();
+            if(window._rabaHoldTimer) return;
+            holdBtn.classList.add("raba-hold-active");
+            fireSend();
+            window._rabaHoldTimer = setInterval(fireSend, 260);
+        }
+        function stopHold(){
+            clearInterval(window._rabaHoldTimer);
+            window._rabaHoldTimer = null;
+            holdBtn.classList.remove("raba-hold-active");
+        }
+        holdBtn.addEventListener("mousedown", startHold);
+        holdBtn.addEventListener("touchstart", startHold, {passive:false});
+        ["mouseup","mouseleave","touchend","touchcancel"].forEach(ev=> holdBtn.addEventListener(ev, stopHold));
+    }
+    bindHoldSend();
 
 }
 
