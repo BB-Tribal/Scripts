@@ -1,44 +1,25 @@
 /*
  * Script Name: Timing Assist
- * Version: v2.2
+ * Version: v2.3
  * Modified by: Black_Lottus
  */
 
 var _taLang = {
-    mustRunFromRally:   "Este script debe ejecutarse desde el punto de reunión."
-                      + "\nEjecutarlo durante un envío de comando añadirá asistencia de milisegundos."
-                      + "\nEjecutarlo después del envío mostrará cuántos milisegundos fallaste y te permitirá recalibrar.",
+    mustRunFromRally:   "Este script debe ejecutarse desde el punto de reunión durante el envío de un comando.",
     alreadyRunning:     "El script ya está en ejecución. ¿Deseas borrar las variables almacenadas? (Puede solucionar errores recurrentes)",
     titleAssist:        "Asistente de Tiempos",
     btnTest:            "Test",
     btnStart:           "Iniciar",
     labelHit:           "Hit: ",
-    labelOffset:        "Offset: ",
-    labelTime:          "Hora: ",
-    tooltipMissed:      "Fallaste por",
     tutorialTitle:      "Asistente de Tiempos — Ayuda",
-    tutorialBody:       "El asistente de tiempos te ayuda a cronometrar tus ataques con precisión mostrando gráficamente los milisegundos en un círculo. El círculo se completa cuando el milisegundo actual alcanza el milisegundo objetivo. "
-                      + "El botón \"Test\" sirve para practicar el timing antes de enviar un comando.",
-    calibTitle:         "Calibración",
-    calibBody:          "El asistente necesita calibrarse regularmente con el reloj de Tribal Wars para una sincronización precisa. Sigue estos pasos:",
-    step1Title:         "Paso 1 — Haz clic en el indicador de color.",
-    step1Body:          "Esto sincroniza el reloj de forma aproximada, sin modificar el \"offset\" de ajuste fino. Hazlo cada hora aproximadamente.",
-    step2Title:         "Paso 2 — Envía un comando de calibración.",
-    step2Body:          "Envía un ataque o apoyo para obtener el tiempo de llegada real frente al estimado. Es el paso más importante y debe repetirse cada 5-7 minutos. Se completa en el paso 3.",
-    step3Title:         "Paso 3 — Ejecuta el script tras enviar el comando e introduce el tiempo de llegada real.",
-    step3Body:          "Ejecutar el script en el punto de reunión después de un envío pedirá al usuario el tiempo de llegada real y mostrará el estimado. Introduce el tiempo (s:ms) para actualizar el offset.",
-    calibNote:          "El script debería quedar calibrado. Repite los pasos 2 y 3 para verificar si estima correctamente (±5-20 ms según velocidad de internet). Para errores recurrentes, ejecuta el script dos veces en esta página y acepta para reiniciar las variables.",
-    colorTitle:         "Indicadores de color",
-    colorBody:          "Los indicadores muestran cuánto tiempo lleva sin sincronizarse el reloj.",
-    colorRed:           " — Sin sincronización aproximada ni fina",
-    colorYellow:        " — Sincronización aproximada o fina (solo una)",
-    colorGreen:         " — Ambas sincronizaciones activas",
-    colorNote:          "<b>Nota:</b> Los colores no reflejan necesariamente la calidad de la sincronización. Para asegurarte, verifica si el script estima correctamente el tiempo de llegada tras un comando de prueba (±5-20 ms).",
-    promptEstimated:    "El ms estimado de llegada es ",
-    promptInput:        "Introduce el tiempo de llegada real (s:ms)",
-    errorOffset:        "No se pudo calcular el offset... Por favor, inténtalo de nuevo.",
-    errorManual:        "Algo salió mal... Introduce el offset manualmente. 'Tiempo real - Tiempo estimado' = offset.",
-    errConsoleInput:    "Algo salió mal al pedir datos al usuario. Verifica la entrada.",
+    tutorialBody:       "El asistente de tiempos te ayuda a cronometrar tus ataques con precisión mostrando gráficamente los milisegundos en un círculo. "
+                      + "El círculo se completa exactamente en el milisegundo objetivo. El reloj se sincroniza directamente con el servidor de Tribal Wars.",
+    hitTitle:           "Hit (ms)",
+    hitBody:            "El milisegundo del segundo de llegada en que quieres enviar el ataque. El círculo se completa en ese instante exacto. "
+                      + "Puedes cambiarlo en cualquier momento — se aplica al instante sin necesidad de reiniciar.",
+    testTitle:          "Botón Test",
+    testBody:           "Pulsa 'Test' para practicar el timing sin enviar el ataque. El círculo se congela. "
+                      + "Pulsa 'Iniciar' para reanudar inmediatamente.",
     errConsoleArrival:  "No se pudo identificar el segundo de llegada:\n",
     errConsoleTable:    "No se pudo encontrar la tabla...\n",
     btnConfirm:         "Confirmar",
@@ -71,15 +52,14 @@ function applyTATheme(key) {
     r.style.setProperty('--ta-text2',  th.text2);
     r.style.setProperty('--ta-stroke', th.stroke);
     localStorage.setItem('ta_theme', key);
-    if (ctx) { ctx.strokeStyle = th.stroke; ctx.clearRect(0,0,160,160); }
-    // update active dot in panel if open
+    if (taCtx) { taCtx.strokeStyle = th.stroke; taCtx.clearRect(0,0,160,160); }
     document.querySelectorAll('.ta-theme-item').forEach(function(el){
         el.classList.toggle('ta-theme-active', el.dataset.theme === key);
     });
 }
 
 function getCurrentTATheme() {
-    return localStorage.getItem('ta_theme') || 'classic';
+    return localStorage.getItem('ta_theme') || 'sakura';
 }
 
 function injectStyles(){
@@ -87,9 +67,7 @@ function injectStyles(){
     var s=document.createElement('style');
     s.id='ta-styles';
     s.innerHTML=
-        // CSS vars defaults (Classic theme)
         ':root{--ta-bg:#1a1208;--ta-bg2:#2a1f0e;--ta-bg3:#0f0a04;--ta-border:#8a6a2a;--ta-accent:#c8982a;--ta-text:#e8c87a;--ta-text2:#d4b87a;--ta-stroke:#c8982a}'
-        // Toasts
        +'#ta-toast-wrap{position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px}'
        +'.ta-toast{display:flex;align-items:flex-start;gap:10px;padding:14px 18px;border-radius:8px;min-width:280px;max-width:360px;box-shadow:0 4px 20px rgba(0,0,0,.6);font-family:Arial,sans-serif;font-size:13px;line-height:1.5;color:#fff;animation:ta-in .3s ease;position:relative;overflow:hidden}'
        +'.ta-toast.info{background:linear-gradient(135deg,#1a3a5c,#2a5a8c);border-left:4px solid #4a9eff}'
@@ -105,7 +83,6 @@ function injectStyles(){
        +'.ta-toast.error .ta-bar{background:#ff4444}'
        +'@keyframes ta-in{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}'
        +'@keyframes ta-prog{from{width:100%}to{width:0}}'
-       // Modal overlay (uses CSS vars)
        +'.ta-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:99998;display:flex;align-items:center;justify-content:center;animation:ta-fi .2s ease}'
        +'@keyframes ta-fi{from{opacity:0}to{opacity:1}}'
        +'.ta-modal{background:linear-gradient(180deg,var(--ta-bg2),var(--ta-bg));border:1px solid var(--ta-border);border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.85);width:460px;max-width:92vw;font-family:Arial,sans-serif;overflow:hidden}'
@@ -126,7 +103,6 @@ function injectStyles(){
        +'.ta-cn{background:var(--ta-bg2);color:var(--ta-text2);border:1px solid var(--ta-border)}'
        +'.ta-close-btn{background:none;border:1px solid var(--ta-border);border-radius:5px;color:var(--ta-text2);cursor:pointer;font-size:14px;padding:2px 8px;line-height:1.4;transition:border-color .15s,color .15s}'
        +'.ta-close-btn:hover{border-color:var(--ta-accent);color:var(--ta-accent)}'
-       // Theme panel
        +'.ta-theme-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100000;background:var(--ta-bg);border:1px solid var(--ta-border);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.9);width:320px;max-width:92vw;font-family:Arial,sans-serif;overflow:hidden;animation:ta-fi .2s ease}'
        +'.ta-theme-list{display:flex;flex-direction:column;gap:4px;padding:10px}'
        +'.ta-theme-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:8px;border:1.5px solid transparent;cursor:pointer;transition:border-color .15s,background .15s}'
@@ -134,7 +110,6 @@ function injectStyles(){
        +'.ta-theme-item.ta-theme-active{border-color:var(--ta-accent) !important;background:var(--ta-bg2)}'
        +'.ta-theme-dot{width:24px;height:24px;border-radius:7px;flex-shrink:0}'
        +'.ta-theme-name{font-size:13px;font-weight:600;color:var(--ta-text)}'
-       // Settings button
        +'#ta-settings-btn{cursor:pointer;padding:2px 6px;border:1px solid var(--ta-border);border-radius:4px;background:var(--ta-bg2);color:var(--ta-text);font-size:13px;transition:border-color .15s,color .15s;vertical-align:middle}'
        +'#ta-settings-btn:hover{border-color:var(--ta-accent);color:var(--ta-accent)}';
     document.head.appendChild(s);
@@ -192,7 +167,6 @@ function showPrompt(msg, defaultVal, callback){
 }
 
 function showThemePanel(){
-    // Toggle: if already open, close it
     var existing = document.getElementById('ta-theme-panel');
     if(existing){existing.remove();return;}
     injectStyles();
@@ -211,7 +185,6 @@ function showThemePanel(){
         +"<button type='button' class='ta-close-btn' onclick=\"document.getElementById('ta-theme-panel').remove()\">✕</button></div>"
         +"<div class='ta-theme-list'>"+items+"</div>";
     document.body.appendChild(panel);
-    // Close on outside click
     setTimeout(function(){
         function outsideClick(ev){
             if(!panel.contains(ev.target) && ev.target.id !== 'ta-settings-btn'){
@@ -224,7 +197,6 @@ function showThemePanel(){
 }
 
 function toggleTutorial(){
-    // Use our own overlay instead of TW's popup_box_container to avoid fader conflicts
     var existing = document.getElementById('ta-tutorial-ov');
     if(existing){existing.remove();return;}
     injectStyles();
@@ -236,52 +208,115 @@ function toggleTutorial(){
         +"<button type='button' class='ta-close-btn' onclick=\"document.getElementById('ta-tutorial-ov').remove()\">✕</button></div>"
         +"<div class='ta-mbd'>"
         +"<p>"+_taLang.tutorialBody+"</p>"
-        +"<h5>"+_taLang.calibTitle+"</h5><p>"+_taLang.calibBody+"</p>"
-        +"<p><b>"+_taLang.step1Title+"</b><br>"+_taLang.step1Body+"</p>"
-        +"<p><b>"+_taLang.step2Title+"</b><br>"+_taLang.step2Body+"</p>"
-        +"<p><b>"+_taLang.step3Title+"</b><br>"+_taLang.step3Body+"</p>"
-        +"<p>"+_taLang.calibNote+"</p>"
-        +"<h5>"+_taLang.colorTitle+"</h5><p>"+_taLang.colorBody+"</p>"
-        +"<p><img src='"+imgSrc.red+"' style='vertical-align:middle'>"+_taLang.colorRed+"</p>"
-        +"<p><img src='"+imgSrc.yellow+"' style='vertical-align:middle'>"+_taLang.colorYellow+"</p>"
-        +"<p><img src='"+imgSrc.green+"' style='vertical-align:middle'>"+_taLang.colorGreen+"</p>"
-        +"<p>"+_taLang.colorNote+"</p>"
+        +"<h5>"+_taLang.hitTitle+"</h5><p>"+_taLang.hitBody+"</p>"
+        +"<h5>"+_taLang.testTitle+"</h5><p>"+_taLang.testBody+"</p>"
         +"</div>"
         +"<div class='ta-mft'><button type='button' class='ta-btn ta-ok' onclick=\"document.getElementById('ta-tutorial-ov').remove()\">Cerrar</button></div>"
         +"</div>";
-    // Click on backdrop closes modal
     ov.addEventListener('click', function(ev){ if(ev.target === ov) ov.remove(); });
     document.body.appendChild(ov);
 }
 
-var c, ctx, circleReference,
-    lastMillis, lastTimingMillis,
-    timerInterval, constOffset, runTimes,
-    hitMs=getStorage("hit_ms"),
-    milliPiFraction=.00628319, calibrationTime=getStorage("offset_ms"),
+// ── Core variables ─────────────────────────────────────────────────────────────
+var millisReference, changeMillis, lastChange,
+    timerInterval, startupInterval,
+    lastArrival, first = true, changed = false, taCtx = null,
+    runTimes,
+    hitMs = getStorage("hit_ms"),
+    calibrationTime = getStorage("offset_ms"),
     imgSrc = {
-        green:      "https://dsen.innogamescdn.com/asset/04d88c84/graphic/dots/green.png",
-        yellow:     "https://dsen.innogamescdn.com/asset/04d88c84/graphic/dots/yellow.png",
-        red:        "https://dsen.innogamescdn.com/asset/04d88c84/graphic/dots/red.png",
-        questionmark:"https://dsen.innogamescdn.com/asset/6be9bf502a/graphic/questionmark.png",
-        watchtower: "https://dsen.innogamescdn.com/asset/04d88c84/graphic/big_buildings/watchtower1.png"
+        green:        "https://dsen.innogamescdn.com/asset/04d88c84/graphic/dots/green.png",
+        yellow:       "https://dsen.innogamescdn.com/asset/04d88c84/graphic/dots/yellow.png",
+        red:          "https://dsen.innogamescdn.com/asset/04d88c84/graphic/dots/red.png",
+        questionmark: "https://dsen.innogamescdn.com/asset/6be9bf502a/graphic/questionmark.png",
+        watchtower:   "https://dsen.innogamescdn.com/asset/04d88c84/graphic/big_buildings/watchtower1.png"
     };
 
-    // Apply saved theme on load
     injectStyles();
     applyTATheme(getCurrentTATheme());
 
     if("place" != game_data.screen) {
         showToast(_taLang.mustRunFromRally,'warn');
-    }else if(2 == window.location.href.split("try=").length){
-        if(null == runTimes ? runTimes = 1:runTimes++, 1 == runTimes) setTimeout(function(){addDisplay()},50);
+    } else if(2 == window.location.href.split("try=").length){
+        if(null == runTimes ? runTimes = 1:runTimes++, 1 == runTimes) setTimeout(function(){addDisplay();},50);
         else {
             showModal(_taLang.alreadyRunning, function(){ clearStorage(); });
         }
-    }else null==runTimes&&(runTimes=0), promptCalibration();
+    } else {
+        null == runTimes && (runTimes = 0);
+    }
+
+    // ── Timer core (server-time based, mirrors original) ──────────────────────
+
+    function timer(){
+        var arrival = $(".relative_time")[0].innerHTML,
+            d = new Date(),
+            now = d.getTime();
+        if(lastArrival != arrival && changed == false){
+            $("#second_display")[0].innerHTML = arrival.split(":")[2];
+            changeMillis = now;
+            changed = true;
+        }
+        if((now - changeMillis >= Number($("#hit_input")[0].value) + calibrationTime) && (changed == true)){
+            changed = false;
+            resetTimer(arrival, false);
+            return;
+        }
+        if(now - 5 > lastChange){
+            startCanvas(lastChange - millisReference, now - millisReference);
+            lastChange = now;
+        }
+    }
+
+    function resetTimer(arrival, start){
+        clearInterval(timerInterval);
+        clearInterval(startupInterval);
+        lastArrival = arrival;
+        var d = new Date();
+        millisReference = d.getTime();
+        lastChange = d.getTime();
+        first = true;
+        if(start){
+            startupInterval = setInterval(startupTimer, 2);
+        } else {
+            var canvas = document.getElementById("millis_canvas");
+            taCtx = canvas.getContext("2d");
+            var th = TA_THEMES[getCurrentTATheme()] || TA_THEMES.classic;
+            taCtx.strokeStyle = th.stroke;
+            taCtx.lineWidth = 3;
+            taCtx.clearRect(0, 0, 160, 160);
+            timerInterval = setInterval(timer, 2);
+        }
+    }
+
+    function startupTimer(){
+        var arrival = $(".relative_time")[0].innerHTML,
+            d = new Date(),
+            now = d.getTime();
+        if(lastArrival != arrival && changed == false){
+            changed = true;
+            $("#second_display")[0].innerHTML = arrival.split(":")[2];
+            changeMillis = now;
+        }
+        if((now - changeMillis >= Number($("#hit_input")[0].value) + calibrationTime) && (changed == true)){
+            clearInterval(startupInterval);
+            resetTimer(arrival, false);
+            return;
+        }
+    }
+
+    function startCanvas(lastMs, currentMs){
+        if(!taCtx) return;
+        var circleRef = -1.6;
+        if(first){ first = false; lastMs = 0; }
+        taCtx.beginPath();
+        taCtx.arc(75, 75, 50, circleRef + lastMs/100000 * 628, circleRef + currentMs/100000 * 628);
+        taCtx.stroke();
+    }
+
+    // ── UI functions ──────────────────────────────────────────────────────────
 
     function getArrivalSeconds() {
-        // Original approach: loop tbody rows from index 2, find first cell with ":", extract [2]
         var tbody = $("#date_arrival").parent().parent()[0];
         for(var t=2; t<tbody.children.length; t++){
             try{
@@ -297,20 +332,14 @@ var c, ctx, circleReference,
     function addDisplay() {
         try {
             var e = $("#date_arrival").closest('tbody')[0] || $("#date_arrival").parent().parent()[0];
-
             var n = e.children[e.children.length-1];
-            var i = getArrivalSeconds();
-            constOffset = i + getStorage("const_offset");
 
-            // Append header TH without destroying TW's existing DOM nodes
             var newTh = document.createElement('th');
             newTh.setAttribute('colspan','4');
             newTh.innerHTML = "<span style='white-space:nowrap'>" + _taLang.titleAssist + "</span>"
-                + " <img src='" + imgSrc.questionmark + "' onclick='toggleTutorial()'"
-                + " style='display:inline;height:15px;width:15px;cursor:pointer;vertical-align:middle'>";
+                + " <button type='button' onclick='toggleTutorial()' style='background:none;border:1px solid #8a6a2a;border-radius:50%;color:#c8982a;cursor:pointer;font-size:11px;font-weight:bold;width:16px;height:16px;line-height:14px;padding:0;vertical-align:middle'>?</button>";
             e.children[0].appendChild(newTh);
 
-            // Canvas TD
             var s = document.createElement("TD");
             s.setAttribute('rowspan', e.children.length-2);
             s.setAttribute('colspan', 2);
@@ -318,125 +347,58 @@ var c, ctx, circleReference,
             s.innerHTML = "<div><h2 style='position:absolute;display:block;margin-top:54px;margin-left:63px' id='second_display'></h2>"
                 + "<canvas id='millis_canvas' width='150px' height='130px' style='margin-top:-20px'></canvas></div>";
 
-            // Watchtower TD
             var l = document.createElement("TD");
             l.setAttribute('rowspan', e.children.length-2);
             l.setAttribute('colspan', 2);
-            l.setAttribute('style', 'height:1px;text-align:center');
-            l.innerHTML = "<img src='" + imgSrc.watchtower + "'>";
+            l.setAttribute('style', 'padding:0;vertical-align:middle;text-align:center;overflow:hidden;min-width:200px');
+            l.innerHTML = "<img src='https://i.imgur.com/FMiLDaZ.png' style='height:260px;width:auto;display:block;margin:0 auto;opacity:0.9'>";
 
-            // Test button + miss display
-            var p = document.createElement("TD");
-            p.innerHTML = "<button id='practice_button' type='button' class='btn btn-recruit' onclick='practiceFunction()' style='width:80px'>" + _taLang.btnTest + "</button>"
-                + "<span id='miss_display' style='width:34px;display:inline-block;font-size:11px;vertical-align:middle;margin-left:3px;font-family:monospace' title='Desfase ms'>0</span>";
-
-            // Hit input
-            var u = document.createElement("TD");
-            u.setAttribute('style','white-space:nowrap');
-            u.innerHTML = "<span>" + _taLang.labelHit + "</span><input style='width:30px' id='hit_input' title='Millisecond to hit' type='text' onchange='storeData(\"hit_ms\")' value='" + hitMs + "'>";
-
-            // Offset input + sync indicator
-            var g = document.createElement("TD");
-            g.setAttribute('style','white-space:nowrap');
-            var b,y,T,v=new Date;
-            y=v.getTime()-getStorage("last_set_offset")<42e4;
-            T=v.getTime()-getStorage("last_set_const")<36e5;
-            b=y&&T?imgSrc.green:y||T?imgSrc.yellow:imgSrc.red;
-            g.innerHTML = "<span>" + _taLang.labelOffset + "</span>"
-                + "<input id='offset_input' type='text' onchange='storeData(\"offset_ms\")' style='width:30px' value='" + calibrationTime + "'>"
-                + "<img id='offset_status' src='" + b + "' onclick='getInitialOffset()' style='cursor:pointer;vertical-align:middle;margin-left:4px'>";
-
-            // Theme button
-            var thTd = document.createElement("TD");
-            thTd.setAttribute('style','white-space:nowrap;padding-left:4px');
-            thTd.innerHTML = "<button id='ta-settings-btn' type='button' onclick='showThemePanel()' title='Tema visual'>🎨</button>";
+            var controls = document.createElement("TD");
+            controls.setAttribute('colspan', 4);
+            controls.setAttribute('style', 'vertical-align:middle;padding:4px 0');
+            controls.innerHTML = "<div style='display:flex;align-items:center;justify-content:space-between'>"
+                + "<span style='white-space:nowrap'>"
+                + "<button id='practice_button' type='button' class='btn btn-recruit' onclick='practiceFunction()' style='width:80px'>" + _taLang.btnTest + "</button>"
+                + "<span style='margin-left:6px;white-space:nowrap'>" + _taLang.labelHit + "<input style='width:30px' id='hit_input' title='Millisecond to hit' type='text' onchange='storeData(\"hit_ms\")' value='" + hitMs + "'></span>"
+                + "</span>"
+                + "<button id='ta-settings-btn' type='button' onclick='showThemePanel()' title='Tema visual'>🎨</button>"
+                + "</div>";
 
             $(".village_anchor").parent().parent()[0].appendChild(s);
             $(".village_anchor").parent().parent()[0].appendChild(l);
-            n.appendChild(p);
-            n.appendChild(u);
-            n.appendChild(g);
-            n.appendChild(thTd);
+            n.appendChild(controls);
 
-            $("#ds_body")[0].setAttribute("onsubmit","sendFunction()");
-            timerInterval = setInterval(drawCircle, 5);
+            $("#ds_body")[0].setAttribute("onsubmit","practiceFunction()");
+            resetTimer($(".relative_time")[0].innerHTML, true);
 
-        }catch(e){
-            console.log(_taLang.errConsoleTable+e);
+        }catch(err){
+            console.log(_taLang.errConsoleTable+err);
         }
-    }
-
-    function drawCircle(){
-        if(null==c){
-            c = document.getElementById("millis_canvas");
-            ctx = c.getContext("2d");
-            circleReference = -Math.PI/2;
-            lastMillis = 0;
-            lastTimingMillis = 0;
-            hitMs = $("#hit_input")[0].value;
-            // Apply theme stroke color
-            var th = TA_THEMES[getCurrentTATheme()] || TA_THEMES.classic;
-            ctx.strokeStyle = th.stroke;
-            ctx.lineWidth = 3;
-            // Init second display — original approach: first .relative_time on the page
-            var relTime = $(".relative_time")[0];
-            $("#second_display")[0].innerHTML = relTime ? (relTime.innerHTML.split(":")[2]||'00') : '00';
-        }
-
-        var e = new Date,
-            t = (e = new Date(e.getTime()+calibrationTime+constOffset)).getMilliseconds(),
-            i = new Date(e.getTime()-hitMs).getMilliseconds();
-
-        if(t < lastMillis){
-            lastMillis = t;
-            var sec = e.getSeconds();
-            $("#second_display")[0].innerHTML = (sec<10?'0':'')+sec;
-        }
-
-        if(i < lastTimingMillis){
-            ctx.clearRect(0,0,160,160);
-            lastTimingMillis=0;
-        }
-        ctx.beginPath();
-        ctx.arc(75,75,50,circleReference+lastTimingMillis*milliPiFraction,circleReference+i*milliPiFraction);
-        ctx.stroke();
-        lastMillis = t;
-        lastTimingMillis = i;
     }
 
     function practiceFunction(){
-        var e=new Date,
-            t=(e=new Date(e.getTime()+calibrationTime+constOffset)).getMilliseconds();
-        var buttonText=[_taLang.btnTest,_taLang.btnStart];
-        var buttonDOM=$("#practice_button")[0];
-        hitMs=$("#hit_input")[0].value;
-        if(buttonDOM.innerHTML==buttonText[0]){
+        var d = new Date(),
+            now = d.getTime(),
+            missMillis,
+            buttonText = [_taLang.btnTest, _taLang.btnStart],
+            buttonDOM = $('#practice_button')[0];
+
+        if(buttonDOM.innerHTML == buttonText[0]){
             clearInterval(timerInterval);
-            buttonDOM.innerHTML=buttonText[1];
-            $("#miss_display")[0].innerHTML = Math.abs(t-hitMs)<=500 ? String(t-hitMs) : String(-(1e3-(t-hitMs)));
-        }else{
-            buttonDOM.innerHTML=buttonText[0];
-            timerInterval=setInterval(drawCircle,5);
+            buttonDOM.innerHTML = buttonText[1];
+            if(now - millisReference > 500){
+                missMillis = '-' + String(1000 - (now - millisReference));
+            } else {
+                missMillis = '+' + String(now - millisReference);
+            }
+            localStorage.missMillis = missMillis;
+        } else {
+            buttonDOM.innerHTML = buttonText[0];
+            resetTimer($(".relative_time")[0].innerHTML, false);
         }
-        lastTimingMillis=1200;
     }
 
-    function sendFunction(){
-        var e=new Date;
-        clearInterval(timerInterval);
-        var t=(e=new Date(e.getTime()+calibrationTime+constOffset)).getSeconds(),
-            i=e.getMilliseconds();
-        storeData("last_hit",String(t)+":"+String(i));
-    }
-
-    function updateColor(){
-        var t,i,n=new Date;
-        t=n.getTime()-getStorage("last_set_offset")<42e4;
-        i=n.getTime()-getStorage("last_set_const")<36e5;
-        $("#offset_status")[0].src = t&&i?imgSrc.green:t||i?imgSrc.yellow:imgSrc.red;
-    }
-
-    function storeData(e,t){
+function storeData(e,t){
         var i=localStorage.timeAssistant.split(","),
             n=new Date,s="";
         if("hit_ms"==e){
@@ -451,11 +413,13 @@ var c, ctx, circleReference,
             i[1]=offsetMs;
             calibrationTime=Number(offsetMs);
             i[i.length-2]=n.getTime();
-            setTimeout(function(){updateColor();},250);
         }else if("offset"==e){
             t=isNaN(Number(t))?getStorage("offset_ms"):Number(t);
             i[1]=t;
+            calibrationTime=Number(t);
             i[i.length-2]=n.getTime();
+            var inp=document.getElementById('offset_input');
+            if(inp) inp.value=t;
         }else if("last_hit"==e){
             i[2]=t;
         }else if("const_offset"==e){
@@ -482,100 +446,3 @@ var c, ctx, circleReference,
         location.reload();
     }
 
-    function promptCalibration(){
-        if(null==localStorage.timeAssistant) return;
-        try{
-            var estRaw=getStorage("last_hit"), tParts=estRaw.split(":");
-            var estimatedMs=1e3*Number(tParts[0])+Number(tParts[1]);
-            1==tParts[0].length&&(tParts[0]="0"+tParts[0]);
-            1==tParts[1].length?tParts[1]="00"+tParts[1]:2==tParts[1].length&&(tParts[1]="0"+tParts[1]);
-            var estimatedStr=tParts[0]+":"+tParts[1];
-
-            injectStyles();
-
-            // Persistent banner at top of page
-            var banner=document.createElement('div');
-            banner.id='ta-calib-banner';
-            banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;'
-                +'background:linear-gradient(90deg,var(--ta-bg2,#2a1f0e),var(--ta-bg,#1a1208));'
-                +'border-bottom:2px solid var(--ta-accent,#c8982a);padding:10px 16px;'
-                +'display:flex;align-items:center;gap:10px;font-family:Arial,sans-serif;'
-                +'font-size:13px;color:var(--ta-text,#e8c87a);box-shadow:0 2px 12px rgba(0,0,0,.6)';
-            banner.innerHTML='<span style="font-size:16px">🎯</span>'
-                +'<span>Hit estimado: <b>'+estimatedStr+'</b> &mdash; haz clic en el ataque que acabas de enviar</span>'
-                +'<button id="ta-calib-cancel" type="button" style="margin-left:auto;background:transparent;'
-                +'border:1px solid var(--ta-border,#8a6a2a);color:var(--ta-text2,#d4b87a);'
-                +'border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px">Cancelar</button>';
-            document.body.appendChild(banner);
-
-            // Highlight clickable rows
-            var $rows=$('tr.command-row');
-            $rows.css({'outline':'2px solid var(--ta-accent,#c8982a)','cursor':'pointer'});
-            $rows.on('mouseenter.tacalib',function(){$(this).css('background','rgba(200,152,42,.12)');});
-            $rows.on('mouseleave.tacalib',function(){$(this).css('background','');});
-
-            function cleanup(){
-                var b=document.getElementById('ta-calib-banner');
-                if(b) b.remove();
-                $rows.css({'outline':'','cursor':'','background':''}).off('.tacalib');
-            }
-
-            document.getElementById('ta-calib-cancel').onclick=cleanup;
-
-            $rows.on('click.tacalib',function(){
-                // Parse arrival time from second TD: "hoy a las 22:57:54:" + <span class="grey small">162</span>
-                var $td=$(this).find('td').eq(1);
-                var realMs=parseInt($td.find('.grey.small').text().trim());
-                var rawText=$td[0].childNodes[0]?$td[0].childNodes[0].nodeValue:'';
-                var match=rawText.match(/(\d{1,2}):(\d{2}):(\d{2})/);
-                var realSec=match?parseInt(match[3]):NaN;
-
-                cleanup();
-
-                if(isNaN(realSec)||isNaN(realMs)){
-                    showToast('No se pudo leer el tiempo de llegada','error');
-                    return;
-                }
-
-                var n=realSec*1000+realMs;
-                estimatedMs-15e3>n?n+=6e4:n-15e3>estimatedMs&&(estimatedMs+=6e4);
-                var s=n-estimatedMs;
-                s=0==runTimes?Number(s+calibrationTime):Number(s);
-                if(isNaN(s)){
-                    storeData("offset",0);
-                    showToast(_taLang.errorOffset,'error');
-                }else{
-                    runTimes++;
-                    storeData("offset",s);
-                    showToast('Calibrado: offset '+(s>=0?'+':'')+s+' ms','info');
-                }
-            });
-
-        }catch(err){
-            console.log(_taLang.errConsoleInput);
-            showToast(_taLang.errorManual,'error');
-        }
-    }
-
-    function getInitialOffset(){
-        try{
-            var t=new Date;
-            var sTime=Timing.getCurrentServerTime();
-            var off=Math.round(sTime-t.getTime());
-            storeData("const_offset",off);
-            updateColor();
-            // Same loop as original: find first tbody row (from index 2) with ":" in second column
-            var tbody=$("#date_arrival").parent().parent()[0];
-            var arrSec=0;
-            for(var n=2;n<tbody.children.length;n++){
-                try{
-                    var cell=tbody.children[n].children[1];
-                    if(cell&&cell.innerHTML.match(":")){arrSec=1e3*Number(cell.innerHTML.split(":")[2]);break;}
-                }catch(ex){}
-            }
-            constOffset=arrSec+off;
-            showToast('Sincronizado con servidor ('+(off>=0?'+':'')+off+' ms)','info');
-        }catch(ex){
-            showToast('Error al sincronizar: '+ex.message,'error');
-        }
-    }
