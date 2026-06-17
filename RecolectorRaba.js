@@ -300,6 +300,30 @@ $('head').append(`<style id="recoRabaCSS">
 .reco-theme-item.active { border-color: var(--fg-accent) !important; }
 .reco-theme-dot { width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0; }
 .reco-theme-name { font-size: 11px; font-weight: 700; color: var(--fg-text2); }
+
+/* Estados de slot — bloqueado / en recolección */
+.reco-cat-row.reco-locked {
+    opacity: 0.42;
+    border-style: dashed !important;
+    pointer-events: none;
+}
+.reco-cat-row.reco-locked .reco-cat-row-val {
+    font-style: italic; font-size: 9px; letter-spacing: 0.3px;
+    color: var(--fg-text2) !important;
+}
+.reco-cat-row.reco-sending {
+    border-color: var(--fg-accent) !important;
+    background: var(--fg-bg2) !important;
+    animation: recoPulse 1.8s ease-in-out infinite;
+}
+.reco-cat-row.reco-sending .reco-cat-row-val {
+    color: var(--fg-accent) !important;
+    font-style: italic;
+}
+@keyframes recoPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.60; }
+}
 </style>`);
 
 // === HTML UN SOLO PANEL ===
@@ -589,7 +613,7 @@ function recalculate() {
             activeSlots.forEach(function(i) { dists[i] = tempDists[i]; });
             break;
         }
-        activeSlots.shift(); // quitar el más rentable (Grande primero): los slots menos eficientes absorben más tropas
+        activeSlots.pop(); // quitar el MENOS rentable (Lackadaisical primero) para concentrar tropas en los mejores slots
     }
 
     currentDistributions = dists;
@@ -603,8 +627,17 @@ function recalculate() {
         var okEl      = document.getElementById('recoCatOk_' + i);
         var troopsEl  = document.getElementById('recoCatTroops_' + i);
 
+        var isLocked  = !isSlotUnlocked(i);
+        var isSending = !isLocked && !isSlotAvailable(i);
+
+        if (card) {
+            card.classList.toggle('reco-active',  total > 0 && !isLocked && !isSending);
+            card.classList.toggle('reco-locked',  isLocked);
+            card.classList.toggle('reco-sending', isSending);
+        }
+
         if (okEl) {
-            if (total === 0) {
+            if (isLocked || isSending || total === 0) {
                 okEl.textContent = ''; okEl.className = '';
             } else if (finalScale >= 0.999) {
                 okEl.className = 'reco-cat-ok'; okEl.textContent = '✓';
@@ -612,10 +645,17 @@ function recalculate() {
                 okEl.className = 'reco-cat-err'; okEl.textContent = '✗';
             }
         }
-        if (val)  val.textContent = total > 0 ? total + ' tropas' : '—';
-        if (card) card.classList.toggle('reco-active', total > 0);
+
+        if (val) {
+            if (isLocked)       val.textContent = '🔒 Bloqueada';
+            else if (isSending) val.textContent = '⏳ Recolectando';
+            else                val.textContent = total > 0 ? total + ' tropas' : '—';
+        }
+
         if (troopsEl) {
-            if (total > 0) {
+            if (isLocked || isSending || total === 0) {
+                troopsEl.innerHTML = '';
+            } else {
                 troopsEl.innerHTML = priorityOrder.map(function(u) {
                     var n = dist[u] || 0;
                     if (!n) return '';
@@ -624,8 +664,6 @@ function recalculate() {
                         n +
                         '</span>';
                 }).join('');
-            } else {
-                troopsEl.innerHTML = '';
             }
         }
     });
@@ -696,7 +734,7 @@ var _obs = new MutationObserver(function() {
         var changed = false;
         for (var i = 0; i < 4; i++) {
             var now = isSlotAvailable(i);
-            if (now && !_prevAvailable[i]) changed = true; // slot pasó de activo a libre
+            if (now !== _prevAvailable[i]) changed = true; // cualquier cambio de estado (libre↔recolectando)
             _prevAvailable[i] = now;
         }
         if (changed) recalculate();
