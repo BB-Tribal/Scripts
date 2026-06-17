@@ -499,6 +499,18 @@ win.DSSelectVillages = {
         });
     },
 
+    applyOverlay: function (villageId, grp) {
+        var v = $('#map_village_' + villageId);
+        if (!v.length) return;
+        $('#DSSelectVillages_overlay_' + villageId).remove();
+        $('<div class="DSSelectVillagesOverlay" id="DSSelectVillages_overlay_' + villageId + '" ' +
+          'style="width:52px;height:37px;position:absolute;z-index:50;' +
+          'left:' + v.css('left') + ';top:' + v.css('top') + ';border-radius:3px;"></div>')
+            .appendTo(v.parent())
+            .css('outline', grp.color + ' solid 2px')
+            .css('background-color', grp.bg);
+    },
+
     handleVillage: function (x, y) {
         var self = this;
         var coord = x + '|' + y;
@@ -516,17 +528,20 @@ win.DSSelectVillages = {
                     og.villages[oi] = null;
                     var idIdx = og.villagesId.indexOf(village.id);
                     if (idIdx !== -1) og.villagesId[idIdx] = null;
+                    $('#DSSelectVillages_overlay_' + village.id).remove();
                 }
             });
             g.villages.push(coord);
             g.villagesId.push(village.id);
+            self.applyOverlay(village.id, g);
         } else {
             g.villages[index] = null;
             var idIdx = g.villagesId.indexOf(village.id);
             if (idIdx !== -1) g.villagesId[idIdx] = null;
+            $('#DSSelectVillages_overlay_' + village.id).remove();
         }
 
-        win.TWMap.reload();
+        // Sin win.TWMap.reload() — evita el parpadeo del mapa
         self.outputCoords();
     },
 
