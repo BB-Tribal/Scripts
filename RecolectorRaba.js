@@ -354,7 +354,7 @@ $('body').append(`
         <div style="width:54px;"></div>
         <div class="reco-head-center">
             <div class="reco-head-title">💜 Recolector Simple 💜</div>
-            <div class="reco-head-subtitle">Calcula y rellena tus tropas automáticamente</div>
+            <div class="reco-head-subtitle">Calcula y rellena tus tropas automáticamente · v1.5.0</div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:5px;align-self:flex-start;">
             <button class="reco-head-help" id="recoThemeBtn" title="Tema visual" style="font-size:13px;">🎨</button>
