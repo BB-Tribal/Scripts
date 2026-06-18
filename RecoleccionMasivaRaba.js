@@ -317,7 +317,7 @@ function applyMasivaTheme(name) {
         '--fg-bg-image:' + (th['--fg-bg-image'] || 'none') + ';--fg-overlay-rgb:' + overlayRgb + '}';
     if (hasImage) {
         css += '#massScavengeSophie .raba-troop-card,#massScavengeSophie .raba-time-row,#massScavengeSophie .raba-cat-toggle{background:rgba(' + overlayRgb + ',.8) !important}'
-            + '#massScavengeSophie .raba-troop-img,#massScavengeSophie .raba-troop-label,#massScavengeSophie .raba-time-hdr{background:rgba(' + overlayRgb + ',.65) !important}'
+            + '#massScavengeSophie .raba-troop-img,#massScavengeSophie .raba-troop-label{background:rgba(' + overlayRgb + ',.65) !important}'
             + '#massScavengeSophie .raba-time-row:last-child{background:rgba(' + overlayRgb + ',.8) !important}';
     }
     el.textContent = css;
@@ -412,6 +412,8 @@ if (typeof colors == 'undefined') {
     .raba-time-block > div:first-child { padding: 0 6px !important; }
     .raba-time-cell { gap: 2px !important; min-width: 0 !important; overflow: hidden !important; }
     .raba-time-cell input { font-size: 10px !important; padding: 2px 2px !important; min-width: 0 !important; box-sizing: border-box !important; }
+    .raba-time-cell input[type="date"],
+    .raba-time-cell input[type="time"] { height: 24px !important; min-height: 0 !important; line-height: 16px !important; padding: 1px 3px !important; }
     .raba-time-row input[type="text"].runTime_off,
     .raba-time-row input[type="text"].runTime_def { font-size: 11px !important; padding: 2px 2px !important; }
     .raba-time-hdr { font-size: 9px !important; padding: 3px 2px !important; }
