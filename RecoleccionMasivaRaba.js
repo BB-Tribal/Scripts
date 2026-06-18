@@ -396,14 +396,16 @@ if (typeof colors == 'undefined') {
     .raba-body { padding: 8px 9px !important; min-height: unset !important; }
     .raba-main-cols { flex-direction: column !important; gap: 6px !important; margin-top: 6px !important; }
     .raba-left-col, .raba-right-col { flex: unset !important; width: 100% !important; }
-    .raba-troops { gap: 3px !important; padding: 2px 0 5px !important; min-height: unset !important; }
-    .raba-troop-card { min-width: 38px !important; max-width: 42px !important; border-radius: 7px !important; }
-    .raba-troop-img { padding: 3px 3px !important; }
-    .raba-troop-img img { width: auto !important; height: auto !important; max-width: 22px !important; max-height: 20px !important; }
-    .raba-troop-label { font-size: 7px !important; padding: 2px 0 !important; letter-spacing: 0 !important; }
-    .raba-troop-input { padding: 2px 3px 3px !important; }
-    .raba-troop-input input { width: 32px !important; font-size: 10px !important; padding: 2px !important; }
-    .raba-troop-check { padding: 2px 0 !important; }
+    .raba-troops { gap: 2px !important; padding: 2px 0 4px !important; min-height: unset !important; }
+    .raba-troop-card { min-width: 32px !important; max-width: 36px !important; border-radius: 6px !important; }
+    .raba-troop-img { padding: 2px 2px !important; }
+    .raba-troop-img img { width: auto !important; height: auto !important; max-width: 18px !important; max-height: 16px !important; }
+    .raba-troop-label { font-size: 6.5px !important; padding: 1px 0 !important; letter-spacing: 0 !important; }
+    .raba-troop-input { padding: 2px 2px 2px !important; }
+    .raba-troop-input input { width: 26px !important; font-size: 9px !important; padding: 1px !important; }
+    .raba-troop-check { padding: 1px 0 !important; }
+    #massScavengeSophie input[type="checkbox"] { width: 13px !important; height: 13px !important; }
+    #massScavengeSophie input[type="checkbox"]:checked::after { font-size: 8px !important; }
     .raba-section-title { font-size: 9px !important; padding-bottom: 5px !important; margin-bottom: 5px !important; }
     .raba-section-title.raba-collapsible-title[style*="margin-top"] { margin-top: 8px !important; }
     .raba-chevron { width: 14px !important; height: 14px !important; font-size: 9px !important; }
@@ -428,7 +430,6 @@ if (typeof colors == 'undefined') {
     .raba-footer { padding: 8px 14px 7px !important; gap: 4px !important; }
     .raba-creator { font-size: 9px !important; }
     .btnSophie, input.btnSophie { padding: 7px 16px !important; font-size: 12px !important; }
-    #massScavengeSophie input[type="checkbox"] { width: 16px !important; height: 16px !important; }
     #massScavengeSophie input[type="radio"] { width: 15px !important; height: 15px !important; }
 }
 
@@ -530,10 +531,10 @@ if (typeof colors == 'undefined') {
 #massScavengeSophie input[type="checkbox"] {
     -webkit-appearance: none !important;
     appearance: none !important;
-    width: 20px !important;
-    height: 20px !important;
-    border: 2px solid var(--fg-border) !important;
-    border-radius: 5px !important;
+    width: 16px !important;
+    height: 16px !important;
+    border: 1.5px solid var(--fg-border) !important;
+    border-radius: 4px !important;
     background: var(--fg-bg3) !important;
     cursor: pointer !important;
     position: relative !important;
@@ -551,7 +552,7 @@ if (typeof colors == 'undefined') {
     top: 50% !important; left: 50% !important;
     transform: translate(-50%, -50%) !important;
     color: white !important;
-    font-size: 13px !important;
+    font-size: 10px !important;
     font-weight: 900 !important;
     line-height: 1 !important;
 }
@@ -725,8 +726,8 @@ if (typeof colors == 'undefined') {
     flex-wrap: nowrap;
     justify-content: center;
     justify-content: safe center;
-    gap: 5px;
-    padding: 4px 2px 6px;
+    gap: 4px;
+    padding: 3px 2px 5px;
     overflow-x: auto;
     min-height: unset;
 }
@@ -735,10 +736,10 @@ if (typeof colors == 'undefined') {
     flex-direction: column;
     align-items: center;
     border: 1.5px solid var(--fg-border);
-    border-radius: 8px;
+    border-radius: 7px;
     background: var(--fg-bg3);
     cursor: grab;
-    min-width: 50px;
+    min-width: 40px;
     flex-shrink: 0;
     overflow: hidden;
     transition: border-color 0.15s, box-shadow 0.15s;
@@ -748,16 +749,16 @@ if (typeof colors == 'undefined') {
     border-color: var(--fg-accent);
     box-shadow: 0 2px 10px rgba(233,30,140,0.18);
 }
-.raba-troop-img { background: var(--fg-bg2); width: 100%; text-align: center; padding: 5px 4px; }
-.raba-troop-img img { width: auto !important; height: auto !important; max-width: 30px !important; max-height: 28px !important; }
-.raba-troop-check { padding: 4px 0; }
+.raba-troop-img { background: var(--fg-bg2); width: 100%; text-align: center; padding: 3px 3px; }
+.raba-troop-img img { width: auto !important; height: auto !important; max-width: 22px !important; max-height: 20px !important; }
+.raba-troop-check { padding: 3px 0; }
 .raba-troop-label {
     background: var(--fg-bg2); width: 100%; text-align: center;
-    font-size: 9px; font-weight: 700; color: var(--fg-text);
-    padding: 3px 0; text-transform: uppercase; letter-spacing: 0.3px;
+    font-size: 7.5px; font-weight: 700; color: var(--fg-text);
+    padding: 2px 0; text-transform: uppercase; letter-spacing: 0.2px;
 }
-.raba-troop-input { padding: 4px 4px 5px; width: 100%; box-sizing: border-box; text-align: center; }
-.raba-troop-input input { width: 40px !important; font-size: 11px !important; text-align: center; }
+.raba-troop-input { padding: 3px 3px 4px; width: 100%; box-sizing: border-box; text-align: center; }
+.raba-troop-input input { width: 32px !important; font-size: 10px !important; text-align: center; }
 
 /* Layout dos columnas */
 .raba-main-cols { display: flex; gap: 16px; margin-top: 18px; align-items: flex-start; }
@@ -1272,7 +1273,7 @@ html = `
     <button id="masivaThemeBtn" title="Cambiar tema">🎨</button>
     <div style="flex:1;text-align:center;padding:4px 0;">
       <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:0.5px;line-height:1.2;">🌸 ${langShinko[0]} 🌸</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.82);margin-top:4px;letter-spacing:0.8px;font-weight:500;text-transform:uppercase;">Gestiona y lanza tu recolección masiva de recursos &middot; v1.5.2</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.82);margin-top:4px;letter-spacing:0.8px;font-weight:500;text-transform:uppercase;">Gestiona y lanza tu recolección masiva de recursos &middot; v1.5.3</div>
     </div>
   </div>
   <div id="masivaThemePanel">
