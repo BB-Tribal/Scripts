@@ -142,7 +142,7 @@ if (localStorage.getItem("troopTypeEnabled") == null) {
     worldUnits = game_data.units;
     var troopTypeEnabled = {}
     for (var i = 0; i < worldUnits.length; i++) {
-        if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy") {
+        if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy" && worldUnits[i] != "knight") {
             troopTypeEnabled[worldUnits[i]] = false
         }
     };
@@ -164,8 +164,7 @@ if (localStorage.getItem("keepHome") == null) {
         "archer": 0,
         "light": 0,
         "marcher": 0,
-        "heavy": 0,
-        "knight": 0
+        "heavy": 0
     }
     localStorage.setItem("keepHome", JSON.stringify(keepHome));
 }
@@ -218,7 +217,7 @@ if (localStorage.getItem("sendOrder") == null) {
     worldUnits = game_data.units;
     var sendOrder = [];
     for (var i = 0; i < worldUnits.length; i++) {
-        if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy") {
+        if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy" && worldUnits[i] != "knight") {
             sendOrder.push(worldUnits[i])
         }
     };
@@ -230,20 +229,18 @@ else {
     var sendOrder = JSON.parse(localStorage.getItem("sendOrder"));
 }
 
-// Migración: añadir paladín (knight) si el mundo lo tiene y no estaba en localStorage previo
-if (game_data.units.indexOf('knight') !== -1) {
-    if (!keepHome.hasOwnProperty('knight')) {
-        keepHome['knight'] = 0;
-        localStorage.setItem('keepHome', JSON.stringify(keepHome));
-    }
-    if (!troopTypeEnabled.hasOwnProperty('knight')) {
-        troopTypeEnabled['knight'] = false;
-        localStorage.setItem('troopTypeEnabled', JSON.stringify(troopTypeEnabled));
-    }
-    if (sendOrder.indexOf('knight') === -1) {
-        sendOrder.push('knight');
-        localStorage.setItem('sendOrder', JSON.stringify(sendOrder));
-    }
+// Limpieza: quitar el paladín (knight) de instalaciones previas donde se hubiera añadido
+if (sendOrder.indexOf('knight') !== -1) {
+    sendOrder.splice(sendOrder.indexOf('knight'), 1);
+    localStorage.setItem('sendOrder', JSON.stringify(sendOrder));
+}
+if (troopTypeEnabled.hasOwnProperty('knight')) {
+    delete troopTypeEnabled['knight'];
+    localStorage.setItem('troopTypeEnabled', JSON.stringify(troopTypeEnabled));
+}
+if (keepHome.hasOwnProperty('knight')) {
+    delete keepHome['knight'];
+    localStorage.setItem('keepHome', JSON.stringify(keepHome));
 }
 
 // runtimes
@@ -389,35 +386,46 @@ if (typeof colors == 'undefined') {
 @media (max-width: 700px) {
     #massScavengeSophie, #massScavengeFinal {
         width: 94vw !important;
-        max-height: 88vh !important;
+        max-height: 94vh !important;
         overflow-y: auto !important;
         cursor: default !important;
     }
-    .raba-header { padding: 12px 44px 12px 14px !important; min-height: 50px !important; }
-    .raba-title { font-size: 15px !important; }
-    .raba-body { padding: 10px 10px !important; }
-    .raba-main-cols { flex-direction: column !important; gap: 10px !important; margin-top: 10px !important; }
+    .raba-header { padding: 8px 40px 8px 12px !important; min-height: 42px !important; }
+    .raba-title { font-size: 13px !important; }
+    .raba-header div div[style*="font-size:11px"] { font-size: 9px !important; margin-top: 2px !important; }
+    .raba-body { padding: 8px 9px !important; min-height: unset !important; }
+    .raba-main-cols { flex-direction: column !important; gap: 6px !important; margin-top: 6px !important; }
     .raba-left-col, .raba-right-col { flex: unset !important; width: 100% !important; }
-    .raba-troops { gap: 3px !important; padding: 2px 0 6px !important; min-height: unset !important; }
+    .raba-troops { gap: 3px !important; padding: 2px 0 5px !important; min-height: unset !important; }
     .raba-troop-card { min-width: 38px !important; max-width: 42px !important; border-radius: 7px !important; }
-    .raba-troop-img { padding: 4px 3px !important; }
-    .raba-troop-img img { width: 22px !important; height: 22px !important; }
+    .raba-troop-img { padding: 3px 3px !important; }
+    .raba-troop-img img { width: auto !important; height: auto !important; max-width: 22px !important; max-height: 20px !important; }
     .raba-troop-label { font-size: 7px !important; padding: 2px 0 !important; letter-spacing: 0 !important; }
-    .raba-troop-input { padding: 3px 3px 4px !important; }
+    .raba-troop-input { padding: 2px 3px 3px !important; }
     .raba-troop-input input { width: 32px !important; font-size: 10px !important; padding: 2px !important; }
     .raba-troop-check { padding: 2px 0 !important; }
-    #massScavengeSophie input[type="checkbox"] { width: 14px !important; height: 14px !important; }
-    .raba-section-title { font-size: 9px !important; margin-bottom: 8px !important; }
+    .raba-section-title { font-size: 9px !important; padding-bottom: 5px !important; margin-bottom: 5px !important; }
+    .raba-section-title.raba-collapsible-title[style*="margin-top"] { margin-top: 8px !important; }
+    .raba-chevron { width: 14px !important; height: 14px !important; font-size: 9px !important; }
     .raba-time-block { overflow: hidden !important; }
-    .raba-time-row { padding: 5px 6px !important; gap: 4px !important; grid-template-columns: 26px 1fr 1fr !important; }
-    .raba-time-cell { min-width: 0 !important; overflow: hidden !important; }
-    .raba-time-cell input { font-size: 10px !important; padding: 3px 2px !important; min-width: 0 !important; box-sizing: border-box !important; }
+    .raba-time-row { padding: 4px 6px !important; gap: 4px !important; grid-template-columns: 22px 1fr 1fr !important; }
+    .raba-time-block > div:first-child { padding: 0 6px !important; }
+    .raba-time-cell { gap: 2px !important; min-width: 0 !important; overflow: hidden !important; }
+    .raba-time-cell input { font-size: 10px !important; padding: 2px 2px !important; min-width: 0 !important; box-sizing: border-box !important; }
     .raba-time-row input[type="text"].runTime_off,
-    .raba-time-row input[type="text"].runTime_def { font-size: 11px !important; padding: 3px 2px !important; }
-    .raba-time-hdr { font-size: 9px !important; padding: 5px 2px !important; }
-    .raba-duration-txt { font-size: 9px !important; }
+    .raba-time-row input[type="text"].runTime_def { font-size: 11px !important; padding: 2px 2px !important; }
+    .raba-time-hdr { font-size: 9px !important; padding: 3px 2px !important; }
+    .raba-duration-txt { font-size: 8px !important; line-height: 1.2 !important; }
     .raba-radio-lbl { font-size: 13px !important; }
-    .btnSophie, input.btnSophie { padding: 8px 16px !important; font-size: 12px !important; }
+    .raba-cat-grid { gap: 5px !important; }
+    .raba-cat-toggle { padding: 6px 5px !important; gap: 2px !important; }
+    .raba-cat-icon { font-size: 15px !important; }
+    .raba-cat-name { font-size: 9px !important; line-height: 1.1 !important; }
+    .raba-segment { margin-top: 2px !important; }
+    .raba-seg-btn { padding: 6px 5px !important; font-size: 9.5px !important; }
+    .raba-footer { padding: 8px 14px 7px !important; gap: 4px !important; }
+    .raba-creator { font-size: 9px !important; }
+    .btnSophie, input.btnSophie { padding: 7px 16px !important; font-size: 12px !important; }
     #massScavengeSophie input[type="checkbox"] { width: 16px !important; height: 16px !important; }
     #massScavengeSophie input[type="radio"] { width: 15px !important; height: 15px !important; }
 }
@@ -714,20 +722,21 @@ if (typeof colors == 'undefined') {
     display: flex;
     flex-wrap: nowrap;
     justify-content: center;
-    gap: 8px;
-    padding: 4px 2px 8px;
+    justify-content: safe center;
+    gap: 5px;
+    padding: 4px 2px 6px;
     overflow-x: auto;
-    min-height: 90px;
+    min-height: unset;
 }
 .raba-troop-card {
     display: flex;
     flex-direction: column;
     align-items: center;
     border: 1.5px solid var(--fg-border);
-    border-radius: 10px;
+    border-radius: 8px;
     background: var(--fg-bg3);
     cursor: grab;
-    min-width: 72px;
+    min-width: 50px;
     flex-shrink: 0;
     overflow: hidden;
     transition: border-color 0.15s, box-shadow 0.15s;
@@ -737,15 +746,16 @@ if (typeof colors == 'undefined') {
     border-color: var(--fg-accent);
     box-shadow: 0 2px 10px rgba(233,30,140,0.18);
 }
-.raba-troop-img { background: var(--fg-bg2); width: 100%; text-align: center; padding: 8px 6px; }
-.raba-troop-check { padding: 6px 0; }
+.raba-troop-img { background: var(--fg-bg2); width: 100%; text-align: center; padding: 5px 4px; }
+.raba-troop-img img { width: auto !important; height: auto !important; max-width: 30px !important; max-height: 28px !important; }
+.raba-troop-check { padding: 4px 0; }
 .raba-troop-label {
     background: var(--fg-bg2); width: 100%; text-align: center;
-    font-size: 10px; font-weight: 700; color: var(--fg-text);
-    padding: 4px 0; text-transform: uppercase; letter-spacing: 0.4px;
+    font-size: 9px; font-weight: 700; color: var(--fg-text);
+    padding: 3px 0; text-transform: uppercase; letter-spacing: 0.3px;
 }
-.raba-troop-input { padding: 5px 6px 6px; width: 100%; box-sizing: border-box; text-align: center; }
-.raba-troop-input input { width: 52px !important; text-align: center; }
+.raba-troop-input { padding: 4px 4px 5px; width: 100%; box-sizing: border-box; text-align: center; }
+.raba-troop-input input { width: 40px !important; font-size: 11px !important; text-align: center; }
 
 /* Layout dos columnas */
 .raba-main-cols { display: flex; gap: 16px; margin-top: 18px; align-items: flex-start; }
@@ -1260,7 +1270,7 @@ html = `
     <button id="masivaThemeBtn" title="Cambiar tema">🎨</button>
     <div style="flex:1;text-align:center;padding:4px 0;">
       <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:0.5px;line-height:1.2;">🌸 ${langShinko[0]} 🌸</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.82);margin-top:4px;letter-spacing:0.8px;font-weight:500;text-transform:uppercase;">Gestiona y lanza tu recolección masiva de recursos &middot; v1.5.1</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.82);margin-top:4px;letter-spacing:0.8px;font-weight:500;text-transform:uppercase;">Gestiona y lanza tu recolección masiva de recursos &middot; v1.5.2</div>
     </div>
   </div>
   <div id="masivaThemePanel">
@@ -1399,7 +1409,7 @@ if (is_mobile == false) {
         left: "50%",
         transform: "translate(-50%, -50%)",
         width: Math.min(window.innerWidth * 0.94, 620) + "px",
-        maxHeight: (window.innerHeight * 0.88) + "px",
+        maxHeight: (window.innerHeight * 0.94) + "px",
         overflowY: "auto",
         cursor: "default"
     });
@@ -1720,7 +1730,6 @@ function calculateHaulCategories(data) {
             "light": 'off',
             "marcher": 'off',
             "heavy": 'def',
-            "knight": 'def',
         }
 
         var typeCount = { 'off': 0, 'def': 0 };
@@ -1740,7 +1749,6 @@ function calculateHaulCategories(data) {
             if (key == "light") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 80);
             if (key == "marcher") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 50);
             if (key == "heavy") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 50);
-            if (key == "knight") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 100);
         }
         console.log("Loot possible from this village: " + totalLoot);
         if (totalLoot == 0) {
@@ -1824,8 +1832,7 @@ function calculateUnitsPerVillage(troopsAllowed) {
         "archer": 10,
         "light": 80,
         "marcher": 50,
-        "heavy": 50,
-        "knight": 100
+        "heavy": 50
     };
     //calculate HERE :D
     console.log(troopsAllowed)
