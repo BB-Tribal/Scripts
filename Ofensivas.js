@@ -51,6 +51,32 @@ var OFFENSIVE_THREE_QUARTERS_MAX = 19000;
 var OFFENSIVE_MEDIUM_MIN = 15000;           // MEDIA OFF: 15000-17000
 var OFFENSIVE_MEDIUM_MAX = 17000;
 
+// Umbrales personalizados por el usuario (persisten entre sesiones)
+var OFFENSIVE_THRESHOLDS_KEY = 'ofensivas_thresholds';
+function loadOffensiveThresholds() {
+    try {
+        var saved = JSON.parse(localStorage.getItem(OFFENSIVE_THRESHOLDS_KEY));
+        if (saved && saved.media > 0 && saved.tres4 > saved.media && saved.full > saved.tres4 && saved.super > saved.full) {
+            OFFENSIVE_MEDIUM_MIN = saved.media;
+            OFFENSIVE_MEDIUM_MAX = saved.tres4;
+            OFFENSIVE_THREE_QUARTERS_MIN = saved.tres4;
+            OFFENSIVE_THREE_QUARTERS_MAX = saved.full;
+            OFFENSIVE_FULL_MIN = saved.full;
+            OFFENSIVE_FULL_MAX = saved.super;
+            OFFENSIVE_SUPER_THRESHOLD = saved.super;
+        }
+    } catch (e) { /* ignorar, se usan los valores por defecto */ }
+}
+loadOffensiveThresholds();
+
+function getThresholdsText(bold) {
+    var b1 = bold ? '<b>' : '', b2 = bold ? '</b>' : '';
+    return b1 + 'SUPER:' + b2 + ' &gt;' + OFFENSIVE_SUPER_THRESHOLD.toLocaleString('es-ES') +
+        ' | ' + b1 + 'FULL:' + b2 + ' ' + OFFENSIVE_FULL_MIN.toLocaleString('es-ES') + '-' + OFFENSIVE_FULL_MAX.toLocaleString('es-ES') +
+        ' | ' + b1 + '3/4:' + b2 + ' ' + OFFENSIVE_THREE_QUARTERS_MIN.toLocaleString('es-ES') + '-' + OFFENSIVE_THREE_QUARTERS_MAX.toLocaleString('es-ES') +
+        ' | ' + b1 + 'MEDIA:' + b2 + ' ' + OFFENSIVE_MEDIUM_MIN.toLocaleString('es-ES') + '-' + OFFENSIVE_MEDIUM_MAX.toLocaleString('es-ES');
+}
+
 // Verificar que estamos en la página correcta
 if (game_data.screen !== 'ally' || !window.location.href.includes('mode=members_troops')) {
     UI.ErrorMessage('Este script debe ejecutarse desde la página de Tropas de la tribu (Tribu → Miembros → Tropas)', 5000);
@@ -381,7 +407,7 @@ function displayResults(data) {
     var html = '<div id="offensive_counter_results" style="margin-top: 20px;">';
     html += '<h3>⚔️ Contador de Ofensivas de la Tribu</h3>';
     html += '<p style="font-size: 11px; color: #666;">';
-    html += '<b>SUPER:</b> &gt;20,650 | <b>FULL:</b> 19,000-20,650 | <b>3/4:</b> 17,000-19,000 | <b>MEDIA:</b> 15,000-17,000<br>';
+    html += getThresholdsText(true) + '<br>';
     html += '<i>Población Ofensiva = Hacha(1) + Ligera(4) + Arq.Caballo(5) + Ariete(5) + Catapulta(8)</i>';
     html += '</p>';
     
@@ -431,7 +457,7 @@ function displayResults(data) {
         var mediumColor = member.offensiveMediumCount > 0 ? '#9370DB' : '#999';
         var hasOffensives = member.offensiveSuperCount > 0 || member.offensiveFullCount > 0 || member.offensiveThreeQuartersCount > 0 || member.offensiveMediumCount > 0;
         
-        html += '<tr class="' + rowClass + '">';
+        html += '<tr class="' + rowClass + '" data-player-id="' + member.playerId + '">';
         html += '<td><a href="/game.php?screen=info_player&id=' + member.playerId + '">' + member.player + '</a></td>';
         html += '<td style="text-align: center;">' + member.villageCount + '</td>';
         html += '<td style="color: ' + superColor + '; font-weight: bold; font-size: 16px; text-align: center;">' + member.offensiveSuperCount + '</td>';
@@ -461,6 +487,7 @@ function displayResults(data) {
     html += '<button id="copy_offensive_summary" class="btn" style="padding: 8px 20px;">📋 Copiar Resumen BBCode</button>';
     html += '<button id="export_offensive_csv" class="btn" style="padding: 8px 20px; margin-left: 10px;">📊 Exportar a CSV</button>';
     html += '<button id="refresh_analysis" class="btn" style="padding: 8px 20px; margin-left: 10px;">🔄 Actualizar</button>';
+    html += '<button id="open_offensive_settings" class="btn" style="padding: 8px 20px; margin-left: 10px;">⚙️ Ajustes</button>';
     html += '</div>';
     
     html += '</div>';
@@ -482,7 +509,11 @@ function displayResults(data) {
     $('#refresh_analysis').click(function() {
         startAnalysis();
     });
-    
+
+    $('#open_offensive_settings').click(function() {
+        showOffensiveSettings();
+    });
+
     // Ver detalles de pueblos ofensivos
     $('.view_details').on('click', function() {
         var index = $(this).data('index');
@@ -490,6 +521,91 @@ function displayResults(data) {
     });
     
     UI.SuccessMessage('✅ Análisis completado: ' + totalOffensivesSuper + ' SUPER, ' + totalOffensivesFull + ' FULL, ' + totalOffensivesThreeQuarters + ' 3/4, ' + totalOffensivesMedium + ' MEDIA', 4000);
+}
+
+//////////////////////////////////
+//      AJUSTES (UMBRALES)      //
+//////////////////////////////////
+
+function showOffensiveSettings() {
+    $('#offensive_settings_modal, #settings_overlay').remove();
+
+    var html = '<div id="offensive_settings_modal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f4e4bc; border: 3px solid #7d510f; padding: 0; z-index: 10001; width: 380px; border-radius: 5px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">';
+
+    html += '<div style="background: #c1a264; padding: 12px 20px; border-bottom: 2px solid #7d510f; border-radius: 3px 3px 0 0;">';
+    html += '<h3 style="margin: 0; color: #000;">⚙️ Ajustes — Umbrales de Ofensiva</h3>';
+    html += '</div>';
+
+    html += '<div style="padding: 20px;">';
+    html += '<p style="font-size: 11px; color: #666; margin: 0 0 14px 0;">Población ofensiva mínima para cada categoría. Deben quedar en orden ascendente (MEDIA &lt; 3/4 &lt; FULL &lt; SUPER).</p>';
+
+    var fields = [
+        { id: 'set_thr_media', label: '🟣 MEDIA desde', val: OFFENSIVE_MEDIUM_MIN },
+        { id: 'set_thr_tres4', label: '🟠 3/4 desde', val: OFFENSIVE_THREE_QUARTERS_MIN },
+        { id: 'set_thr_full', label: '🟢 FULL desde', val: OFFENSIVE_FULL_MIN },
+        { id: 'set_thr_super', label: '🔴 SUPER desde', val: OFFENSIVE_SUPER_THRESHOLD }
+    ];
+    fields.forEach(function(f) {
+        html += '<div style="margin-bottom: 10px;">';
+        html += '<label style="display: block; font-size: 12px; font-weight: bold; color: #000; margin-bottom: 3px;">' + f.label + '</label>';
+        html += '<input type="number" id="' + f.id + '" value="' + f.val + '" min="0" step="1" style="width: 100%; padding: 6px 8px; border: 1px solid #7d510f; border-radius: 4px; box-sizing: border-box;">';
+        html += '</div>';
+    });
+
+    html += '<div style="display: flex; gap: 8px; margin-top: 16px;">';
+    html += '<button id="btn_save_offensive_settings" class="btn" style="flex: 1; padding: 8px;">💾 Guardar y reanalizar</button>';
+    html += '<button id="btn_reset_offensive_settings" class="btn" style="flex: 1; padding: 8px;">↩️ Por defecto</button>';
+    html += '</div>';
+    html += '<div style="text-align: center; margin-top: 10px;"><button id="btn_close_offensive_settings" class="btn">❌ Cerrar</button></div>';
+    html += '</div></div>';
+
+    var overlay = '<div id="settings_overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000;"></div>';
+
+    $('body').append(overlay);
+    $('body').append(html);
+
+    $('#btn_save_offensive_settings').on('click', function() {
+        var media = parseInt($('#set_thr_media').val());
+        var tres4 = parseInt($('#set_thr_tres4').val());
+        var full = parseInt($('#set_thr_full').val());
+        var sup = parseInt($('#set_thr_super').val());
+
+        if ([media, tres4, full, sup].some(function(v) { return isNaN(v) || v < 0; })) {
+            alert('Introduce valores numéricos válidos.');
+            return;
+        }
+        if (!(media < tres4 && tres4 < full && full < sup)) {
+            alert('Los umbrales deben ir en orden ascendente: MEDIA < 3/4 < FULL < SUPER.');
+            return;
+        }
+
+        localStorage.setItem(OFFENSIVE_THRESHOLDS_KEY, JSON.stringify({ media: media, tres4: tres4, full: full, super: sup }));
+        loadOffensiveThresholds();
+        closeOffensiveSettingsModal();
+        UI.SuccessMessage('⚙️ Ajustes guardados, reanalizando...', 2000);
+        startAnalysis();
+    });
+
+    $('#btn_reset_offensive_settings').on('click', function() {
+        localStorage.removeItem(OFFENSIVE_THRESHOLDS_KEY);
+        OFFENSIVE_MEDIUM_MIN = 15000;
+        OFFENSIVE_MEDIUM_MAX = 17000;
+        OFFENSIVE_THREE_QUARTERS_MIN = 17000;
+        OFFENSIVE_THREE_QUARTERS_MAX = 19000;
+        OFFENSIVE_FULL_MIN = 19000;
+        OFFENSIVE_FULL_MAX = 20650;
+        OFFENSIVE_SUPER_THRESHOLD = 20650;
+        closeOffensiveSettingsModal();
+        UI.SuccessMessage('↩️ Valores por defecto restaurados, reanalizando...', 2000);
+        startAnalysis();
+    });
+
+    $('#btn_close_offensive_settings, #settings_overlay').on('click', closeOffensiveSettingsModal);
+}
+
+function closeOffensiveSettingsModal() {
+    $('#settings_overlay').remove();
+    $('#offensive_settings_modal').remove();
 }
 
 //////////////////////////////////
@@ -503,10 +619,8 @@ function updateMainTableCounters(memberData) {
     var threeQuartersCount = memberData.offensiveThreeQuartersVillages.filter(function(v) { return !v.deleted; }).length;
     var mediumCount = memberData.offensiveMediumVillages.filter(function(v) { return !v.deleted; }).length;
     
-    // Encontrar la fila del jugador en la tabla principal
-    var playerRow = $('#offensive_counter_results table.vis tbody tr').filter(function() {
-        return $(this).find('a[href*="id=' + memberData.playerId + '"]').length > 0;
-    });
+    // Encontrar la fila del jugador en la tabla principal (coincidencia exacta por ID)
+    var playerRow = $('#offensive_counter_results table.vis tbody tr[data-player-id="' + memberData.playerId + '"]');
     
     if (playerRow.length > 0) {
         // Actualizar las celdas de contadores (columnas 3, 4, 5, 6 - índices 2, 3, 4, 5)
@@ -527,12 +641,11 @@ function updateMainTableCounters(memberData) {
         // MEDIA
         var mediumColor = mediumCount > 0 ? '#9370DB' : '#999';
         cells.eq(5).html(mediumCount).css({'color': mediumColor, 'font-weight': 'bold', 'font-size': '16px', 'text-align': 'center'});
-        
-        // Actualizar botón de detalles
-        var hasOffensives = superCount > 0 || fullCount > 0 || threeQuartersCount > 0 || mediumCount > 0;
-        if (!hasOffensives) {
-            cells.eq(12).html('-');
-        }
+
+        // Nota: el botón "Ver" (celda 12) no se toca aquí a propósito. Los pueblos nunca
+        // se eliminan de los arrays (solo se marcan deleted), así que el botón debe seguir
+        // disponible siempre para poder reabrir el modal y deshacer eliminaciones, aunque
+        // en este momento no queden ofensivas activas para ese jugador.
     }
     
     // Recalcular totales globales
@@ -574,7 +687,7 @@ function showOffensiveDetails(memberData) {
     // Contenido
     html += '<div style="padding: 20px; background: #f4e4bc;">';
     html += '<p style="margin: 5px 0;"><b>SUPER: ' + memberData.offensiveSuperCount + '</b> | <b>FULL: ' + memberData.offensiveFullCount + '</b> | <b>3/4: ' + memberData.offensiveThreeQuartersCount + '</b> | <b>MEDIA: ' + memberData.offensiveMediumCount + '</b></p>';
-    html += '<p style="font-size: 10px; color: #666; margin: 5px 0 15px 0;"><i>SUPER: &gt;20,650 | FULL: 19,000-20,650 | 3/4: 17,000-19,000 | MEDIA: 15,000-17,000</i></p>';
+    html += '<p style="font-size: 10px; color: #666; margin: 5px 0 15px 0;"><i>' + getThresholdsText(false) + '</i></p>';
     
     html += '<table class="vis" style="width: 100%; margin-top: 10px;">';
     html += '<thead>';
@@ -726,7 +839,7 @@ function copyBBCodeSummary(data, totalVillages) {
     bbcode += '[b]Total Ofensivas:[/b] ' + totalAll + '\n';
     bbcode += '[b]Total de Pueblos:[/b] ' + totalVillages + '\n';
     bbcode += '[b]Miembros Analizados:[/b] ' + data.length + '\n';
-    bbcode += '[i]SUPER: >20,650 | FULL: 19,000-20,650 | 3/4: 17,000-19,000 | MEDIA: 15,000-17,000[/i]\n';
+    bbcode += '[i]' + getThresholdsText(false).replace('&gt;', '>') + '[/i]\n';
     bbcode += '[i]Pob. OFF = Hacha(1) + Ligera(4) + Arq.Caballo(5) + Ariete(5) + Catapulta(8)[/i]\n\n';
     bbcode += '[color=#8B4513]━━━━━━━━━━━━━━━━━━━━━━━━━[/color]\n';
     bbcode += '[b]TOP 10 JUGADORES CON MÁS OFENSIVAS:[/b]\n\n';
