@@ -291,6 +291,13 @@ function injectRSCSS() {
 .rs-form-row { display:flex; gap:12px; margin-bottom:14px; }
 .rs-form-col { flex:1; }
 
+/* ===== Coordenadas recientes ===== */
+.rs-recent-coords { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:7px; }
+.rs-recent-label { font-size:10px; font-weight:700; color:var(--fg-text2); text-transform:uppercase; letter-spacing:.5px; flex-shrink:0; }
+.rs-recent-chip { padding:3px 10px; border-radius:20px; border:1.5px solid var(--fg-border); background:var(--fg-bg3); color:var(--fg-text2); font-size:11px; font-weight:600; cursor:pointer; font-family:inherit; transition:border-color .15s,color .15s,background .15s; white-space:nowrap; }
+.rs-recent-chip:hover { border-color:var(--fg-accent); color:var(--fg-accent); background:var(--fg-hover); }
+.rs-recent-coord-sub { opacity:.65; font-weight:500; }
+
 /* ===== Buttons ===== */
 .rs-btn { padding:8px 18px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .15s,transform .1s; }
 .rs-btn:active { transform:scale(.97); }
@@ -347,6 +354,24 @@ function injectRSCSS() {
 .rs-btn-send-card:hover { background:var(--fg-accent); color:var(--fg-bg2); }
 .rs-btn-send-card:disabled { opacity:.4; cursor:not-allowed; }
 
+/* ===== Mantener pulsado para enviar todo ===== */
+.rs-hold-bar { padding:9px 14px; display:flex; justify-content:center; background:var(--fg-bg2); border-bottom:1px solid var(--fg-border); }
+.rs-hold-btn { display:flex; align-items:center; gap:12px; padding:10px 24px; width:100%; max-width:420px; justify-content:center;
+    background:linear-gradient(135deg,var(--fg-accent) 0%,var(--fg-accent2) 100%); border:none; border-radius:10px; cursor:pointer;
+    box-shadow:0 4px 14px var(--fg-shadow); -webkit-tap-highlight-color:transparent; user-select:none;
+    position:relative; overflow:hidden; transition:transform .12s,box-shadow .12s; font-family:inherit; }
+.rs-hold-btn::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,0); transition:background .15s; pointer-events:none; }
+.rs-hold-btn.rs-hold-active { transform:scale(.97); box-shadow:0 2px 8px var(--fg-shadow); }
+.rs-hold-btn.rs-hold-active::after { background:rgba(0,0,0,.12); }
+.rs-hold-btn:disabled { opacity:.45; cursor:not-allowed; }
+.rs-hold-icon { font-size:18px; line-height:1; flex-shrink:0; }
+.rs-hold-text { display:flex; flex-direction:column; align-items:flex-start; }
+.rs-hold-label { font-size:12.5px; font-weight:800; color:var(--fg-bg2); letter-spacing:.4px; white-space:nowrap; line-height:1.3; }
+.rs-hold-sub { font-size:10px; color:rgba(0,0,0,.55); font-weight:600; white-space:nowrap; margin-top:1px; }
+.rs-hold-counter { min-width:24px; height:24px; border-radius:12px; background:rgba(0,0,0,.18); color:var(--fg-bg2); font-size:11px; font-weight:800;
+    display:none; align-items:center; justify-content:center; padding:0 7px; flex-shrink:0; }
+.rs-hold-btn.rs-hold-active .rs-hold-counter { display:flex; }
+
 /* ===== Theme panel ===== */
 .rs-theme-overlay { position:absolute; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(3px); z-index:9; opacity:0; pointer-events:none; transition:opacity .22s; }
 .rs-theme-overlay.open { opacity:1; pointer-events:all; }
@@ -378,6 +403,48 @@ function numberWithCommas(x) {
 function checkDistance(x1, y1, x2, y2) {
     var a = x1 - x2, b = y1 - y2;
     return Math.round(Math.hypot(a, b));
+}
+
+// ── Coordenadas recientes (últimos destinos usados) ───────────
+var RS_RECENT_KEY = "rs_recent_coords";
+
+function getRecentCoords() {
+    try {
+        var list = JSON.parse(localStorage.getItem(RS_RECENT_KEY)) || [];
+        return list.map(function (item) {
+            return (typeof item === "string") ? { coord: item, name: "" } : item;
+        });
+    } catch (e) { return []; }
+}
+
+function saveRecentCoord(coord, name) {
+    if (!coord) return;
+    var list = getRecentCoords().filter(function (c) { return c.coord !== coord; });
+    list.unshift({ coord: coord, name: name || "" });
+    list = list.slice(0, 3);
+    localStorage.setItem(RS_RECENT_KEY, JSON.stringify(list));
+}
+
+function buildRecentCoordsHTML(targetInputId) {
+    var list = getRecentCoords();
+    if (!list.length) return "";
+    var chips = list.map(function (item) {
+        var label = item.name
+            ? `${item.name} <span class="rs-recent-coord-sub">(${item.coord})</span>`
+            : item.coord;
+        return `<button type="button" class="rs-recent-chip" data-coord="${item.coord}" title="${item.coord}">&#x1F4CD; ${label}</button>`;
+    }).join("");
+    return `<div class="rs-recent-coords" data-target="${targetInputId}">
+        <span class="rs-recent-label">Recientes</span>${chips}
+    </div>`;
+}
+
+function bindRecentCoordsHandlers() {
+    $(document).off("click.rsRecent").on("click.rsRecent", ".rs-recent-chip", function () {
+        var coord = $(this).data("coord");
+        var targetSel = $(this).closest(".rs-recent-coords").data("target");
+        $(targetSel).val(coord).focus();
+    });
 }
 
 function rsFooter() {
@@ -487,8 +554,9 @@ function askCoordinate() {
         </div>
         <div class="rs-body">
           <label class="rs-label">${langShinko[7]}</label>
-          <input class="rs-input" type="text" id="rs-coord-input" placeholder="500|500" style="margin-bottom:16px;">
-          <div style="display:flex;justify-content:flex-end;">
+          <input class="rs-input" type="text" id="rs-coord-input" placeholder="500|500" style="margin-bottom:6px;">
+          ${buildRecentCoordsHTML("#rs-coord-input")}
+          <div style="display:flex;justify-content:flex-end;margin-top:16px;">
             <button class="rs-btn rs-btn-primary" id="rs-coord-save">&#x2694;&#xFE0F; ${langShinko[2]}</button>
           </div>
         </div>
@@ -497,6 +565,7 @@ function askCoordinate() {
     </div>`;
 
     $("body").append(html);
+    bindRecentCoordsHandlers();
 
     $("#rs-coord-save").on("click", function () {
         var val = $("#rs-coord-input").val();
@@ -511,6 +580,7 @@ function askCoordinate() {
 
 // ── Panel principal ──────────────────────────────────────────
 function createList() {
+    if (window._rsHoldTimer) { clearInterval(window._rsHoldTimer); window._rsHoldTimer = null; }
     $("#rs-main-panel").remove();
 
     var targetImg    = sendBack[2] || "";
@@ -582,6 +652,7 @@ function createList() {
           <div class="rs-form-col">
             <label class="rs-label">${langShinko[7]}</label>
             <input class="rs-input" type="text" id="rs-coord-target" value="${coordinate}" placeholder="500|500">
+            ${buildRecentCoordsHTML("#rs-coord-target")}
           </div>
           <div class="rs-form-col" style="max-width:120px;">
             <label class="rs-label">${langShinko[8]}</label>
@@ -596,6 +667,16 @@ function createList() {
             <span class="rs-cards-title">${langShinko[11]}</span>
             <span class="rs-cards-badge">${cardData.length}</span>
           </div>
+          ${cardData.length ? `<div class="rs-hold-bar">
+            <button class="rs-hold-btn" id="rs-hold-btn" type="button">
+                <span class="rs-hold-icon">🚀</span>
+                <span class="rs-hold-text">
+                    <span class="rs-hold-label">MANTÉN PULSADO</span>
+                    <span class="rs-hold-sub">para enviar todas las aldeas</span>
+                </span>
+                <span class="rs-hold-counter" id="rs-hold-counter">0</span>
+            </button>
+          </div>` : ""}
           <div class="rs-cards-grid" id="rs-cards-grid">${cards}</div>
         </div>
       </div>
@@ -621,9 +702,46 @@ function createList() {
     $("#rs-redo-btn").on("click", applyInputsAndRedo);
     $("#rs-help-btn").on("click", showRSHelp);
     bindRSThemeHandlers();
+    bindRecentCoordsHandlers();
+    bindRSHoldSend();
 
     var firstBtn = $(".rs-btn-send-card")[0];
     if (firstBtn) firstBtn.focus();
+}
+
+// ── Mantener pulsado para enviar todo (PC y móvil) ────────────
+function bindRSHoldSend() {
+    if (window._rsHoldTimer) { clearInterval(window._rsHoldTimer); window._rsHoldTimer = null; }
+    var holdBtn = document.getElementById("rs-hold-btn");
+    if (!holdBtn) return;
+    var counterEl = document.getElementById("rs-hold-counter");
+    var sentCount = 0;
+
+    function fireSend() {
+        var btn = document.querySelector(".rs-btn-send-card:not(:disabled)");
+        if (!btn) { stopHold(); return; }
+        btn.click();
+        sentCount++;
+        if (counterEl) counterEl.textContent = sentCount;
+        if (navigator.vibrate) navigator.vibrate(15);
+    }
+    function startHold(e) {
+        e.preventDefault();
+        if (window._rsHoldTimer) return;
+        holdBtn.classList.add("rs-hold-active");
+        fireSend();
+        window._rsHoldTimer = setInterval(fireSend, 260);
+    }
+    function stopHold() {
+        clearInterval(window._rsHoldTimer);
+        window._rsHoldTimer = null;
+        holdBtn.classList.remove("rs-hold-active");
+    }
+    holdBtn.addEventListener("mousedown", startHold);
+    holdBtn.addEventListener("touchstart", startHold, { passive: false });
+    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(function (ev) {
+        holdBtn.addEventListener(ev, stopHold);
+    });
 }
 
 // ── Enviar recursos ──────────────────────────────────────────
@@ -638,6 +756,9 @@ function sendResource(sourceID, targetID, woodAmount, stoneAmount, ironAmount, r
 
         var remaining = $(".rs-village-card").length;
         if (remaining === 0) {
+            if (window._rsHoldTimer) { clearInterval(window._rsHoldTimer); window._rsHoldTimer = null; }
+            $("#rs-hold-btn").removeClass("rs-hold-active");
+            $(".rs-hold-bar").slideUp(150);
             showRSAlert(langShinko[21]);
         }
     }, 200);
@@ -770,6 +891,7 @@ function coordToId(coord) {
         sendBack = [d.villages[0].id, d.villages[0].name, d.villages[0].image,
                     d.villages[0].player_name, d.villages[0].points,
                     d.villages[0].x, d.villages[0].y];
+        saveRecentCoord(coord, d.villages[0].name);
         createList();
     });
 }
