@@ -2101,6 +2101,14 @@ async function createTable(list_launches,obj_stats,list_production,list_clusters
 
     document.getElementById("table_view").innerHTML = buildSendTable();
 
+    // Fija la altura del contenedor al renderizar la tabla completa, para que al ir
+    // desapareciendo filas (tras cada envío) el modal no se redimensione ni recoloque
+    // el botón de mantener pulsado: solo cambia el scroll interno, no el alto de la caja.
+    if(list_launches.length > 0){
+        let _wrap = document.getElementById("table_view");
+        _wrap.style.height = Math.min(_wrap.scrollHeight, 310) + "px";
+    }
+
     if(game_data.device != "desktop") $(".hide_mobile").hide();
 
     ////////////////////////////////////////////////////////////////////table statistics/////////////////////////////////////////////////////////////////////

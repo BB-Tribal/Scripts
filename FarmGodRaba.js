@@ -552,45 +552,47 @@ window.FarmGod.Main = (function (Library, Translation) {
         }
       });
 
-    // === Mobile Hold-to-Farm FAB ===
-    // Only on mobile (no physical keyboard). Tap: fires once. Hold: fires continuously
-    // while finger is pressed — same behavior as holding Enter on desktop. Not automation:
-    // requires continuous manual contact.
-    if ($('#mobileHeader').length > 0 || window.innerWidth <= 900) {
-      if (window._fgFabTimer) { clearInterval(window._fgFabTimer); window._fgFabTimer = null; }
-      $('#fg-hold-fab').remove();
-      $('<div id="fg-hold-fab">' +
-          '<button class="fg-fab-btn" id="fg-hold-btn" aria-label="Mantener pulsado para granjear">' +
-            '<span class="fg-fab-icon">&#x2694;&#xFE0F;</span>' +
-            '<div class="fg-fab-text">' +
-              '<span class="fg-fab-label">MANTENER PULSADO</span>' +
-              '<span class="fg-fab-sub">para enviar granja</span>' +
-            '</div>' +
-            '<span class="fg-fab-counter" id="fg-fab-counter">0</span>' +
-          '</button>' +
-        '</div>').insertAfter('.fgRabaProgress');
-      var _fabBtn = document.getElementById('fg-hold-btn');
-      _fabBtn.addEventListener('touchstart', function (e) {
-        e.preventDefault();
-        _fabBtn.classList.add('fg-fab-active');
-        function _fire() {
-          var icon = document.querySelector('.farmGod_icon');
-          if (icon) {
-            $(icon).trigger('click');
-            if (navigator.vibrate) navigator.vibrate(18);
-          }
-        }
-        _fire();
-        window._fgFabTimer = setInterval(_fire, 220);
-      }, { passive: false });
-      function _fabStop() {
-        _fabBtn.classList.remove('fg-fab-active');
-        clearInterval(window._fgFabTimer);
-        window._fgFabTimer = null;
+    // === Hold-to-Farm Button (PC + movil) ===
+    // Click/tap: dispara una vez. Mantener pulsado (raton o dedo): dispara en bucle
+    // mientras se mantiene el contacto — igual que mantener Enter pulsado en PC.
+    // Not automation: requiere contacto manual continuo.
+    if (window._fgFabTimer) { clearInterval(window._fgFabTimer); window._fgFabTimer = null; }
+    $('#fg-hold-fab').remove();
+    $('<div id="fg-hold-fab">' +
+        '<button class="fg-fab-btn" id="fg-hold-btn" type="button" aria-label="Mantener pulsado para granjear">' +
+          '<span class="fg-fab-icon">&#x2694;&#xFE0F;</span>' +
+          '<div class="fg-fab-text">' +
+            '<span class="fg-fab-label">MANTENER PULSADO</span>' +
+            '<span class="fg-fab-sub">para enviar granja</span>' +
+          '</div>' +
+          '<span class="fg-fab-counter" id="fg-fab-counter">0</span>' +
+        '</button>' +
+      '</div>').insertAfter('.fgRabaProgress');
+    var _fabBtn = document.getElementById('fg-hold-btn');
+    function _fabFire() {
+      var icon = document.querySelector('.farmGod_icon');
+      if (icon) {
+        $(icon).trigger('click');
+        if (navigator.vibrate) navigator.vibrate(18);
       }
-      _fabBtn.addEventListener('touchend', _fabStop);
-      _fabBtn.addEventListener('touchcancel', _fabStop);
     }
+    function _fabStart(e) {
+      e.preventDefault();
+      if (window._fgFabTimer) return;
+      _fabBtn.classList.add('fg-fab-active');
+      _fabFire();
+      window._fgFabTimer = setInterval(_fabFire, 220);
+    }
+    function _fabStop() {
+      _fabBtn.classList.remove('fg-fab-active');
+      clearInterval(window._fgFabTimer);
+      window._fgFabTimer = null;
+    }
+    _fabBtn.addEventListener('mousedown', _fabStart);
+    _fabBtn.addEventListener('touchstart', _fabStart, { passive: false });
+    ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(function (ev) {
+      _fabBtn.addEventListener(ev, _fabStop);
+    });
 
     $('.switchVillage')
       .off('click')
@@ -729,15 +731,16 @@ window.FarmGod.Main = (function (Library, Translation) {
 .fg-summary-ok .fg-summary-num { color:var(--fg-accent); }
 .fg-summary-er .fg-summary-num { color:#ef4444; }
 .fg-summary-tot .fg-summary-num { color:var(--fg-text); }
-.fg-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:7px; }
+.fg-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:7px; }
 .fg-farm-card { background:var(--fg-bg3); border:1.5px solid var(--fg-border); border-radius:9px; overflow:hidden; display:flex; flex-direction:column; transition:border-color .18s, transform .15s, box-shadow .18s; }
 .fg-farm-card:hover { border-color:var(--fg-accent); transform:translateY(-2px); box-shadow:0 6px 18px var(--fg-shadow); }
 .fg-card-top { padding:8px 9px 7px; position:relative; }
 .fg-farm-card.fg-tmpl-b .fg-card-top { background:linear-gradient(135deg,var(--fg-accent),var(--fg-accent2)); }
 .fg-farm-card.fg-tmpl-a .fg-card-top { background:linear-gradient(135deg,var(--fg-accent2),var(--fg-bg2)); }
-.fg-card-target { font-size:12px; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.4); }
+.fg-card-target { font-size:12px; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fg-card-target a { color:inherit; text-decoration:none; }
 .fg-card-target a:hover { opacity:.82; }
+.fg-card-target-coord { font-size:9px; font-weight:600; color:rgba(255,255,255,.75); text-shadow:0 1px 2px rgba(0,0,0,.3); margin-top:1px; }
 .fg-card-tmpl { position:absolute; top:6px; right:6px; width:15px; height:15px; border-radius:3px; background:rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:800; color:#fff; }
 .fg-card-body { padding:6px 9px 5px; display:flex; flex-direction:column; gap:3px; flex:1; }
 .fg-card-origin { font-size:10px; color:var(--fg-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -754,7 +757,7 @@ window.FarmGod.Main = (function (Library, Translation) {
 .fg-farm-card:hover .fg-card-send-label { color:var(--fg-bg2); }
 .fg-empty-cards { padding:44px 20px; text-align:center; color:var(--fg-text2); font-size:13px; }
 
-/* === Mobile Hold-to-Farm FAB (inline) === */
+/* === Hold-to-Farm Button (PC + movil) === */
 #fg-hold-fab { padding:10px 14px; background:var(--fg-bg2); border-bottom:1px solid var(--fg-border); display:flex; justify-content:center; align-items:center; }
 .fg-fab-btn { display:flex; align-items:center; gap:13px; padding:13px 28px; width:100%; max-width:400px; justify-content:center; background:linear-gradient(135deg,var(--fg-accent) 0%,var(--fg-accent2) 100%); border:none; border-radius:10px; box-shadow:0 4px 16px var(--fg-shadow); cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; position:relative; overflow:hidden; transition:transform .12s,box-shadow .12s; }
 .fg-fab-btn::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,0); transition:background .15s; pointer-events:none; }
@@ -773,9 +776,10 @@ window.FarmGod.Main = (function (Library, Translation) {
     #fg-theme-overlay { position:fixed !important; inset:0 !important; z-index:99998 !important; }
     #fg-theme-panel { position:fixed !important; top:0 !important; right:0 !important; bottom:0 !important; left:auto !important; width:80vw !important; max-width:300px !important; z-index:99999 !important; transform:translateX(100%) !important; border-radius:0 !important; }
     #fg-theme-panel.open { transform:translateX(0) !important; }
-    .fg-card-grid { grid-template-columns:repeat(auto-fill,minmax(78px,1fr)) !important; gap:5px !important; }
+    .fg-card-grid { grid-template-columns:repeat(auto-fill,minmax(105px,1fr)) !important; gap:5px !important; }
     .fg-card-top { padding:6px 7px 5px !important; }
     .fg-card-target { font-size:10px !important; }
+    .fg-card-target-coord { font-size:8px !important; }
     .fg-card-tmpl { width:12px !important; height:12px !important; font-size:7px !important; top:4px !important; right:4px !important; }
     .fg-card-body { padding:4px 7px 3px !important; gap:2px !important; }
     .fg-card-origin { font-size:9px !important; }
@@ -926,7 +930,8 @@ window.FarmGod.Main = (function (Library, Translation) {
           let isB = val.template.name === 'b';
           return `<div class="fg-farm-card ${isB ? 'fg-tmpl-b' : 'fg-tmpl-a'}">
             <div class="fg-card-top">
-              <div class="fg-card-target"><a href="${game_data.link_base_pure}info_village&id=${val.target.id}">${val.target.coord}</a></div>
+              <div class="fg-card-target"><a href="${game_data.link_base_pure}info_village&id=${val.target.id}">${val.target.name || val.target.coord}</a></div>
+              ${val.target.name ? `<div class="fg-card-target-coord">${val.target.coord}</div>` : ''}
               <span class="fg-card-tmpl">${val.template.name.toUpperCase()}</span>
             </div>
             <div class="fg-card-body">
@@ -1176,29 +1181,39 @@ window.FarmGod.Main = (function (Library, Translation) {
       return data;
     };
 
+    // Carga /map/village.txt para resolver el nombre real de cada pueblo objetivo
+    // (util sobre todo para pueblos abandonados con nombre propio; en barbaros
+    // genericos seguira mostrando "Barbaros" pero al menos es informacion real).
+    // Se descarga siempre porque tambien sirve para detectar nuevos barbaros si
+    // esa opcion esta activada.
     let findNewbarbs = () => {
-      if (newbarbs) {
-        return twLib.get('/map/village.txt').then((allVillages) => {
-          allVillages.match(/[^\r\n]+/g).forEach((villageData) => {
-            let [id, name, x, y, player_id] =
-              villageData.split(',');
-            let coord = `${x}|${y}`;
+      data.villageNames = {};
 
-            if (
-              player_id == 0 &&
-              !data.farms.farms.hasOwnProperty(coord)
-            ) {
-              data.farms.farms[coord] = {
-                id: id.toNumber(),
-              };
-            }
-          });
+      return twLib.get('/map/village.txt').then((allVillages) => {
+        allVillages.match(/[^\r\n]+/g).forEach((villageData) => {
+          let [id, name, x, y, player_id] =
+            villageData.split(',');
+          let coord = `${x}|${y}`;
 
-          return data;
+          try {
+            data.villageNames[coord] = decodeURIComponent(name.replace(/\+/g, ' '));
+          } catch (e) {
+            data.villageNames[coord] = name.replace(/\+/g, ' ');
+          }
+
+          if (
+            newbarbs &&
+            player_id == 0 &&
+            !data.farms.farms.hasOwnProperty(coord)
+          ) {
+            data.farms.farms[coord] = {
+              id: id.toNumber(),
+            };
+          }
         });
-      } else {
+
         return data;
-      }
+      });
     };
 
     let filterFarms = () => {
@@ -1311,7 +1326,7 @@ window.FarmGod.Main = (function (Library, Translation) {
               name: data.villages[prop].name,
               id: data.villages[prop].id,
             },
-            target: { coord: el.coord, id: farmIndex.id },
+            target: { coord: el.coord, id: farmIndex.id, name: data.villageNames[el.coord] || '' },
             fields: distance,
             template: { name: template_name, id: template.id },
           });
