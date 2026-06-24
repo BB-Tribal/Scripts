@@ -774,6 +774,7 @@ function sendResource(sourceID, targetID, woodAmount, stoneAmount, ironAmount, r
             $("#rs-wood-sent").text(numberWithCommas(totalWoodSent));
             $("#rs-stone-sent").text(numberWithCommas(totalStoneSent));
             $("#rs-iron-sent").text(numberWithCommas(totalIronSent));
+            saveRecentCoord(coordinate, sendBack[1]);
         }, !1
     );
 }
@@ -891,7 +892,6 @@ function coordToId(coord) {
         sendBack = [d.villages[0].id, d.villages[0].name, d.villages[0].image,
                     d.villages[0].player_name, d.villages[0].points,
                     d.villages[0].x, d.villages[0].y];
-        saveRecentCoord(coord, d.villages[0].name);
         createList();
     });
 }
