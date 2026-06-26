@@ -19,27 +19,27 @@ if(getParameterByName('screen') == "info_village"){
 
 //var content = document.getElementsByClassName("quickedit-content");
 var _rnLang = {
-    spear: " 𝐋𝐚𝐧𝐳𝐚𝐬 🔱▸",
-    sword: " 𝐄𝐬𝐩𝐚𝐝𝐚𝐬 🗡️▸",
-    axe: " 𝐇𝐚𝐜𝐡𝐚𝐬 🪓▸",
-    archer: " 𝐀𝐫𝐪𝐮𝐞𝐫𝐨𝐬 🏹▸",
-    spy: " 𝐄𝐬𝐩í𝐚𝐬 🕵️▸",
-    light: " 𝐋𝐢𝐠𝐞𝐫𝐚 🐴▸",
-    marcher: " 𝐉𝐢𝐧𝐞𝐭𝐞𝐬 🏇▸",
+    spear: " 𝓛𝓪𝓷𝔃𝓪𝓼 🔱▸",
+    sword: " 𝓔𝓼𝓹𝓪𝓭𝓪𝓼 🗡️▸",
+    axe: " 𝓗𝓪𝓬𝓱𝓪𝓼 🪓▸",
+    archer: " 𝓐𝓻𝓺𝓾𝓮𝓻𝓸𝓼 🏹▸",
+    spy: " 𝓔𝓼𝓹í𝓪𝓼 🕵️▸",
+    light: " 𝓛𝓲𝓰𝓮𝓻𝓪 🐴▸",
+    marcher: " 𝓙𝓲𝓷𝓮𝓽𝓮𝓼 🏇▸",
     heavy: "",
-    ram: " 𝐀𝐫𝐢𝐞𝐭𝐞𝐬 💣▸",
-    catapult: " 𝐂𝐚𝐭𝐚𝐩𝐮𝐥𝐭𝐚𝐬 💥▸",
-    knight: " 𝐩𝐚𝐥𝐚𝐝𝐢𝐧 🤵▸",
-    snob: "『👑』𝐓𝐄 𝐕𝐎𝐘 𝐀 𝐄𝐍𝐍𝐎𝐁𝐋𝐄𝐂𝐄𝐑『👑』",
+    ram: " 𝓐𝓻𝓲𝓮𝓽𝓮𝓼 💣▸",
+    catapult: " 𝓒𝓪𝓽𝓪𝓹𝓾𝓵𝓽𝓪𝓼 💥▸",
+    knight: " 𝓟𝓪𝓵𝓪𝓭í𝓷 🤵▸",
+    snob: "『👑』𝓛𝓵𝓮𝓰𝓪 𝓮𝓵 𝓷𝓸𝓫𝓵𝓮『👑』",
 
-    miniOff: "⚡𝐌𝐈𝐍𝐈 𝐎𝐅𝐅⚡",
-    off: "『☠️』𝐕𝐀𝐌𝐎𝐒 𝐀 𝐋𝐀 𝐆𝐔𝐄𝐑𝐑𝐀『☠️』",
-    fake: "💨 𝐅𝐚𝐤𝐞... 𝐬𝐢𝐠𝐮𝐞 𝐝𝐮𝐫𝐦𝐢𝐞𝐧𝐝𝐨 💨",
-    fakeSpy: "🕵️ 𝐒𝐨𝐥𝐨 𝐦𝐞 𝐚𝐬𝐨𝐦𝐨 🕵️"
+    miniOff: "🤏 𝓔𝓼𝓸 𝓮𝓼 𝓼𝓸𝓵𝓸 𝓾𝓷 𝓬𝓸𝓼𝓺𝓾𝓲𝓵𝓵𝓮𝓸 🤏",
+    off: "☠️ 𝓡𝓮𝔃𝓪 𝓵𝓸 𝓺𝓾𝓮 𝓼𝓮𝓹𝓪𝓼 ☠️",
+    fake: "💤 𝓔𝓼𝓸 𝓮𝓼 𝓹𝓾𝓻𝓸 𝓽𝓮𝓪𝓽𝓻𝓸... 𝓼𝓲𝓰𝓾𝓮 𝓭𝓾𝓻𝓶𝓲𝓮𝓷𝓭𝓸 💤",
+    fakeSpy: "🕵️ 𝓢𝓸𝓵𝓸 𝓱𝓮 𝓿𝓮𝓷𝓲𝓭𝓸 𝓪 𝓶𝓲𝓻𝓪𝓻... 𝓻𝓪𝓳𝓪𝓭𝓸 🕵️"
 
 }
 
-const conditions = ["🤵", "💥", "💣", "🏹", "🐴", "🕵️", "🏇", "🪓", "🗡️", "🔱", "⚡", "💨", "☠️", "👑", "『"];
+const conditions = ["🤵", "💥", "💣", "🏹", "🐴", "🕵️", "🏇", "🪓", "🗡️", "🔱", "🤏", "💤", "☠️", "👑", "『"];
 
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
@@ -91,7 +91,7 @@ async function calculateAsync(link){
     var atackName = "";
     if(snob >= 1){
         atackName = _rnLang.snob;
-    }else if(spy >= valor/2){
+    }else if(spy >= valor/2 && ram === 0 && catapult === 0){
         atackName = _rnLang.fakeSpy;
     }else if(troopsValue >= 0 && troopsValue <= 300){
         atackName = _rnLang.fake;
