@@ -469,7 +469,25 @@ win.DSSelectVillages = {
             var realCount = 0;
 
             if (self.showWithFakes && realVillages.length > 0) {
-                out = generateFakeScript(realVillages, g.label, self.fakeMain, self.fakeSpy, self.fakeMode);
+                var nameMap = {}, ownerMap = {};
+                realVillages.forEach(function (coord) {
+                    var pts = coord.split('|');
+                    var v = win.TWMap && win.TWMap.villages &&
+                            win.TWMap.villages[Number(pts[0]) * 1000 + Number(pts[1])];
+                    if (v && v.name) {
+                        nameMap[coord] = v.name;
+                        var pid = v.owner;
+                        if (pid && pid !== '0' && pid !== 0) {
+                            var playerObj = (win.TWMap.players && win.TWMap.players[pid])
+                                         || (win.TWMap.data && win.TWMap.data.players && win.TWMap.data.players[pid]);
+                            if (playerObj) {
+                                var pname = typeof playerObj === 'string' ? playerObj : (playerObj.name || playerObj.player_name);
+                                if (pname) ownerMap[coord] = pname;
+                            }
+                        }
+                    }
+                });
+                out = generateFakeScript(realVillages, g.label, self.fakeMain, self.fakeSpy, self.fakeMode, nameMap, ownerMap);
                 realCount = realVillages.length;
             } else {
                 for (var i = 0; i < g.villages.length; i++) {
@@ -551,7 +569,7 @@ win.DSSelectVillages = {
     }
 };
 
-function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
+function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode, nameMap, ownerMap) {
     // Fisher-Yates shuffle para modo mezclado
     function shuffle(arr) {
         var a = arr.slice();
@@ -569,24 +587,13 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
 
     var base =
         'var b=document;' +
-        'function el(n){return b.getElementsByName(n)[0];}' +
-        'function ins(f,v){if(!f)return;f.value=v;' +
-            'try{var ev=b.createEvent("HTMLEvents");ev.initEvent("change",true,true);f.dispatchEvent(ev);}catch(x){}}' +
-        'function avail(n){var f=el(n);if(!f)return 0;' +
-            'var s=f.nextSibling;while(s&&s.nodeType!==1)s=s.nextSibling;' +
-            'if(!s)return 0;var m=s.innerHTML.match(/\\d+/);return m?Number(m[0]):0;}' +
-        'function toast(icon,title,msg,color){' +
-            'var d=document.createElement("div");' +
-            'd.innerHTML="<span style=\\"font-size:20px;line-height:1;\\">"+icon+"</span>' +
-                '<div style=\\"line-height:1.4;\\"><div style=\\"font-size:12px;font-weight:800;color:"+color+";\\">"+title+"</div>' +
-                '<div style=\\"font-size:10px;margin-top:2px;color:#ccc;\\">"+msg+"</div></div>";' +
-            'd.style.cssText="position:fixed;top:24px;right:24px;z-index:99999;display:flex;align-items:center;gap:12px;' +
-                'background:#111;color:#fff;padding:13px 18px;border-radius:9px;' +
-                'font-family:Segoe UI,Tahoma,sans-serif;' +
-                'box-shadow:0 8px 28px rgba(0,0,0,0.55);border-left:4px solid "+color+";' +
-                'opacity:1;transition:opacity 0.4s;min-width:240px;";' +
-            'document.body.appendChild(d);' +
-            'setTimeout(function(){d.style.opacity="0";setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},400);},3200);' +
+        'function el(n){return b.getElementsByName(n)[0]}' +
+        'function ins(f,v){if(f){f.value=v;try{f.dispatchEvent(new Event("change",{bubbles:true}))}catch(e){}}}' +
+        'function avail(n){var f=el(n);if(!f)return 0;var s=f.nextSibling;while(s&&s.nodeType!==1)s=s.nextSibling;if(!s)return 0;var m=s.innerHTML.match(/\\d+/);return m?+m[0]:0}' +
+        'function toast(i,t,m,c){var d=b.createElement("div");' +
+            'd.style.cssText="position:fixed;top:20px;right:20px;z-index:99999;background:#111;color:#fff;padding:12px 16px;border-radius:8px;border-left:4px solid "+c+";font:12px Segoe UI,sans-serif;min-width:220px;box-shadow:0 4px 16px rgba(0,0,0,.5)";' +
+            'd.innerHTML="<b style=\\"color:"+c+"\\">"+i+" "+t+"</b><br><span style=\\"color:#ccc;font-size:11px\\">"+m+"</span>";' +
+            'b.body.appendChild(d);setTimeout(function(){d.remove()},3200)' +
         '}';
 
     // Lógica de unidad principal con flag sent
@@ -632,7 +639,7 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
             '}' +
         '}';
 
-    return 'javascript:var coords="' + coordsStr + '";var spy=' + (fakeSpy ? 'true' : 'false') + ';(function(){' +
+    return 'javascript:var coords="' + coordsStr + '";var names=' + JSON.stringify(nameMap || {}) + ';var owners=' + JSON.stringify(ownerMap || {}) + ';var spy=' + (fakeSpy ? 'true' : 'false') + ';(function(){' +
         'if(typeof game_data==="undefined"||game_data.screen!=="place"){' +
             'if(typeof game_data!=="undefined")' +
                 'window.location.href=game_data.link_base_pure+"place";' +
@@ -641,6 +648,7 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
         'var mode="' + modeStr + '";' +
         'var key="' + storageKey + '";' +
         base +
+        'if(game_data&&String(game_data.world).replace(/\\D/g,"")!=="102"){toast("🌍","Mundo incorrecto","Este fake solo es válido para el mundo 102.","#e53935");return;}' +
         'var sig=coordList.length+"_"+coordList[0];' +
         'var _saved=JSON.parse(localStorage.getItem(key)||"null");' +
         'var validSig=_saved&&_saved.s===sig;' +
@@ -677,77 +685,48 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
         'if(el("x")&&el("y")){ins(el("x"),tPts[0]);ins(el("y"),tPts[1]);}' +
         'else if(el("input")){ins(el("input"),t);}' +
         'if(typeof xProcess==="function")xProcess("inputx","inputy");' +
-        // Inyectar panel de info en la página
         '(function(){' +
-            'var old=b.getElementById("ecFakeInfoBar");if(old)old.parentNode.removeChild(old);' +
+            'var old=b.getElementById("ecFakeInfoBar");if(old)old.remove();' +
+            'if(!b.getElementById("ecFC")){var cs=b.createElement("style");cs.id="ecFC";' +
+            'cs.textContent=".ecfb{display:flex;width:fit-content;max-width:100%;align-items:stretch;margin:8px 0 12px;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:Segoe UI,sans-serif;clear:both}' +
+            '.ecfb-a{background:linear-gradient(135deg,#0ea5e9,#0369a1);padding:8px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:60px;gap:2px}' +
+            '.ecfb-a em{font-size:16px;font-style:normal}' +
+            '.ecfb-a small{font-size:7px;font-weight:900;color:#e0f2fe;letter-spacing:1px;text-transform:uppercase}' +
+            '.ecfb-c{background:#1a1a2e;padding:7px 12px;display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid #2d2d44}' +
+            '.ecfb-c:last-child{border-right:none}' +
+            '.ecfb-c small{font-size:8px;font-weight:700;color:#8888aa;letter-spacing:.8px;text-transform:uppercase;display:block}' +
+            '.ecfb-c span{font-size:11px;font-weight:700;color:#e0e0e0}";' +
+            'b.head.appendChild(cs)}' +
             'var isNewCycle=nextIdx===0&&nextIdx!==null;' +
             'var newCycles=isNewCycle?cycles+1:cycles;' +
             'var total=coordList.length;' +
             'var current=mode==="rand"?null:(idx+1);' +
-            // Barra de progreso CSS
-            'var barPct=mode==="rand"?0:Math.round((current/total)*100);' +
-            'var progressBar="<div style=\\"background:#333;border-radius:3px;width:70px;height:5px;overflow:hidden;margin-bottom:2px;\\">"' +
-                '+"<div style=\\"background:#f5a623;height:100%;width:"+barPct+"%;transition:width 0.3s;\\"></div></div>";' +
-            'var progressStr=mode==="rand"?"<span style=\\"color:#f5a623;font-weight:900;\\">✦ Aleatorio</span>":progressBar+"<span style=\\"font-size:11px;font-weight:700;color:#e0e0e0;\\">"+current+"/"+total+"</span>";' +
-            // Modo label
-            'var modeLabel=mode==="rand"?"🎲 Aleatorio":mode==="shuffle"?"🔀 Mezclado":"▶ Secuencial";' +
-            // Ciclo
-            'var cycleStr=isNewCycle?"<span style=\\"color:#43a047;font-weight:900;\\">"+(newCycles)+" ✅</span>":"<span>"+newCycles+"</span>";' +
-            // Coordenada link
+            'var barPct=mode==="rand"?0:Math.round(current/total*100);' +
+            'var progressStr=mode==="rand"?"✦ Rand":"<div style=\\"height:4px;background:#333;border-radius:2px;margin-bottom:3px\\"><div style=\\"height:4px;background:#f5a623;width:"+barPct+"%\\"></div></div>"+current+"/"+total;' +
+            'var modeLabel=mode==="rand"?"🎲 Rand":mode==="shuffle"?"🔀 Mezcla":"▶ Sec";' +
+            'var cycleStr=isNewCycle?"<span style=\\"color:#43a047\\">"+newCycles+" ✅</span>":""+newCycles;' +
             'var tParts=t.split("|");' +
             'var tLink=game_data.link_base_pure+"map&x="+tParts[0]+"&y="+tParts[1];' +
-            'var tHtml="<a href=\\""+tLink+"\\" style=\\"color:#f5a623;font-weight:900;font-size:13px;text-decoration:none;letter-spacing:0.5px;\\">📍 "+t+"</a>";' +
-            // Contenedor — compacto en móvil
-            'var isMobile=window.innerWidth<600;' +
-            'var p=isMobile?"5px 8px":"8px 16px";' +
-            'var bar=b.createElement("div");' +
-            'bar.id="ecFakeInfoBar";' +
-            'bar.style.cssText=' +
-                '"display:flex;width:fit-content;max-width:100%;align-items:stretch;margin:8px 0 12px;border-radius:8px;overflow:hidden;' +
-                'box-shadow:0 4px 16px rgba(0,0,0,0.35);font-family:Segoe UI,Tahoma,sans-serif;' +
-                'clear:both;opacity:0;transition:opacity 0.3s;";' +
+            'var tLabel=(names&&names[t])?names[t]+" <span style=\\"font-size:10px;opacity:.75\\">("+t+")</span>":t;' +
+            'var tOwner=(owners&&owners[t])?"<div style=\\"font-size:9px;color:#8888aa;margin-top:2px\\">👤 "+owners[t]+"</div>":"";' +
+            'var tHtml="<div><a href=\\""+tLink+"\\" style=\\"color:#f5a623;font-weight:900;font-size:13px;text-decoration:none\\">📍 "+tLabel+"</a>"+tOwner+"</div>";' +
+            'var bar=b.createElement("div");bar.id="ecFakeInfoBar";bar.className="ecfb";' +
             'bar.innerHTML=' +
-                // Badge izquierdo
-                '"<div style=\\"background:linear-gradient(135deg,#b71c1c,#7f0000);padding:"+p+";display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;"+(isMobile?"min-width:44px":"min-width:70px")+";\\">"' +
-                '+"<span style=\\"font-size:"+(isMobile?"14px":"18px")+";line-height:1;\\">⚔️</span>"' +
-                '+"<span style=\\"font-size:8px;font-weight:900;color:#ffcdd2;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;\\">FAKES</span>"' +
-                '+"</div>"' +
-                // Celda objetivo
-                '+"<div style=\\"background:#1a1a2e;padding:"+p+";display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid #2d2d44;\\">"' +
-                '+"<span style=\\"font-size:9px;font-weight:700;color:#8888aa;letter-spacing:1px;text-transform:uppercase;\\">OBJETIVO</span>"' +
-                '+"<span>"+tHtml+"</span>"' +
-                '+"</div>"' +
-                // Celda progreso
-                '+"<div style=\\"background:#1a1a2e;padding:"+p+";display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid #2d2d44;\\">"' +
-                '+"<span style=\\"font-size:9px;font-weight:700;color:#8888aa;letter-spacing:1px;text-transform:uppercase;\\">PROGRESO</span>"' +
-                '+"<span style=\\"font-family:monospace;font-size:11px;font-weight:700;color:#e0e0e0;letter-spacing:1px;\\">"+progressStr+"</span>"' +
-                '+"</div>"' +
-                // Celda modo — oculta en móvil
-                '+(isMobile?"":' +
-                '"<div style=\\"background:#1a1a2e;padding:"+p+";display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid #2d2d44;\\">"' +
-                '+"<span style=\\"font-size:9px;font-weight:700;color:#8888aa;letter-spacing:1px;text-transform:uppercase;\\">MODO</span>"' +
-                '+"<span style=\\"font-size:11px;font-weight:700;color:#e0e0e0;\\">"+modeLabel+"</span>"' +
-                '+"</div>")' +
-                // Celda ciclo
-                '+"<div style=\\"background:#1a1a2e;padding:"+p+";display:flex;flex-direction:column;justify-content:center;gap:2px;\\">"' +
-                '+"<span style=\\"font-size:9px;font-weight:700;color:#8888aa;letter-spacing:1px;text-transform:uppercase;\\">CICLO</span>"' +
-                '+"<span style=\\"font-size:12px;font-weight:700;color:#e0e0e0;\\">"+cycleStr+"</span>"' +
-                '+"</div>"' +
-                // Author — oculto en móvil
-                '+(isMobile?"":' +
-                '"<div style=\\"background:#1a1a2e;padding:8px 10px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;border-left:1px solid #2d2d44;\\">"' +
-                '+"<span style=\\"font-size:8px;color:#8888aa;letter-spacing:0.5px;white-space:nowrap;\\">by rabagalan73</span>"' +
-                '+"</div>");' +
+                '"<div class=\\"ecfb-a\\"><em>⚔️</em><small>FAKES</small></div>"' +
+                '+"<div class=\\"ecfb-c\\"><small>OBJETIVO</small><span>"+tHtml+"</span></div>"' +
+                '+"<div class=\\"ecfb-c\\"><small>PROGRESO</small><span>"+progressStr+"</span></div>"' +
+                '+"<div class=\\"ecfb-c\\"><small>MODO</small><span>"+modeLabel+"</span></div>"' +
+                '+"<div class=\\"ecfb-c\\"><small>CICLO</small><span>"+cycleStr+"</span></div>";' +
             'var anchor=b.getElementById("command-form-warning");' +
+            'var oldWarn=b.getElementById("ecFakeWarn");if(oldWarn)oldWarn.remove();' +
             'if(anchor){' +
-            'anchor.parentNode.insertBefore(bar,anchor);' +
-            'var warn=b.createElement("div");' +
-            'warn.id="ecFakeWarn";' +
-            'warn.style.cssText="clear:both;margin:6px 0 8px;padding:6px 12px;background:#2a1a00;border-left:3px solid #f5a623;border-radius:4px;font-family:Segoe UI,Tahoma,sans-serif;font-size:10px;color:#c8a96e;";' +
-            'warn.innerHTML="⚠️ <strong style=\\"color:#f5a623;\\">AVISO:</strong> Este script ha sido generado únicamente para <strong style=\\"color:#fff;\\">Polonia</strong>. Si lo compartes con alguien más, lo sabremos y te buscaremos. 🐺";' +
-            'var warnAnchor=isMobile?anchor:b.getElementById("command_target");' +
-            'if(warnAnchor)warnAnchor.parentNode.insertBefore(warn,warnAnchor);' +
-            'setTimeout(function(){bar.style.opacity="1";},30);}' +
+                'anchor.parentNode.insertBefore(bar,anchor);' +
+                'var warn=b.createElement("div");warn.id="ecFakeWarn";' +
+                'warn.style.cssText="clear:both;margin:6px 0 8px;padding:7px 14px;background:#071a2c;border-left:3px solid #0ea5e9;border-radius:4px;font-family:Segoe UI,Tahoma,sans-serif;font-size:10px;color:#7dd3fc";' +
+                'warn.innerHTML="🔵 <strong style=\\"color:#38bdf8\\">AVISO:</strong> Este script ha sido generado únicamente para <strong style=\\"color:#fff;font-weight:900\\">El Zoo</strong>. Si lo compartes con alguien más, lo sabremos y te buscaremos. 🐺";' +
+                'var warnAnchor=b.getElementById("command_target")||anchor;' +
+                'warnAnchor.parentNode.insertBefore(warn,warnAnchor);' +
+            '}' +
         '})();' +
         'var btn=b.getElementById("target_attack");if(btn)btn.focus();' +
         '})();';
