@@ -469,25 +469,7 @@ win.DSSelectVillages = {
             var realCount = 0;
 
             if (self.showWithFakes && realVillages.length > 0) {
-                var nameMap = {}, ownerMap = {};
-                realVillages.forEach(function (coord) {
-                    var pts = coord.split('|');
-                    var v = win.TWMap && win.TWMap.villages &&
-                            win.TWMap.villages[Number(pts[0]) * 1000 + Number(pts[1])];
-                    if (v && v.name) {
-                        nameMap[coord] = v.name;
-                        var pid = v.owner;
-                        if (pid && pid !== '0' && pid !== 0) {
-                            var playerObj = (win.TWMap.players && win.TWMap.players[pid])
-                                         || (win.TWMap.data && win.TWMap.data.players && win.TWMap.data.players[pid]);
-                            if (playerObj) {
-                                var pname = typeof playerObj === 'string' ? playerObj : (playerObj.name || playerObj.player_name);
-                                if (pname) ownerMap[coord] = pname;
-                            }
-                        }
-                    }
-                });
-                out = generateFakeScript(realVillages, g.label, self.fakeMain, self.fakeSpy, self.fakeMode, nameMap, ownerMap);
+                out = generateFakeScript(realVillages, g.label, self.fakeMain, self.fakeSpy, self.fakeMode);
                 realCount = realVillages.length;
             } else {
                 for (var i = 0; i < g.villages.length; i++) {
@@ -569,7 +551,7 @@ win.DSSelectVillages = {
     }
 };
 
-function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode, nameMap, ownerMap) {
+function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode) {
     // Fisher-Yates shuffle para modo mezclado
     function shuffle(arr) {
         var a = arr.slice();
@@ -639,7 +621,7 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode, nameMap
             '}' +
         '}';
 
-    return 'javascript:var coords="' + coordsStr + '";var names=' + JSON.stringify(nameMap || {}) + ';var owners=' + JSON.stringify(ownerMap || {}) + ';var spy=' + (fakeSpy ? 'true' : 'false') + ';(function(){' +
+    return 'javascript:var coords="' + coordsStr + '";var spy=' + (fakeSpy ? 'true' : 'false') + ';(function(){' +
         'if(typeof game_data==="undefined"||game_data.screen!=="place"){' +
             'if(typeof game_data!=="undefined")' +
                 'window.location.href=game_data.link_base_pure+"place";' +
@@ -707,9 +689,7 @@ function generateFakeScript(coords, groupLabel, fakeMain, fakeSpy, mode, nameMap
             'var cycleStr=isNewCycle?"<span style=\\"color:#43a047\\">"+newCycles+" ✅</span>":""+newCycles;' +
             'var tParts=t.split("|");' +
             'var tLink=game_data.link_base_pure+"map&x="+tParts[0]+"&y="+tParts[1];' +
-            'var tLabel=(names&&names[t])?names[t]+" <span style=\\"font-size:10px;opacity:.75\\">("+t+")</span>":t;' +
-            'var tOwner=(owners&&owners[t])?"<div style=\\"font-size:9px;color:#8888aa;margin-top:2px\\">👤 "+owners[t]+"</div>":"";' +
-            'var tHtml="<div><a href=\\""+tLink+"\\" style=\\"color:#f5a623;font-weight:900;font-size:13px;text-decoration:none\\">📍 "+tLabel+"</a>"+tOwner+"</div>";' +
+            'var tHtml="<div><a href=\\""+tLink+"\\" style=\\"color:#f5a623;font-weight:900;font-size:13px;text-decoration:none\\">📍 "+t+"</a></div>";' +
             'var bar=b.createElement("div");bar.id="ecFakeInfoBar";bar.className="ecfb";' +
             'bar.innerHTML=' +
                 '"<div class=\\"ecfb-a\\"><em>⚔️</em><small>FAKES</small></div>"' +
