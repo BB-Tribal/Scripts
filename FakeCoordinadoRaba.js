@@ -91,7 +91,8 @@ var KEY_PENDING = 'fakeCoorPending';
 var KEY_FONT    = 'fakeCoorFont';
 var KEY_TROOPS  = 'fakeCoorTroops';
 var KEY_FMT     = 'fakeCoorTimeFmt';
-var KEY_THEME   = 'fakeCoor_theme';
+var KEY_THEME    = 'fakeCoor_theme';
+var KEY_ALL_UNITS = 'fakeCoorAllUnits';
 
 var currentFont = localStorage.getItem(KEY_FONT) || 'mono';
 var timeFmt     = localStorage.getItem(KEY_FMT)  || 'text';
@@ -313,12 +314,14 @@ input[type="datetime-local"].fc-input { padding:7px 12px; }
     text-align:left;border-bottom:2px solid var(--fg-accent) !important;
     background:var(--fg-accent2) !important;
 }
-.fc-res-table thead th:nth-child(1) { width:44px; }
+.fc-res-table thead th:nth-child(1) { width:36px; }
 .fc-res-table thead th:nth-child(2) { width:auto; }
-.fc-res-table thead th:nth-child(3) { width:110px; }
-.fc-res-table thead th:nth-child(4) { width:130px; }
-.fc-res-table thead th:nth-child(5) { width:140px; }
-.fc-res-table thead th:nth-child(6) { width:120px;text-align:right; }
+.fc-res-table thead th:nth-child(3) { width:190px; }
+.fc-res-table thead th:nth-child(4) { width:40px;text-align:center; }
+.fc-res-table thead th:nth-child(5) { width:88px; }
+.fc-res-table thead th:nth-child(6) { width:105px; }
+.fc-res-table thead th:nth-child(7) { width:140px; }
+.fc-res-table thead th:nth-child(8) { width:110px;text-align:right; }
 .fc-res-table tbody tr {
     border-bottom:1px solid var(--fg-border);
     transition:background .12s,box-shadow .12s;
@@ -443,6 +446,19 @@ input[type="datetime-local"].fc-input { padding:7px 12px; }
 }
 .fc-help-text { font-size:12px;color:var(--fg-text);line-height:1.6; }
 .fc-help-sep  { height:1px;background:var(--fg-border);margin:2px 0; }
+.fc-res-src { font-size:12px;font-weight:600;color:var(--fg-accent2);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block; }
+.fc-res-src:hover { color:var(--fg-accent);text-decoration:underline; }
+.fc-pagination { display:flex;align-items:center;gap:4px;padding:10px 16px;border-top:1px solid var(--fg-border);flex-wrap:wrap; }
+.fc-page-btn, .fc-page-num { border:none;border-radius:6px;cursor:pointer;font-family:inherit;background:var(--fg-bg2);color:var(--fg-text);padding:5px 10px;font-size:12px;font-weight:600;transition:all .15s; }
+.fc-page-btn:disabled { opacity:.35;cursor:default;pointer-events:none; }
+.fc-page-btn:not(:disabled):hover, .fc-page-num:hover { background:var(--fg-accent2);color:#fff; }
+.fc-page-num.active { background:var(--fg-accent);color:#fff; }
+.fc-page-ellipsis { color:var(--fg-text2);font-size:12px;padding:0 3px; }
+.fc-page-info { margin-left:auto;font-size:11px;color:var(--fg-text2);font-weight:600; }
+.fc-seg-ctrl { display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--fg-border);margin-top:6px; }
+.fc-seg-btn { flex:1;border:none;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--fg-bg2);color:var(--fg-text2);transition:all .15s; }
+.fc-seg-btn.active { background:var(--fg-accent);color:#fff; }
+.fc-seg-btn:not(.active):hover { background:var(--fg-border);color:var(--fg-text); }
     `;
 }
 
@@ -648,7 +664,8 @@ function openHelp() {
 // ╚══════════════════════════════════════════════════════╝
 function openSettings() {
     $('#fcSettOverlay').remove();
-    var st = JSON.parse(localStorage.getItem(KEY_TROOPS) || '{"ram":1,"spy":1}');
+    var st      = JSON.parse(localStorage.getItem(KEY_TROOPS) || '{"ram":1,"spy":1}');
+    var allMode = localStorage.getItem(KEY_ALL_UNITS) === '1';
 
     var troopCards = worldUnits.map(function(u) {
         var v = st[u] || 0;
@@ -686,6 +703,13 @@ function openSettings() {
                 '<div class="fc-font-row" id="fcsFont">' + fontBtns + '</div>' +
             '</div>' +
             '<div class="fc-card">' +
+                '<div class="fc-card-label">⚡ Modo de cálculo</div>' +
+                '<div class="fc-seg-ctrl" id="fcsMode">' +
+                    '<button class="fc-seg-btn' + (!allMode ? ' active' : '') + '" data-mode="custom">🎯 Personalizado</button>' +
+                    '<button class="fc-seg-btn' + ( allMode ? ' active' : '') + '" data-mode="all">🌐 Cualquiera</button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="fc-card" id="fcsTroopCard" style="' + (allMode ? 'opacity:.45;pointer-events:none;' : '') + '">' +
                 '<div class="fc-card-label"><span class="icon header lc"> </span>&nbsp;' + _fcLang.troopsLabel + '</div>' +
                 '<div class="fc-troop-grid">' + troopCards + '</div>' +
             '</div>' +
@@ -697,6 +721,13 @@ function openSettings() {
 
     fcOverlayClose('#fcSettOverlay');
     $('#fcSettOverlay').on('click', '.fc-close-btn', function() { $('#fcSettOverlay').remove(); });
+
+    $('#fcSettOverlay').on('click', '#fcsMode .fc-seg-btn', function() {
+        $('#fcsMode .fc-seg-btn').removeClass('active');
+        $(this).addClass('active');
+        var isAll = $(this).data('mode') === 'all';
+        $('#fcsTroopCard').css({ opacity: isAll ? '.45' : '1', pointerEvents: isAll ? 'none' : 'auto' });
+    });
 
     $('#fcSettOverlay').on('click', '.fc-theme-chip', function() {
         var name = $(this).data('fc-theme');
@@ -715,6 +746,8 @@ function openSettings() {
     });
 
     $('#fcSettSave').on('click', function() {
+        var isAll = $('#fcsMode .fc-seg-btn.active').data('mode') === 'all';
+        localStorage.setItem(KEY_ALL_UNITS, isAll ? '1' : '0');
         var troops = {};
         worldUnits.forEach(function(u) { troops[u] = parseInt($('#fcs_' + u).val()) || 0; });
         localStorage.setItem(KEY_TROOPS, JSON.stringify(troops));
@@ -766,21 +799,21 @@ function runCalculation(timeStr, troops) {
         return;
     }
 
+    var allUnitsMode    = localStorage.getItem(KEY_ALL_UNITS) === '1';
     var configuredUnits = Object.keys(troops).filter(function(u) { return troops[u] > 0 && unitSpeeds[u]; });
     var refUnit, refSpeedMs = 0;
-    if (configuredUnits.length > 0) {
-        configuredUnits.forEach(function(u) {
-            var spd = unitSpeeds[u] * 60000;
-            if (spd > refSpeedMs) { refSpeedMs = spd; refUnit = u; }
-        });
-    } else {
-        refUnit = unitSpeeds.ram ? 'ram' : 'catapult';
-        refSpeedMs = (unitSpeeds[refUnit] || 0) * 60000;
-    }
 
-    if (!refSpeedMs) {
-        alert('No se pudo determinar la velocidad de la unidad de referencia.');
-        return;
+    if (!allUnitsMode) {
+        if (configuredUnits.length > 0) {
+            configuredUnits.forEach(function(u) {
+                var spd = unitSpeeds[u] * 60000;
+                if (spd > refSpeedMs) { refSpeedMs = spd; refUnit = u; }
+            });
+        } else {
+            refUnit    = unitSpeeds.ram ? 'ram' : 'catapult';
+            refSpeedMs = (unitSpeeds[refUnit] || 0) * 60000;
+        }
+        if (!refSpeedMs) { alert('No se pudo determinar la velocidad de la unidad de referencia.'); return; }
     }
 
     var serverNow = Date.now() + getFCServerOffset();
@@ -791,16 +824,45 @@ function runCalculation(timeStr, troops) {
 
     testDistances.sort(function(a,b) { return a.distance - b.distance; });
 
-    for (var i = 0; i < testDistances.length; i++) {
-        var td = testDistances[i];
-        var hasUnit = configuredUnits.length > 0
-            ? (td.source.Units[refUnit] || 0) >= (troops[refUnit] || 1)
-            : (td.source.Units.ram > 0 || td.source.Units.catapult > 0);
-        if (hasUnit) {
-            var lt  = +landTime - td.distance * refSpeedMs;
-            var ttl = lt - serverNow;
-            if (ttl > 0)
-                timedFakeList.push({ source: td.source, target: td.target, distance: td.distance, ttl: ttl, launchTime: lt, troops: troops, refUnit: refUnit });
+    if (allUnitsMode) {
+        // Build unique-speed map (one representative unit per distinct speed)
+        var speedMap = {};
+        worldUnits.forEach(function(u) {
+            if (!unitSpeeds[u]) return;
+            var spd = unitSpeeds[u] * 60000;
+            if (!speedMap[spd]) speedMap[spd] = u;
+        });
+        var speedKeys = Object.keys(speedMap);
+        for (var i = 0; i < testDistances.length; i++) {
+            var td = testDistances[i];
+            for (var si = 0; si < speedKeys.length; si++) {
+                var spd = parseFloat(speedKeys[si]);
+                var ru  = speedMap[speedKeys[si]];
+                // Check if this village has any unit belonging to this speed group
+                var hasAny = false;
+                for (var wi = 0; wi < worldUnits.length; wi++) {
+                    var wu = worldUnits[wi];
+                    if (unitSpeeds[wu] && Math.abs(unitSpeeds[wu] * 60000 - spd) < 0.01 && (td.source.Units[wu] || 0) > 0) { hasAny = true; break; }
+                }
+                if (!hasAny) continue;
+                var lt  = +landTime - td.distance * spd;
+                var ttl = lt - serverNow;
+                if (ttl > 0)
+                    timedFakeList.push({ source: td.source, target: td.target, distance: td.distance, ttl: ttl, launchTime: lt, troops: {}, refUnit: ru });
+            }
+        }
+    } else {
+        for (var i = 0; i < testDistances.length; i++) {
+            var td = testDistances[i];
+            var hasUnit = configuredUnits.length > 0
+                ? (td.source.Units[refUnit] || 0) >= (troops[refUnit] || 1)
+                : (td.source.Units.ram > 0 || td.source.Units.catapult > 0);
+            if (hasUnit) {
+                var lt  = +landTime - td.distance * refSpeedMs;
+                var ttl = lt - serverNow;
+                if (ttl > 0)
+                    timedFakeList.push({ source: td.source, target: td.target, distance: td.distance, ttl: ttl, launchTime: lt, troops: troops, refUnit: refUnit });
+            }
         }
     }
     timedFakeList.sort(function(a,b) { return a.ttl - b.ttl; });
@@ -820,7 +882,7 @@ function runCalculation(timeStr, troops) {
         '<div id="fcLoader"><div class="fcl-box">' +
         '<div class="fcl-spinner"></div>' +
         '<div class="fcl-title">Resolviendo pueblos...</div>' +
-        '<div class="fcl-sub">Consultando ' + total + ' coordenadas · Ref: <img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + refUnit + '.png" style="width:13px;height:13px;vertical-align:-2px;margin:0 2px;"><strong>' + (unitNames[refUnit] || refUnit) + '</strong></div>' +
+        '<div class="fcl-sub">Consultando ' + total + ' coordenadas · ' + (allUnitsMode ? '🌐 <strong>Todas las unidades</strong>' : 'Ref: <img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + refUnit + '.png" style="width:13px;height:13px;vertical-align:-2px;margin:0 2px;"><strong>' + (unitNames[refUnit] || refUnit) + '</strong>') + '</div>' +
         '<div class="fcl-bar-wrap"><div class="fcl-bar" id="fclBar" style="width:0%"></div></div>' +
         '<div class="fcl-count" id="fclCount">0 / ' + total + '</div>' +
         '</div></div>'
@@ -860,78 +922,88 @@ function showResults(targetIdMap, targetNameMap) {
     targetIdMap   = targetIdMap   || {};
     targetNameMap = targetNameMap || {};
     $('#fcMainOverlay, #fcResOverlay').remove();
-    var rows = '';
 
-    if (timedFakeList.length) {
-        var groups = {};
-        var groupOrder = [];
-        for (var i = 0; i < timedFakeList.length; i++) {
-            var it = timedFakeList[i];
-            var key = it.source.ID;
-            if (!groups[key]) {
-                groups[key] = { source: it.source, items: [] };
-                groupOrder.push(key);
-            }
-            groups[key].items.push({ item: it, idx: i });
-        }
-        groupOrder.sort(function(a, b) {
-            return groups[a].items[0].item.ttl - groups[b].items[0].item.ttl;
-        });
+    var PAGE_SIZE = 20;
+    var _fcPage   = 0;
+    var total     = timedFakeList.length;
+    var pageCount = Math.ceil(total / PAGE_SIZE) || 1;
 
-        groupOrder.forEach(function(key) {
-            var g = groups[key];
-            var src = g.source;
+    function buildRows(page) {
+        if (!total) return '';
+        var html  = '';
+        var sOff  = getFCServerOffset();
+        var nowMs = Date.now();
+        var start = page * PAGE_SIZE;
+        var end   = Math.min(start + PAGE_SIZE, total);
+        for (var i = start; i < end; i++) {
+            var item = timedFakeList[i];
+            var src  = item.source;
             var srcLabel = src.Name ? src.Name + ' (' + src.Coord + ')' : src.Coord;
-            rows +=
-                '<tr class="fc-group-head">' +
-                '<td colspan="6">' +
-                    '<span class="fc-group-icon">🏰</span>' +
-                    '<a class="fc-group-name" href="/game.php?screen=info_village&id=' + src.ID + '" target="_blank" title="' + (src.Name || src.Coord) + '">' + srcLabel + '</a>' +
-                    '<span class="fc-group-count">' + g.items.length + ' ' + (g.items.length === 1 ? 'objetivo' : 'objetivos') + '</span>' +
-                '</td>' +
+            var srcHTML  = '<a class="fc-res-src" href="/game.php?screen=info_village&id=' + src.ID + '" target="_blank">' + srcLabel + '</a>';
+            var tx       = item.target.match(/(\d+)\|(\d+)/);
+            var tgtHTML  = targetIdMap[item.target]
+                ? '<a class="fc-res-tgt" href="/game.php?screen=info_village&id=' + targetIdMap[item.target] + '" target="_blank">' + (targetNameMap[item.target] ? targetNameMap[item.target] + ' (' + item.target + ')' : item.target) + '</a>'
+                : '<span class="fc-res-tgt">' + (targetNameMap[item.target] ? targetNameMap[item.target] + ' (' + item.target + ')' : item.target) + '</span>';
+            var unitIcon = '<img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + item.refUnit + '.png" style="width:16px;height:16px;vertical-align:-3px;" title="' + (unitNames[item.refUnit] || item.refUnit) + '">';
+            var _ldS     = new Date(item.launchTime + sOff);
+            var _nowS    = new Date(nowMs + sOff);
+            var _sameDay = _ldS.getUTCFullYear() === _nowS.getUTCFullYear() && _ldS.getUTCMonth() === _nowS.getUTCMonth() && _ldS.getUTCDate() === _nowS.getUTCDate();
+            var _ldT     = pad(_ldS.getUTCHours()) + ':' + pad(_ldS.getUTCMinutes()) + ':' + pad(_ldS.getUTCSeconds());
+            var timeStr  = _sameDay ? 'Hoy ' + _ldT : pad(_ldS.getUTCDate()) + '/' + pad(_ldS.getUTCMonth()+1) + ' ' + _ldT;
+            var ms       = item.launchTime - nowMs;
+            var timerCol = ms < 30000 ? '#ef4444' : ms < 1800000 ? '#d97706' : '';
+            html +=
+                '<tr id="fcCard_' + i + '" class="fc-target-row">' +
+                '<td><span class="fc-res-num">' + (i+1) + '</span></td>' +
+                '<td><div class="fc-res-route">' + srcHTML + '</div></td>' +
+                '<td><div class="fc-res-route">' + tgtHTML + '</div></td>' +
+                '<td style="text-align:center">' + unitIcon + '</td>' +
+                '<td><span class="fc-res-dist-pill">📏 ' + Math.round(item.distance) + '</span></td>' +
+                '<td><div class="fc-res-timer timer" id="fcTimer_' + i + '" style="color:' + timerCol + '">' + (ms > 0 ? msToHMS(ms) : '¡YA!') + '</div></td>' +
+                '<td><span class="fc-res-localtime">🕐 ' + timeStr + '</span></td>' +
+                '<td style="text-align:right"><button class="fc-rally-btn" onclick="fcGoRally(' + i + ',' + src.ID + ',' + tx[1] + ',' + tx[2] + ')">🏹 ' + _fcLang.rallyBtn + '</button></td>' +
                 '</tr>';
-
-            g.items.forEach(function(entry, n) {
-                var item = entry.item, i = entry.idx;
-                var tx      = item.target.match(/(\d+)\|(\d+)/);
-                var _ldOff  = getFCServerOffset();
-                var _ldS    = new Date(item.launchTime + _ldOff);
-                var _nowS   = new Date(Date.now() + _ldOff);
-                var _sameDay = _ldS.getUTCFullYear() === _nowS.getUTCFullYear() && _ldS.getUTCMonth() === _nowS.getUTCMonth() && _ldS.getUTCDate() === _nowS.getUTCDate();
-                var _ldT    = pad(_ldS.getUTCHours()) + ':' + pad(_ldS.getUTCMinutes()) + ':' + pad(_ldS.getUTCSeconds());
-                var timeStr = _sameDay ? 'Hoy ' + _ldT : pad(_ldS.getUTCDate()) + '/' + pad(_ldS.getUTCMonth()+1) + ' ' + _ldT;
-                var tgtHTML = targetIdMap[item.target]
-                    ? '<a class="fc-res-tgt" href="/game.php?screen=info_village&id=' + targetIdMap[item.target] + '" target="_blank" title="' + (targetNameMap[item.target] || item.target) + '">' + (targetNameMap[item.target] ? targetNameMap[item.target] + ' (' + item.target + ')' : item.target) + '</a>'
-                    : '<span class="fc-res-tgt" title="' + item.target + '">' + (targetNameMap[item.target] ? targetNameMap[item.target] + ' (' + item.target + ')' : item.target) + '</span>';
-                rows +=
-                    '<tr id="fcCard_' + i + '" class="fc-target-row">' +
-                    '<td><span class="fc-res-num">' + (n+1) + '</span></td>' +
-                    '<td><div class="fc-res-route">' + tgtHTML + '</div></td>' +
-                    '<td><span class="fc-res-dist-pill">📏 ' + Math.round(item.distance) + ' ' + _fcLang.fields + '</span></td>' +
-                    '<td>' +
-                        '<div class="fc-res-timer-wrap">' +
-                            '<div class="fc-res-timer-lbl">' + _fcLang.launchIn + '</div>' +
-                            '<div class="fc-res-timer timer" id="fcTimer_' + i + '" style="color:' + (item.ttl < 30000 ? '#ef4444' : item.ttl < 1800000 ? '#d97706' : '') + '">' + msToHMS(item.ttl) + '</div>' +
-                        '</div>' +
-                    '</td>' +
-                    '<td><span class="fc-res-localtime">🕐 ' + timeStr + '</span></td>' +
-                    '<td style="text-align:right"><button class="fc-rally-btn" onclick="fcGoRally(' + i + ',' + src.ID + ',' + tx[1] + ',' + tx[2] + ')">🏹 ' + _fcLang.rallyBtn + '</button></td>' +
-                    '</tr>';
-            });
-        });
+        }
+        return html;
     }
 
-    var subTitle = _fcLang.resSub.replace('{n}', timedFakeList.length);
-    if (timedFakeList.length && timedFakeList[0].refUnit) {
+    function buildPager(page) {
+        if (pageCount <= 1) return '';
+        var prev = '<button class="fc-page-btn" id="fcPagePrev"' + (page > 0 ? '' : ' disabled') + '>‹ Ant</button>';
+        var next = '<button class="fc-page-btn" id="fcPageNext"' + (page < pageCount-1 ? '' : ' disabled') + '>Sig ›</button>';
+        var nums = '';
+        for (var p = 0; p < pageCount; p++) {
+            if (p === 0 || p === pageCount-1 || (p >= page-2 && p <= page+2)) {
+                nums += '<button class="fc-page-num' + (p===page?' active':'') + '" data-p="' + p + '">' + (p+1) + '</button>';
+            } else if (p === page-3 || p === page+3) {
+                nums += '<span class="fc-page-ellipsis">…</span>';
+            }
+        }
+        var showing = (page*PAGE_SIZE+1) + '–' + Math.min((page+1)*PAGE_SIZE, total);
+        return '<div class="fc-pagination">' + prev + nums + next + '<span class="fc-page-info">' + showing + ' / ' + total + '</span></div>';
+    }
+
+    function renderPage(page) {
+        _fcPage = page;
+        document.getElementById('fcResBody').innerHTML = buildRows(page);
+        document.getElementById('fcResPager').innerHTML = buildPager(page);
+    }
+
+    var allMode  = localStorage.getItem(KEY_ALL_UNITS) === '1';
+    var subTitle = _fcLang.resSub.replace('{n}', total);
+    if (!allMode && total && timedFakeList[0].refUnit) {
         var ru = timedFakeList[0].refUnit;
-        subTitle += ' · Ref: <img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + ru + '.png" style="width:13px;height:13px;vertical-align:-2px;margin:0 2px;"> ' + (unitNames[ru] || ru);
+        subTitle += ' · <img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + ru + '.png" style="width:13px;height:13px;vertical-align:-2px;margin:0 2px;"> ' + (unitNames[ru] || ru);
+    } else if (allMode && total) {
+        subTitle += ' · 🌐 Todas las unidades';
     }
+
     $('body').append(
         '<div class="fc-overlay" id="fcResOverlay">' +
         '<div class="fc-box" id="fcResBox">' +
         subHeaderHTML('🏹', _fcLang.resTitle, subTitle, '<button class="fc-icon-btn" id="fcResBack" title="' + _fcLang.back + '">←</button>') +
         '<div class="fc-res-body">' +
-            (!timedFakeList.length
+            (!total
             ? '<div class="fc-empty-state">' +
                 '<div class="fc-empty-icon">🔍</div>' +
                 '<div class="fc-empty-title">Sin lanzamientos</div>' +
@@ -946,23 +1018,31 @@ function showResults(targetIdMap, targetNameMap) {
             : '<table class="fc-res-table">' +
                 '<thead><tr>' +
                     '<th>#</th>' +
+                    '<th>' + _fcLang.source + '</th>' +
                     '<th>' + _fcLang.target + '</th>' +
+                    '<th></th>' +
                     '<th>' + _fcLang.dist + '</th>' +
                     '<th>' + _fcLang.launchIn + '</th>' +
                     '<th>' + _fcLang.launchAt + '</th>' +
                     '<th></th>' +
                 '</tr></thead>' +
-                '<tbody>' + rows + '</tbody>' +
+                '<tbody id="fcResBody"></tbody>' +
               '</table>') +
         '</div>' +
+        '<div id="fcResPager"></div>' +
         '<div class="fc-footer">💚 Creado por <strong style="font-style:normal;">rabagalan73</strong> para la reina <strong style="font-style:normal;">M0bscene</strong> 💚</div>' +
         '</div></div>'
     );
+
+    if (total) renderPage(0);
 
     fcOverlayClose('#fcResOverlay');
     $('#fcResOverlay').on('click', '.fc-close-btn', function() { clearInterval(_resTimer); $('#fcResOverlay').remove(); });
     $('#fcResBack').on('click', function() { clearInterval(_resTimer); $('#fcResOverlay').remove(); openMain(); });
     $('#fcEmptyBack').on('click', function() { $('#fcResOverlay').remove(); openMain(); });
+    $('#fcResOverlay').on('click', '#fcPagePrev', function() { if (_fcPage > 0) renderPage(_fcPage - 1); });
+    $('#fcResOverlay').on('click', '#fcPageNext', function() { if (_fcPage < pageCount-1) renderPage(_fcPage + 1); });
+    $('#fcResOverlay').on('click', '.fc-page-num', function() { renderPage(parseInt($(this).data('p'))); });
 
     var _resTimer = setInterval(function() {
         if (!$('#fcResOverlay').length) { clearInterval(_resTimer); return; }
