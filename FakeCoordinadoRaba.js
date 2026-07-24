@@ -866,7 +866,7 @@ function runCalculation(timeStr, troops) {
                 var spd2 = parseFloat(speedKeys[si2]);
                 for (var wi2 = 0; wi2 < worldUnits.length; wi2++) {
                     var wu2 = worldUnits[wi2];
-                    if (unitSpeeds[wu2] && Math.abs(unitSpeeds[wu2]*60000 - spd2) < 0.01 && (vsrc.Units[wu2]||0) > 0) { vcap[speedKeys[si2]] = true; break; }
+                    if (unitSpeeds[wu2] && Math.abs(unitSpeeds[wu2]*60000 - spd2) < 0.01 && (vsrc.Units[wu2]||0) > 0) { vcap[speedKeys[si2]] = wu2; break; }
                 }
             }
             vspeedCap[vsrc.ID] = vcap;
@@ -876,9 +876,9 @@ function runCalculation(timeStr, troops) {
             var td = testDistances[i];
             var vcapSrc = vspeedCap[td.source.ID] || {};
             for (var si = 0; si < speedKeys.length; si++) {
-                if (!vcapSrc[speedKeys[si]]) continue;
+                var ru = vcapSrc[speedKeys[si]]; // actual unit name this village can send
+                if (!ru) continue;
                 var spd = parseFloat(speedKeys[si]);
-                var ru  = speedMap[speedKeys[si]];
                 var lt  = +landTime - td.distance * spd;
                 var ttl = lt - serverNow;
                 if (ttl > 0)
@@ -1114,7 +1114,7 @@ function showResults(targetIdMap, targetNameMap) {
                             $(r).css({ maxHeight: '0', padding: '0', borderBottom: 'none', overflow: 'hidden' });
                             setTimeout(function() { $(r).remove(); }, 650);
                         }, 1000);
-                    }, 10000, row);
+                    }, 5000, row);
                 }
             } else {
                 el.textContent = msToHMS(ms);
@@ -1184,6 +1184,7 @@ window.fcGoRally = function(idx, sourceID, x, y) {
         launchTime: item.launchTime,
         distance:   Math.round(item.distance),
         troops:     troops,
+        refUnit:    item.refUnit,
     };
     pendingData.openedAt = Date.now();
     localStorage.setItem(KEY_PENDING, JSON.stringify(pendingData));
@@ -1213,10 +1214,15 @@ window.fcGoRally = function(idx, sourceID, x, y) {
                     var nw$ = newWin.$;
                     if (!nw$) return;
                     if (newWin.document.querySelector('input.unitsInput')) {
-                        Object.keys(troops).forEach(function(u) {
-                            if (troops[u] > 0)
-                                nw$('input.unitsInput[name="' + u + '"]').val(troops[u]).trigger('change');
-                        });
+                        var hasTroops = Object.keys(troops).some(function(u) { return troops[u] > 0; });
+                        if (hasTroops) {
+                            Object.keys(troops).forEach(function(u) {
+                                if (troops[u] > 0)
+                                    nw$('input.unitsInput[name="' + u + '"]').val(troops[u]).trigger('change');
+                            });
+                        } else if (item.refUnit) {
+                            nw$('input.unitsInput[name="' + item.refUnit + '"]').val(1).trigger('change');
+                        }
                     }
                     injectRallyCardInWindow(newWin, pendingData);
                 } catch(e) {}
@@ -1292,11 +1298,18 @@ function injectRallyCardInWindow(win, data) {
     }
     themeStyle.textContent = '#fcRallyCard { ' + themeVars + ' }';
 
-    var troopHTML = Object.keys(data.troops || {}).filter(function(u) { return data.troops[u] > 0; }).map(function(u) {
-        return '<span style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--fg-accent2);">' +
-            '<img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + u + '.png" style="width:14px;height:14px;">' +
-            data.troops[u] + '</span>';
-    }).join('');
+    var _hasTroops = Object.keys(data.troops || {}).some(function(u) { return data.troops[u] > 0; });
+    var troopHTML = _hasTroops
+        ? Object.keys(data.troops).filter(function(u) { return data.troops[u] > 0; }).map(function(u) {
+            return '<span style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--fg-accent2);">' +
+                '<img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + u + '.png" style="width:14px;height:14px;">' +
+                data.troops[u] + '</span>';
+          }).join('')
+        : (data.refUnit
+            ? '<span style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--fg-accent2);">' +
+              '<img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + data.refUnit + '.png" style="width:14px;height:14px;">' +
+              '1</span>'
+            : '');
 
     var targetLabel = data.targetName ? data.targetName + ' (' + data.target + ')' : data.target;
     var targetLink = data.targetID
@@ -1413,10 +1426,15 @@ function handleRallyPage() {
 
     function fillTroops() {
         if (!document.querySelector('input.unitsInput')) return;
-        Object.keys(data.troops || {}).forEach(function(u) {
-            var v = data.troops[u];
-            $('input.unitsInput[name="' + u + '"]').val(v > 0 ? v : '').trigger('change');
-        });
+        var hasTroops = Object.keys(data.troops || {}).some(function(u) { return data.troops[u] > 0; });
+        if (hasTroops) {
+            Object.keys(data.troops).forEach(function(u) {
+                var v = data.troops[u];
+                $('input.unitsInput[name="' + u + '"]').val(v > 0 ? v : '').trigger('change');
+            });
+        } else if (data.refUnit) {
+            $('input.unitsInput[name="' + data.refUnit + '"]').val(1).trigger('change');
+        }
     }
 
     var _rendered = false;
