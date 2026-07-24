@@ -106,16 +106,35 @@ function msToHMS(ms) {
     return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor((s % 3600) / 60)) + ':' + pad(s % 60);
 }
 
-function toDatetimeLocal(dateStr) {
-    var d = new Date(dateStr);
-    if (isNaN(d)) return '';
-    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) +
-           'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+// Returns how many ms the server clock is ahead of UTC (e.g. +7200000 for UTC+2).
+// Computed fresh each call so DST changes are picked up automatically.
+function getFCServerOffset() {
+    try {
+        var te = document.getElementById('serverTime');
+        var de = document.getElementById('serverDate');
+        if (!te || !de) return 0;
+        var t  = te.textContent.trim();
+        var dm = de.textContent.trim().match(/(\d+)\/(\d+)\/(\d+)/);
+        if (!dm) return 0;
+        return Date.parse(dm[3] + '-' + dm[2] + '-' + dm[1] + 'T' + t + 'Z') - Date.now();
+    } catch(e) { return 0; }
 }
 
+// Converts a server-time string (ISO "YYYY-MM-DDTHH:MM" or text "Mon DD YYYY HH:MM:SS")
+// into a datetime-local value, treating the input as server time in both cases.
+function toDatetimeLocal(dateStr) {
+    var ep = /^\d{4}-\d{2}-\d{2}T/.test(dateStr) ? Date.parse(dateStr + 'Z') : Date.parse(dateStr + ' UTC');
+    if (isNaN(ep)) return '';
+    var d = new Date(ep);
+    return d.getUTCFullYear() + '-' + pad(d.getUTCMonth()+1) + '-' + pad(d.getUTCDate()) +
+           'T' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes());
+}
+
+// Parses the time input (server time) into a real UTC Date, accounting for server timezone.
 function fromInput(val) {
-    var d = new Date(val);
-    return isNaN(d) ? null : d;
+    var sOff = getFCServerOffset();
+    var ep = /^\d{4}-\d{2}-\d{2}T/.test(val) ? Date.parse(val + 'Z') - sOff : Date.parse(val + ' UTC') - sOff;
+    return isNaN(ep) ? null : new Date(ep);
 }
 
 function extractCoords(src) {
@@ -475,9 +494,10 @@ $.get('/interface.php?func=get_unit_info', function(xml) {
 });
 
 var msPerMin = 60000, msPerDay = 86400000, minsPerDay = 1440;
-var defDate = new Date();
-defDate.setTime(((Math.floor(defDate.getTime() / msPerDay) + 1) * minsPerDay + defDate.getTimezoneOffset()) * msPerMin);
-defDate = defDate.toString().replace(/\w+\s*/i,'').replace(/(\d*:\d*:\d*)(.*)/i,'$1');
+var _srvNow = Date.now() + getFCServerOffset();
+var _tmrw   = new Date((Math.floor(_srvNow / msPerDay) + 1) * msPerDay);
+var _MN     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var defDate = _MN[_tmrw.getUTCMonth()] + ' ' + _tmrw.getUTCDate() + ' ' + _tmrw.getUTCFullYear() + ' 00:00:00';
 var saved = localStorage.getItem(KEY_DATE);
 if (saved && Date.parse(saved) >= Date.parse(defDate)) defDate = saved;
 else localStorage.setItem(KEY_DATE, defDate);
@@ -763,9 +783,7 @@ function runCalculation(timeStr, troops) {
         return;
     }
 
-    var stmp = $('#serverDate')[0].innerText + ' ' + $('#serverTime')[0].innerText;
-    var sm   = stmp.match(/^([0][1-9]|[12][0-9]|3[01])[\/\-]([0][1-9]|1[012])[\/\-](\d{4})( (0?[0-9]|[1][0-9]|[2][0-3])[:]([0-5][0-9])([:]([0-5][0-9]))?)?$/);
-    var serverNow = Date.parse(sm[2]+'/'+sm[1]+'/'+sm[3]+sm[4]);
+    var serverNow = Date.now() + getFCServerOffset();
 
     for (var i = 0; i < coordListOwn.length; i++)
         for (var j = 0; j < targets.length; j++)
@@ -875,11 +893,13 @@ function showResults(targetIdMap, targetNameMap) {
 
             g.items.forEach(function(entry, n) {
                 var item = entry.item, i = entry.idx;
-                var ld   = new Date(item.launchTime);
-                var tx   = item.target.match(/(\d+)\|(\d+)/);
-                var timeStr = ld.toLocaleDateString() === new Date().toLocaleDateString()
-                    ? 'Hoy ' + ld.toLocaleTimeString()
-                    : ld.toLocaleString();
+                var tx      = item.target.match(/(\d+)\|(\d+)/);
+                var _ldOff  = getFCServerOffset();
+                var _ldS    = new Date(item.launchTime + _ldOff);
+                var _nowS   = new Date(Date.now() + _ldOff);
+                var _sameDay = _ldS.getUTCFullYear() === _nowS.getUTCFullYear() && _ldS.getUTCMonth() === _nowS.getUTCMonth() && _ldS.getUTCDate() === _nowS.getUTCDate();
+                var _ldT    = pad(_ldS.getUTCHours()) + ':' + pad(_ldS.getUTCMinutes()) + ':' + pad(_ldS.getUTCSeconds());
+                var timeStr = _sameDay ? 'Hoy ' + _ldT : pad(_ldS.getUTCDate()) + '/' + pad(_ldS.getUTCMonth()+1) + ' ' + _ldT;
                 var tgtHTML = targetIdMap[item.target]
                     ? '<a class="fc-res-tgt" href="/game.php?screen=info_village&id=' + targetIdMap[item.target] + '" target="_blank" title="' + (targetNameMap[item.target] || item.target) + '">' + (targetNameMap[item.target] ? targetNameMap[item.target] + ' (' + item.target + ')' : item.target) + '</a>'
                     : '<span class="fc-res-tgt" title="' + item.target + '">' + (targetNameMap[item.target] ? targetNameMap[item.target] + ' (' + item.target + ')' : item.target) + '</span>';
@@ -1004,8 +1024,10 @@ function openMain() {
         if (timeFmt === 'picker') {
             $('#fcTime').replaceWith('<input class="fc-input" id="fcTime" type="datetime-local" value="' + toDatetimeLocal(cur) + '">');
         } else {
-            var d = new Date(cur);
-            var txt = isNaN(d) ? defDate : d.toString().replace(/\w+\s*/i,'').replace(/(\d*:\d*:\d*)(.*)/i,'$1');
+            var _fmtEp = /^\d{4}-\d{2}-\d{2}T/.test(cur) ? Date.parse(cur + 'Z') : Date.parse(cur + ' UTC');
+            var _fmtD  = isNaN(_fmtEp) ? null : new Date(_fmtEp);
+            var _MNF   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var txt    = _fmtD ? _MNF[_fmtD.getUTCMonth()] + ' ' + _fmtD.getUTCDate() + ' ' + _fmtD.getUTCFullYear() + ' ' + pad(_fmtD.getUTCHours()) + ':' + pad(_fmtD.getUTCMinutes()) + ':' + pad(_fmtD.getUTCSeconds()) : defDate;
             $('#fcTime').replaceWith('<input class="fc-input" id="fcTime" type="text" value="' + txt + '" placeholder="May 30 2026 00:00:00">');
         }
     });
@@ -1113,7 +1135,7 @@ function getServerOffset(winDoc) {
         var t = timeEl.textContent.trim();
         var d = dateEl.textContent.trim().match(/(\d+)\/(\d+)\/(\d+)/);
         if (!d) return 0;
-        var serverMs = new Date(d[3] + '-' + d[2] + '-' + d[1] + 'T' + t).getTime();
+        var serverMs = Date.parse(d[3] + '-' + d[2] + '-' + d[1] + 'T' + t + 'Z');
         return serverMs - Date.now();
     } catch(e) { return 0; }
 }
