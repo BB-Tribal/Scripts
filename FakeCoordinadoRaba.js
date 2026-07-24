@@ -816,7 +816,7 @@ function runCalculation(timeStr, troops) {
         if (!refSpeedMs) { alert('No se pudo determinar la velocidad de la unidad de referencia.'); return; }
     }
 
-    var serverNow = Date.now() + getFCServerOffset();
+    var serverNow = Date.now();
 
     for (var i = 0; i < coordListOwn.length; i++)
         for (var j = 0; j < targets.length; j++)
@@ -1224,8 +1224,9 @@ function injectRallyCardInWindow(win, data) {
     var cf  = localStorage.getItem(KEY_FONT) || 'mono';
     var fnt = fonts[cf] ? fonts[cf].css : fonts.mono.css;
     var serverOffset = getServerOffset(win.document);
-    var ld  = new Date(data.launchTime);
-    var ms  = data.launchTime - (Date.now() + serverOffset);
+    var ms  = data.launchTime - Date.now();
+    var _ldS = new Date(data.launchTime + serverOffset);
+    var _launchStr = pad(_ldS.getUTCHours()) + ':' + pad(_ldS.getUTCMinutes()) + ':' + pad(_ldS.getUTCSeconds());
 
     // Inject theme vars into the rally window
     var themeName = localStorage.getItem(KEY_THEME) || 'emerald';
@@ -1282,7 +1283,7 @@ function injectRallyCardInWindow(win, data) {
         '<div class="rb">' +
             '<div class="rc"><div class="rcl">⏱ Tiempo restante</div><div class="rcv" id="fcRCTimer">' + (ms > 0 ? msToHMS(ms) : '¡LANZAR!') + '</div></div>' +
             '<div class="rr" style="flex-direction:column;align-items:flex-start;gap:3px;"><span class="rl">🎯 Objetivo</span><span class="rv">' + targetLink + '</span></div>' +
-            '<div class="rr"><span class="rl">⏰ Lanzar a las</span><span class="rv">' + ld.toLocaleTimeString() + '</span></div>' +
+            '<div class="rr"><span class="rl">⏰ Lanzar a las</span><span class="rv">' + _launchStr + '</span></div>' +
             '<div class="rr"><span class="rl">📏 Distancia</span><span class="rv">' + data.distance + ' campos</span></div>' +
             (troopHTML ? '<div class="rr" style="flex-direction:column;align-items:flex-start;gap:5px;"><span class="rl">⚔️ Tropas</span><div style="display:flex;flex-wrap:wrap;gap:5px;">' + troopHTML + '</div></div>' : '') +
         '</div></div>';
@@ -1319,7 +1320,7 @@ function injectRallyCardInWindow(win, data) {
     function tickTimer() {
         var el = win.document.getElementById('fcRCTimer');
         if (!el) return false;
-        var remaining = launchTime - (Date.now() + serverOffset);
+        var remaining = launchTime - Date.now();
         if (remaining <= 0) {
             el.textContent = '¡LANZAR!';
             el.style.color = '#ef4444';
@@ -1367,9 +1368,10 @@ function handleRallyPage() {
         });
     }
 
+    var _rendered = false;
     function render() {
         fillTroops();
-        injectRallyCardInWindow(window, data);
+        if (!_rendered) { _rendered = true; injectRallyCardInWindow(window, data); }
     }
 
     if (document.readyState === 'complete') render();
