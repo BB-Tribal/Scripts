@@ -92,7 +92,29 @@ var KEY_FONT    = 'fakeCoorFont';
 var KEY_TROOPS  = 'fakeCoorTroops';
 var KEY_FMT     = 'fakeCoorTimeFmt';
 var KEY_THEME    = 'fakeCoor_theme';
-var KEY_ALL_UNITS = 'fakeCoorAllUnits';
+var KEY_ALL_UNITS    = 'fakeCoorAllUnits';
+var KEY_VCACHE       = 'fakeCoorVCache';
+var VCACHE_TTL       = 86400000; // 24h
+
+function getVCache(coord) {
+    try {
+        var c = JSON.parse(localStorage.getItem(KEY_VCACHE) || '{}');
+        var e = c[coord];
+        return (e && Date.now() - e.ts < VCACHE_TTL) ? e : null;
+    } catch(x) { return null; }
+}
+function setVCache(coord, id, name) {
+    try {
+        var c = JSON.parse(localStorage.getItem(KEY_VCACHE) || '{}');
+        c[coord] = { id: id, name: name || '', ts: Date.now() };
+        var keys = Object.keys(c);
+        if (keys.length > 2000) {
+            keys.sort(function(a,b){ return c[a].ts - c[b].ts; });
+            for (var ki = 0; ki < keys.length - 1500; ki++) delete c[keys[ki]];
+        }
+        localStorage.setItem(KEY_VCACHE, JSON.stringify(c));
+    } catch(x) {}
+}
 
 var currentFont = localStorage.getItem(KEY_FONT) || 'mono';
 var timeFmt     = localStorage.getItem(KEY_FMT)  || 'text';
@@ -610,8 +632,10 @@ $('#fcMainOverlay').on('click', '.fc-fmt-btn', function() {
     if (timeFmt === 'picker') {
         $('#fcTime').replaceWith('<input class="fc-input" id="fcTime" type="datetime-local" value="' + toDatetimeLocal(cur) + '">');
     } else {
-        var d = new Date(cur);
-        var txt = isNaN(d) ? defDate : d.toString().replace(/\w+\s*/i,'').replace(/(\d*:\d*:\d*)(.*)/i,'$1');
+        var _fmtEp = /^\d{4}-\d{2}-\d{2}T/.test(cur) ? Date.parse(cur + 'Z') : Date.parse(cur + ' UTC');
+        var _fmtD  = isNaN(_fmtEp) ? null : new Date(_fmtEp);
+        var _MNF   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var txt    = _fmtD ? _MNF[_fmtD.getUTCMonth()] + ' ' + _fmtD.getUTCDate() + ' ' + _fmtD.getUTCFullYear() + ' ' + pad(_fmtD.getUTCHours()) + ':' + pad(_fmtD.getUTCMinutes()) + ':' + pad(_fmtD.getUTCSeconds()) : defDate;
         $('#fcTime').replaceWith('<input class="fc-input" id="fcTime" type="text" value="' + txt + '" placeholder="May 30 2026 00:00:00">');
     }
 });
@@ -833,18 +857,28 @@ function runCalculation(timeStr, troops) {
             if (!speedMap[spd]) speedMap[spd] = u;
         });
         var speedKeys = Object.keys(speedMap);
+
+        // Pre-compute which speeds each source village can send (avoids inner worldUnits loop)
+        var vspeedCap = {};
+        for (var vi = 0; vi < coordListOwn.length; vi++) {
+            var vsrc = coordListOwn[vi]; var vcap = {};
+            for (var si2 = 0; si2 < speedKeys.length; si2++) {
+                var spd2 = parseFloat(speedKeys[si2]);
+                for (var wi2 = 0; wi2 < worldUnits.length; wi2++) {
+                    var wu2 = worldUnits[wi2];
+                    if (unitSpeeds[wu2] && Math.abs(unitSpeeds[wu2]*60000 - spd2) < 0.01 && (vsrc.Units[wu2]||0) > 0) { vcap[speedKeys[si2]] = true; break; }
+                }
+            }
+            vspeedCap[vsrc.ID] = vcap;
+        }
+
         for (var i = 0; i < testDistances.length; i++) {
             var td = testDistances[i];
+            var vcapSrc = vspeedCap[td.source.ID] || {};
             for (var si = 0; si < speedKeys.length; si++) {
+                if (!vcapSrc[speedKeys[si]]) continue;
                 var spd = parseFloat(speedKeys[si]);
                 var ru  = speedMap[speedKeys[si]];
-                // Check if this village has any unit belonging to this speed group
-                var hasAny = false;
-                for (var wi = 0; wi < worldUnits.length; wi++) {
-                    var wu = worldUnits[wi];
-                    if (unitSpeeds[wu] && Math.abs(unitSpeeds[wu] * 60000 - spd) < 0.01 && (td.source.Units[wu] || 0) > 0) { hasAny = true; break; }
-                }
-                if (!hasAny) continue;
                 var lt  = +landTime - td.distance * spd;
                 var ttl = lt - serverNow;
                 if (ttl > 0)
@@ -888,7 +922,23 @@ function runCalculation(timeStr, troops) {
         '</div></div>'
     );
 
-    var queue = uniqueTargets.slice();
+    // Resolve cached targets immediately; only queue uncached ones for API
+    var uncached = [];
+    uniqueTargets.forEach(function(coords) {
+        var hit = getVCache(coords);
+        if (hit) {
+            targetIdMap[coords]   = hit.id;
+            targetNameMap[coords] = hit.name;
+            done++;
+        } else {
+            uncached.push(coords);
+        }
+    });
+    var pct0 = Math.round(done / total * 100);
+    $('#fclBar').css('width', pct0 + '%');
+    $('#fclCount').text(done + ' / ' + total);
+
+    var queue = uncached.slice();
     function processNext() {
         if (queue.length === 0) {
             $('#fcLoader').remove();
@@ -902,6 +952,7 @@ function runCalculation(timeStr, troops) {
                 if (data.villages && data.villages.length) {
                     targetIdMap[coords]   = data.villages[0].id;
                     targetNameMap[coords] = data.villages[0].name || '';
+                    setVCache(coords, data.villages[0].id, data.villages[0].name);
                 }
             })
             .always(function() {
