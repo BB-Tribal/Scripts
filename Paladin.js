@@ -1,29 +1,247 @@
 javascript:
-function _hms(ms){if(ms<=0)return"00:00:00";var s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60);s=s%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
-function _pso(){try{var t=document.getElementById("serverTime"),d=document.getElementById("serverDate"),m=d&&d.textContent.trim().match(/(\d+)\/(\d+)\/(\d+)/);return t&&m?Date.parse(m[3]+"-"+m[2]+"-"+m[1]+"T"+t.textContent.trim()+"Z")-Date.now():0}catch(e){return 0}}
-if(window.location.href.includes("statue&mode=overview")){
-if(!window.BuildingStatue||!BuildingStatue.knights||!Object.keys(BuildingStatue.knights).length){UI.ErrorMessage("Estatua no cargada.");throw new Error();}
-var BK=BuildingStatue.knights,pt={},et={},lv={};
-document.querySelectorAll(".knight_card").forEach(function(c){var ie=c.querySelector("[data-id]"),ee=c.querySelector("[data-endtime]"),pe=c.querySelector(".portrait.sprite");if(!ie)return;var id=ie.dataset.id;if(ee)et[id]=+ee.dataset.endtime;if(pe){var bp=(pe.style.backgroundPosition||"0 0").trim().split(/\s+/),py=Math.round(parseInt(bp[1]||bp[0]||0)*0.45);pt[id]=pe.style.backgroundImage.replace(/url\(["']?([^"')]+)["']?\)/,"url($1)")+";background-size:36px 648px;background-position:0 "+py+"px"}var le=c.querySelector(".level .value");if(le)lv[id]=+le.textContent;});
-var s=document.createElement("style");
-s.textContent=".pal{font-family:Segoe UI,Arial,sans-serif;padding:4px 0 6px;min-width:340px}.pal-label{font-size:10px;text-transform:uppercase;letter-spacing:1.4px;color:#9a7e3a;margin:14px 0 8px;font-weight:700;display:flex;align-items:center;gap:8px}.pal-label::after{content:'';flex:1;height:1px;background:#c8b078;opacity:.25}.pal-label:first-child{margin-top:0}.pal-pills{display:flex;flex-wrap:wrap;gap:6px}.pal-pill input[type=radio]{display:none}.pal-pill label{display:block;padding:7px 15px;background:#f0e8d0;border:1px solid #b0985a;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;color:#6a5020;transition:all .15s}.pal-pill input:checked+label{background:linear-gradient(180deg,#7a5010,#4a3008);border-color:#e0a830;color:#ffe090;box-shadow:0 2px 8px rgba(180,130,30,.4)}.pal-list{display:flex;flex-direction:column;gap:5px;max-height:300px;overflow-y:auto}.pal-card{display:flex;align-items:center;border-radius:5px;overflow:hidden;border:1px solid #b8a060}.pal-stripe{width:5px;flex-shrink:0;align-self:stretch}.pal-card.is-home .pal-stripe{background:#4a9e50}.pal-card.is-busy .pal-stripe{background:#c07820}.pal-body{flex:1;display:flex;align-items:center;gap:10px;padding:9px 12px;min-width:0;background:linear-gradient(135deg,#fdf6e3,#f5e8c8)}.pal-card.is-busy .pal-body{background:linear-gradient(135deg,#f8f0de,#eee0c0)}.pal-aw{position:relative;flex-shrink:0}.pal-avatar{width:36px;height:36px;border-radius:5px;background-repeat:no-repeat;overflow:hidden;border:1px solid #c8b078}.pal-lv{position:absolute;bottom:1px;right:1px;background:#000c;color:#ffd060;font-size:9px;font-weight:900;padding:0 3px;border-radius:2px}.pal-card-info{flex:1;min-width:0}.pal-card-name{font-size:14px;font-weight:700;color:#2a1e08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}.pal-card-status{display:flex;align-items:center;gap:5px;margin-top:2px}.pal-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}.pal-dot-green{background:#3a9e42}.pal-dot-amber{background:#d07820}.pal-status-txt{font-size:11px;color:#7a6040;font-weight:600}.pal-timer{font-size:11px;color:#a05010;font-weight:700;background:rgba(180,100,10,.1);padding:1px 6px;border-radius:3px;margin-left:2px;border:1px solid rgba(180,100,10,.2)}.pal-finish{font-size:10px;color:#7a5030;margin-left:4px}.pal-btn-train{border-radius:4px;padding:6px 13px;flex-shrink:0;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;transition:all .12s;border:1px solid}.pal-btn-train.btn-ready{background:linear-gradient(180deg,#4a8830,#2e5818);border-color:#6ab848;color:#d8f8b8}.pal-btn-train.btn-busy{background:#e0d0a8;border-color:#b8a060;color:#9a8050;cursor:default}.pal-btn-train:disabled{opacity:.7;cursor:default}.pal-footer{display:flex;gap:8px;margin-top:14px}.pal-btn-all{flex:1;background:linear-gradient(180deg,#7a5010,#3e2808);border:1px solid #c8a840;color:#ffe080;padding:9px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700}.pal-btn-save{background:#f0e8d0;border:1px solid #b8a060;color:#6a5020;padding:9px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600}.pal-credit{text-align:center;font-size:10px;color:#a09060;margin-top:10px}.pal-credit .cb{color:#4060a0;font-weight:700}";
-document.head.appendChild(s);
-var regimens=BK[Object.keys(BK)[0]].usable_regimens,durHTML="";
-regimens.forEach(function(el,i){var hh=String(Math.floor(el.duration/3600)).padStart(2,"0"),mm=String(Math.floor((el.duration%3600)/60)).padStart(2,"0"),ss=String(Math.floor(el.duration%60)).padStart(2,"0");durHTML+="<div class=pal-pill><input type=radio id=pal-d"+i+" name=train-knights value="+i+"><label for=pal-d"+i+">"+hh+":"+mm+":"+ss+"</label></div>";});
-var nowMs=Date.now(),srvOff=_pso(),p2=function(n){return String(n).padStart(2,"0");},collection=Object.keys(BK),cardsHTML="";
-for(var i=0;i<collection.length;i++){
-var k=collection[i],knight=BK[k],isHome=knight.activity.type==="home",statusHTML,timerStr="";
-if(isHome){statusHTML="<span class=pal-dot pal-dot-green></span><span class=pal-status-txt>Disponible</span>";}
-else{var finEp=(et[k]||knight.activity.finish_at||0)*1000;if(finEp){var rem=finEp-nowMs,fd=new Date(finEp+srvOff),finStr=p2(fd.getUTCHours())+":"+p2(fd.getUTCMinutes())+":"+p2(fd.getUTCSeconds());if(rem>0)timerStr="<span class=pal-timer data-fin="+finEp+">"+_hms(rem)+"</span><span class=pal-finish>libre "+finStr+"</span>";}statusHTML="<span class=pal-dot pal-dot-amber></span><span class=pal-status-txt>Entrenando</span>"+timerStr;}
-var av=pt[k]?"style="+JSON.stringify("background-image:"+pt[k]):"";
-cardsHTML+="<div class=pal-card "+(isHome?"is-home":"is-busy")+"><div class=pal-stripe></div><div class=pal-body><div class=pal-aw><div class=pal-avatar "+av+"></div>"+(lv[k]?"<span class=pal-lv>"+lv[k]+"</span>":"")+"</div><div class=pal-card-info><div class=pal-card-name>"+knight.name+"</div><div class=pal-card-status>"+statusHTML+"</div></div><button class=\"pal-btn-train "+(isHome?"btn-ready":"btn-busy")+"\""+(isHome?" onClick=\"onIndi("+k+",this)\"":""+(isHome?"":"  disabled"))+">"+(isHome?"Entrenar":"Ocupado")+"</button></div></div>";
+
+function _hms(ms) {
+    if (ms <= 0) return "00:00:00";
+    var s = Math.floor(ms / 1000),
+        h = Math.floor(s / 3600),
+        m = Math.floor((s % 3600) / 60);
+    s = s % 60;
+    return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
 }
-var html="<div class=pal><div class=pal-label>Duracion del entrenamiento</div><div class=pal-pills>"+durHTML+"</div><div class=pal-label>Paladines</div><div class=pal-list>"+cardsHTML+"</div><div class=pal-footer><button id=start class=pal-btn-all>Entrenar Todos</button><button id=save class=pal-btn-save>Guardar</button></div><div class=pal-credit>Training v1.7 by <span class=cb>Rabagalan73</span></div></div>";
-Dialog.show("Entrenar Paladines",html);
-var sv=Number(localStorage.getItem("Statue"));
-$("#pal-d"+(isNaN(sv)?0:sv)).prop("checked",true);
-var _iv=setInterval(function(){var els=document.querySelectorAll(".pal-timer[data-fin]");if(!els.length){clearInterval(_iv);return;}var now=Date.now();els.forEach(function(el){var r=+el.dataset.fin-now;el.textContent=r>0?_hms(r):"Listo!";});},1000);
-$("#save").on("click",function(){localStorage.setItem("Statue",$("input[name=train-knights]:checked").val());UI.SuccessMessage("Opciones guardadas.");});
-$("#start").on("click",function(e){e.preventDefault();var sv=Number($("input[name=train-knights]:checked").val());if(isNaN(sv)){UI.ErrorMessage("Selecciona duracion.");return;}this.disabled=true;this.textContent="Enviando...";Dialog.close();Object.keys(BK).forEach(function(key,idx){var kn=BK[key];if(kn.activity.type!=="home"||!kn.usable_regimens[sv])return;setTimeout(function(){TribalWars.post(game_data.link_base.replace("amp;screen=","")+"screen=statue&ajaxaction=regimen",null,{knight:kn.id,regimen:kn.usable_regimens[sv].id},function(){UI.SuccessMessage(_("386e303de70e5a2ff1b5cabefb0666f5"));},function(r){UI.ErrorMessage("Error: "+kn.name);});},idx*250);});});
-}else{var _t=document.createElement("div");_t.style.cssText="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1508;border:1px solid #c8a84a;color:#ffe080;padding:10px 22px;border-radius:8px;font-family:Segoe UI,sans-serif;font-size:13px;font-weight:bold;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.7)";_t.textContent="Redirigiendo a la Estatua...";document.body.appendChild(_t);setTimeout(function(){window.location.href=game_data.link_base_pure+"statue&mode=overview";},700);}
-function onIndi(id,btn){var val=Number($("input[name=train-knights]:checked").val());if(isNaN(val)){UI.ErrorMessage("Selecciona duracion.");return;}var knight=BK[id];if(!knight||!knight.usable_regimens[val]){UI.ErrorMessage("Sin regimen.");return;}if(btn){btn.disabled=true;btn.textContent="Enviando...";}TribalWars.post(game_data.link_base.replace("amp;screen=","")+"screen=statue&ajaxaction=regimen",null,{knight:id,regimen:knight.usable_regimens[val].id},function(){if(btn)btn.textContent="Enviado";UI.SuccessMessage(_("386e303de70e5a2ff1b5cabefb0666f5"));},function(r){if(btn){btn.disabled=false;btn.textContent="Entrenar";}UI.ErrorMessage("Error al entrenar.");});}
+
+function _pso() {
+    try {
+        var t = document.getElementById("serverTime"),
+            d = document.getElementById("serverDate"),
+            m = d && d.textContent.trim().match(/(\d+)\/(\d+)\/(\d+)/);
+        return t && m ? Date.parse(m[3] + "-" + m[2] + "-" + m[1] + "T" + t.textContent.trim() + "Z") - Date.now() : 0;
+    } catch (e) {
+        return 0;
+    }
+}
+
+if (window.location.href.includes("statue&mode=overview")) {
+
+    if (!window.BuildingStatue || !BuildingStatue.knights || !Object.keys(BuildingStatue.knights).length) {
+        UI.ErrorMessage("Estatua no cargada.");
+        throw new Error();
+    }
+
+    var BK = BuildingStatue.knights, pt = {}, et = {}, lv = {};
+
+    document.querySelectorAll(".knight_card").forEach(function (c) {
+        var ie = c.querySelector("[data-id]"),
+            ee = c.querySelector("[data-endtime]"),
+            pe = c.querySelector(".portrait.sprite");
+        if (!ie) return;
+        var id = ie.dataset.id;
+        if (ee) et[id] = +ee.dataset.endtime;
+        if (pe) {
+            var bp = (pe.style.backgroundPosition || "0 0").trim().split(/\s+/),
+                py = Math.round(parseInt(bp[1] || bp[0] || 0) * 0.45);
+            pt[id] = pe.style.backgroundImage.replace(/url\(["']?([^"')]+)["']?\)/, "url($1)") + ";background-size:36px 648px;background-position:0 " + py + "px";
+        }
+        var le = c.querySelector(".level .value");
+        if (le) lv[id] = +le.textContent;
+    });
+
+    var s = document.createElement("style");
+    s.textContent =
+        ".pal{font-family:Segoe UI,Arial,sans-serif;padding:4px 0 6px;min-width:340px}" +
+        ".pal-label{font-size:10px;text-transform:uppercase;letter-spacing:1.4px;color:#9a7e3a;margin:14px 0 8px;font-weight:700;display:flex;align-items:center;gap:8px}" +
+        ".pal-label::after{content:'';flex:1;height:1px;background:#c8b078;opacity:.25}" +
+        ".pal-label:first-child{margin-top:0}" +
+        ".pal-pills{display:flex;flex-wrap:wrap;gap:6px}" +
+        ".pal-pill input[type=radio]{display:none}" +
+        ".pal-pill label{display:block;padding:7px 15px;background:#f0e8d0;border:1px solid #b0985a;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;color:#6a5020;transition:all .15s}" +
+        ".pal-pill input:checked+label{background:linear-gradient(180deg,#7a5010,#4a3008);border-color:#e0a830;color:#ffe090;box-shadow:0 2px 8px rgba(180,130,30,.4)}" +
+        ".pal-list{display:flex;flex-direction:column;gap:5px;max-height:300px;overflow-y:auto}" +
+        ".pal-card{display:flex;align-items:center;border-radius:5px;overflow:hidden;border:1px solid #b8a060}" +
+        ".pal-stripe{width:5px;flex-shrink:0;align-self:stretch}" +
+        ".pal-card.is-home .pal-stripe{background:#4a9e50}" +
+        ".pal-card.is-busy .pal-stripe{background:#c07820}" +
+        ".pal-body{flex:1;display:flex;align-items:center;gap:10px;padding:9px 12px;min-width:0;background:linear-gradient(135deg,#fdf6e3,#f5e8c8)}" +
+        ".pal-card.is-busy .pal-body{background:linear-gradient(135deg,#f8f0de,#eee0c0)}" +
+        ".pal-aw{position:relative;flex-shrink:0}" +
+        ".pal-avatar{width:36px;height:36px;border-radius:5px;background-repeat:no-repeat;overflow:hidden;border:1px solid #c8b078}" +
+        ".pal-lv{position:absolute;bottom:1px;right:1px;background:#000c;color:#ffd060;font-size:9px;font-weight:900;padding:0 3px;border-radius:2px}" +
+        ".pal-card-info{flex:1;min-width:0}" +
+        ".pal-card-name{font-size:14px;font-weight:700;color:#2a1e08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}" +
+        ".pal-card-status{display:flex;align-items:center;gap:5px;margin-top:2px}" +
+        ".pal-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}" +
+        ".pal-dot-green{background:#3a9e42}" +
+        ".pal-dot-amber{background:#d07820}" +
+        ".pal-status-txt{font-size:11px;color:#7a6040;font-weight:600}" +
+        ".pal-timer{font-size:11px;color:#a05010;font-weight:700;background:rgba(180,100,10,.1);padding:1px 6px;border-radius:3px;margin-left:2px;border:1px solid rgba(180,100,10,.2)}" +
+        ".pal-finish{font-size:10px;color:#7a5030;margin-left:4px}" +
+        ".pal-btn-train{border-radius:4px;padding:6px 13px;flex-shrink:0;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;transition:all .12s;border:1px solid}" +
+        ".pal-btn-train.btn-ready{background:linear-gradient(180deg,#4a8830,#2e5818);border-color:#6ab848;color:#d8f8b8}" +
+        ".pal-btn-train.btn-busy{background:#e0d0a8;border-color:#b8a060;color:#9a8050;cursor:default}" +
+        ".pal-btn-train:disabled{opacity:.7;cursor:default}" +
+        ".pal-footer{display:flex;gap:8px;margin-top:14px}" +
+        ".pal-btn-all{flex:1;background:linear-gradient(180deg,#7a5010,#3e2808);border:1px solid #c8a840;color:#ffe080;padding:9px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700}" +
+        ".pal-btn-save{background:#f0e8d0;border:1px solid #b8a060;color:#6a5020;padding:9px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600}" +
+        ".pal-credit{text-align:center;font-size:10px;color:#a09060;margin-top:10px}" +
+        ".pal-credit .cb{color:#4060a0;font-weight:700}";
+    document.head.appendChild(s);
+
+    var regimens = BK[Object.keys(BK)[0]].usable_regimens,
+        durHTML = "";
+
+    regimens.forEach(function (el, i) {
+        var hh = String(Math.floor(el.duration / 3600)).padStart(2, "0"),
+            mm = String(Math.floor((el.duration % 3600) / 60)).padStart(2, "0"),
+            ss = String(Math.floor(el.duration % 60)).padStart(2, "0");
+        durHTML += "<div class=pal-pill><input type=radio id=pal-d" + i + " name=train-knights value=" + i + "><label for=pal-d" + i + ">" + hh + ":" + mm + ":" + ss + "</label></div>";
+    });
+
+    var nowMs = Date.now(),
+        srvOff = _pso(),
+        p2 = function (n) { return String(n).padStart(2, "0"); },
+        collection = Object.keys(BK),
+        cardsHTML = "";
+
+    for (var i = 0; i < collection.length; i++) {
+        var k = collection[i],
+            knight = BK[k],
+            isHome = knight.activity.type === "home",
+            statusHTML,
+            timerStr = "";
+
+        if (isHome) {
+            statusHTML = "<span class=pal-dot pal-dot-green></span><span class=pal-status-txt>Disponible</span>";
+        } else {
+            var finEp = (et[k] || knight.activity.finish_at || 0) * 1000;
+            if (finEp) {
+                var rem = finEp - nowMs,
+                    fd = new Date(finEp + srvOff),
+                    finStr = p2(fd.getUTCHours()) + ":" + p2(fd.getUTCMinutes()) + ":" + p2(fd.getUTCSeconds());
+                if (rem > 0) timerStr = "<span class=pal-timer data-fin=" + finEp + ">" + _hms(rem) + "</span><span class=pal-finish>libre " + finStr + "</span>";
+            }
+            statusHTML = "<span class=pal-dot pal-dot-amber></span><span class=pal-status-txt>Entrenando</span>" + timerStr;
+        }
+
+        var av = pt[k] ? "style=" + JSON.stringify("background-image:" + pt[k]) : "";
+
+        cardsHTML +=
+            "<div class=pal-card " + (isHome ? "is-home" : "is-busy") + ">" +
+                "<div class=pal-stripe></div>" +
+                "<div class=pal-body>" +
+                    "<div class=pal-aw>" +
+                        "<div class=pal-avatar " + av + "></div>" +
+                        (lv[k] ? "<span class=pal-lv>" + lv[k] + "</span>" : "") +
+                    "</div>" +
+                    "<div class=pal-card-info>" +
+                        "<div class=pal-card-name>" + knight.name + "</div>" +
+                        "<div class=pal-card-status>" + statusHTML + "</div>" +
+                    "</div>" +
+                    "<button class=\"pal-btn-train " + (isHome ? "btn-ready" : "btn-busy") + "\"" + (isHome ? " onClick=\"onIndi(" + k + ",this)\"" : "  disabled") + ">" + (isHome ? "Entrenar" : "Ocupado") + "</button>" +
+                "</div>" +
+            "</div>";
+    }
+
+    var html =
+        "<div class=pal>" +
+            "<div class=pal-label>Duracion del entrenamiento</div>" +
+            "<div class=pal-pills>" + durHTML + "</div>" +
+            "<div class=pal-label>Paladines</div>" +
+            "<div class=pal-list>" + cardsHTML + "</div>" +
+            "<div class=pal-footer>" +
+                "<button id=start class=pal-btn-all>Entrenar Todos</button>" +
+                "<button id=save class=pal-btn-save>Guardar</button>" +
+            "</div>" +
+            "<div class=pal-credit>Training v1.7 by <span class=cb>Rabagalan73</span></div>" +
+        "</div>";
+
+    Dialog.show("Entrenar Paladines", html);
+
+    var sv = Number(localStorage.getItem("Statue"));
+    $("#pal-d" + (isNaN(sv) ? 0 : sv)).prop("checked", true);
+
+    var _iv = setInterval(function () {
+        var els = document.querySelectorAll(".pal-timer[data-fin]");
+        if (!els.length) {
+            clearInterval(_iv);
+            return;
+        }
+        var now = Date.now();
+        els.forEach(function (el) {
+            var r = +el.dataset.fin - now;
+            el.textContent = r > 0 ? _hms(r) : "Listo!";
+        });
+    }, 1000);
+
+    $("#save").on("click", function () {
+        localStorage.setItem("Statue", $("input[name=train-knights]:checked").val());
+        UI.SuccessMessage("Opciones guardadas.");
+    });
+
+    $("#start").on("click", function (e) {
+        e.preventDefault();
+        var sv = Number($("input[name=train-knights]:checked").val());
+        if (isNaN(sv)) {
+            UI.ErrorMessage("Selecciona duracion.");
+            return;
+        }
+        this.disabled = true;
+        this.textContent = "Enviando...";
+        Dialog.close();
+        Object.keys(BK).forEach(function (key, idx) {
+            var kn = BK[key];
+            if (kn.activity.type !== "home" || !kn.usable_regimens[sv]) return;
+            setTimeout(function () {
+                TribalWars.post(
+                    game_data.link_base.replace("amp;screen=", "") + "screen=statue&ajaxaction=regimen",
+                    null,
+                    { knight: kn.id, regimen: kn.usable_regimens[sv].id },
+                    function () { UI.SuccessMessage(_("386e303de70e5a2ff1b5cabefb0666f5")); },
+                    function (r) { UI.ErrorMessage("Error: " + kn.name); }
+                );
+            }, idx * 250);
+        });
+    });
+
+} else {
+
+    var _t = document.createElement("div");
+    _t.style.cssText = "position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1508;border:1px solid #c8a84a;color:#ffe080;padding:10px 22px;border-radius:8px;font-family:Segoe UI,sans-serif;font-size:13px;font-weight:bold;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.7)";
+    _t.textContent = "Redirigiendo a la Estatua...";
+    document.body.appendChild(_t);
+    setTimeout(function () {
+        window.location.href = game_data.link_base_pure + "statue&mode=overview";
+    }, 700);
+
+}
+
+function onIndi(id, btn) {
+    var val = Number($("input[name=train-knights]:checked").val());
+    if (isNaN(val)) {
+        UI.ErrorMessage("Selecciona duracion.");
+        return;
+    }
+    var knight = BK[id];
+    if (!knight || !knight.usable_regimens[val]) {
+        UI.ErrorMessage("Sin regimen.");
+        return;
+    }
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Enviando...";
+    }
+    TribalWars.post(
+        game_data.link_base.replace("amp;screen=", "") + "screen=statue&ajaxaction=regimen",
+        null,
+        { knight: id, regimen: knight.usable_regimens[val].id },
+        function () {
+            if (btn) btn.textContent = "Enviado";
+            UI.SuccessMessage(_("386e303de70e5a2ff1b5cabefb0666f5"));
+        },
+        function (r) {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "Entrenar";
+            }
+            UI.ErrorMessage("Error al entrenar.");
+        }
+    );
+}
