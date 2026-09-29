@@ -1,7 +1,6 @@
-
 /************************/
 /*    InspectRaba.js    */
-/*     Versión 1.1      */
+/*     Versión 1.6      */
 /*   by Rabagalan73    */
 /************************/
 
@@ -16,6 +15,7 @@ var IR_CONFIG = {
     regenCavDay:    600,   // Caballería regenerada por día (estimación media)
     cavAvgFarm:     4.5,   // Coste medio de pop por unidad de caballería
     fakeThreshold:  2000,  // Pop mínima enviada para considerar el informe informativo (no fake)
+    analyzeNotes:   false, // Valor inicial de "Analizar notas" (después se recuerda lo que elijas en el panel)
 };
 
 // Coste de granja según número de unidades del mundo
@@ -52,6 +52,15 @@ var IR_TYPES = {
     unknown:       { label: '?',            color: '#888',    bg: 'rgba(100,100,100,0.08)'},
     sin_nota:      { label: 'SIN NOTA',     color: '#aaa',    bg: 'rgba(150,150,150,0.06)'},
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DETECCIÓN DE ATAQUES YA RENOMBRADOS
+//  Prefijos: [❓] etiquetado por el script | [💥] estampado | [✔️] pasa de largo
+// ─────────────────────────────────────────────────────────────────────────────
+
+function irIsRenamed(text) {
+    return /^\s*\[(❓|💥|✔)\uFE0F?\]/.test(text || '');
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  PARSER DE TROPAS: divide string concatenado en N enteros sin ceros iniciales
@@ -266,6 +275,9 @@ function irGenerateLabel(atk) {
     var note   = atk.note;
     var troops = atk.troops;
 
+    // Sin análisis (o aún sin cargar) → solo se pone el prefijo [❓]
+    if (!window.irAnalyze || atk.pending) return '';
+
     if (!note.hasNote) return '[?]';
 
     var type = note.type;
@@ -307,7 +319,7 @@ async function irRenameOne(commandId, newLabel) {
     // Si ya tiene cualquiera de los 3 prefijos, no tocar
     var currentLabel = qe.querySelector('.quickedit-label');
     var currentText  = currentLabel ? currentLabel.textContent.trim() : '';
-    if (currentText.startsWith('[❓]') || currentText.startsWith('[💥]') || currentText.startsWith('[✔️]')) return 'already';
+    if (irIsRenamed(currentText)) return 'already';
 
     $(renameIcon).click();
     await irSleep(300);
@@ -315,7 +327,7 @@ async function irRenameOne(commandId, newLabel) {
     var input = $(qe).find('input[type=text]');
     if (input.length === 0) return false;
     var current = input.val().trim();
-    var prefix  = '[❓] ' + newLabel;
+    var prefix  = newLabel ? '[❓] ' + newLabel : '[❓]';
     input.val(current ? prefix + ' ' + current : prefix);
     $(qe).find('input[type=button]').click();
     await irSleep(260); // ~4 por segundo
@@ -335,7 +347,7 @@ async function irMarkAs(commandId, newPrefix) {
     if (input.length === 0) return false;
     var current = input.val().trim();
     // Sustituir cualquier prefijo existente, si no anteponer
-    var updated = (current.startsWith('[❓]') || current.startsWith('[💥]') || current.startsWith('[✔️]'))
+    var updated = irIsRenamed(current)
         ? newPrefix + current.slice(current.indexOf(']') + 1)
         : newPrefix + ' ' + current;
     input.val(updated);
@@ -348,23 +360,26 @@ async function irRenameAll(attacks) {
     var btn = document.getElementById('ir-btn-all');
     if (btn) { btn.disabled = true; btn.textContent = 'Renombrando...'; }
 
+    await window.irQueue;
+    attacks = attacks.filter(function(a){ return !a.renamed; });
     var done = 0;
     for (var i = 0; i < attacks.length; i++) {
         var atk   = attacks[i];
         var label = irGenerateLabel(atk);
         var ok    = await irRenameOne(atk.id, label);
-        if (ok) done++;
+        if (ok === true) done++;
+        if (ok === true || ok === 'already') irMarkDone(atk, '[❓]', 'rename');
 
         // Actualizar progreso en el footer
         var foot = document.getElementById('ir-foot-status');
-        if (foot) foot.textContent = done + '/' + attacks.length;
+        if (foot) foot.textContent = (i + 1) + '/' + attacks.length;
     }
 
     if (btn) { btn.textContent = '✔ Hecho (' + done + ')'; }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  PARSEAR TABLA DE ATAQUES
+//  PARSEAR TABLA DE ATAQUES (overview_villages&mode=incomings)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function irParseIncomings() {
@@ -376,6 +391,7 @@ function irParseIncomings() {
 
         var labelEl  = row.querySelector('.quickedit-label');
         var labelTxt = labelEl ? labelEl.textContent.trim() : '';
+
         var unitStr  = labelTxt.split('|')[0].trim();
 
         var cells = row.querySelectorAll('td');
@@ -403,13 +419,165 @@ function irParseIncomings() {
             troops = irAnalyzeTroops(noteTitle, playerTxt, unitStr);
         }
 
-        var currentLabel = labelEl ? labelEl.textContent.trim() : '';
-
-        results.push({ id, unitStr, destination: destTxt, origin: originTxt,
+        results.push({ id: id, unitStr: unitStr, destination: destTxt, origin: originTxt,
                         player: playerTxt, distance: distTxt, arrival: arrTxt,
-                        countdown, note, troops, noteTitle, currentLabel, villageUrl });
+                        countdown: countdown, note: note, troops: troops,
+                        noteTitle: noteTitle, currentLabel: labelTxt, villageUrl: villageUrl,
+                        renamed: irIsRenamed(labelTxt), pending: false });
     });
     return results;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  CONTEXTO + PARSER PARA WIDGET (overview / info_village)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function irGetContext() {
+    var p = new URL(window.location.href).searchParams;
+    var screen = p.get('screen'), mode = p.get('mode');
+    if (screen === 'overview_villages' && mode === 'incomings' &&
+        document.getElementById('incomings_table')) return 'table';
+    if ((screen === 'overview' || screen === 'info_village' || screen === 'place') &&
+        document.getElementById('commands_incomings')) return 'widget';
+    return null;
+}
+
+function irGet(url) {
+    return new Promise(function(resolve, reject) {
+        $.get(url).done(resolve).fail(reject);
+    });
+}
+
+function irAbsUrl(href) { return new URL(href, window.location.origin).href; }
+
+// Convierte el HTML de la nota en texto plano con saltos de línea
+function irNoteToText(el) {
+    var html = el.innerHTML
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(p|div|tr|li|h\d)>/gi, '\n')
+        .replace(/<[^>]+>/g, ' ');
+    var ta = document.createElement('textarea');
+    ta.innerHTML = html;
+    return ta.value;
+}
+
+// Abre el info_command y devuelve {text, url} del pueblo de origen
+async function irFetchOrigin(cmdUrl, destVillageId) {
+    var html = await irGet(cmdUrl);
+    var dom  = new DOMParser().parseFromString(html, 'text/html');
+
+    // 1) Fila cuya primera celda empieza por "Orig"
+    var rows = dom.querySelectorAll('table.vis tr');
+    for (var i = 0; i < rows.length; i++) {
+        var first = rows[i].querySelector('td, th');
+        if (first && /^\s*orig/i.test(first.textContent)) {
+            var a = rows[i].querySelector('a[href*="info_village"]');
+            if (a) return { text: a.textContent.trim(), url: irAbsUrl(a.getAttribute('href')) };
+        }
+    }
+    // 2) Plan B: primer enlace a un pueblo distinto del destino
+    var links = dom.querySelectorAll('a[href*="info_village"]');
+    for (var j = 0; j < links.length; j++) {
+        var href = links[j].getAttribute('href');
+        var m = href.match(/[?&]id=(\d+)/);
+        if (m && m[1] !== String(destVillageId))
+            return { text: links[j].textContent.trim(), url: irAbsUrl(href) };
+    }
+    return null;
+}
+
+async function irFetchNote(villageUrl) {
+    var html = await irGet(villageUrl);
+    var dom  = new DOMParser().parseFromString(html, 'text/html');
+    var note = dom.querySelector('#own_village_note .village-note');
+    if (!note || !note.children[1]) return '';
+    return irNoteToText(note.children[1]);
+}
+
+function irWidgetBasics(row) {
+    var qe       = row.querySelector('.quickedit');
+    var labelEl  = row.querySelector('.quickedit-label');
+    var labelTxt = labelEl ? labelEl.textContent.replace(/\s+/g, ' ').trim() : '';
+    var parts    = labelTxt.split('|');
+    var cells    = row.querySelectorAll('td');
+    var cdEl     = row.querySelector('span[data-endtime]');
+    return {
+        id:        qe.getAttribute('data-id'),
+        labelTxt:  labelTxt,
+        unitStr:   parts[0].trim(),
+        playerTxt: parts.slice(1).join('|').replace(/^\s*player\s*/i, '').trim() || '—',
+        arrTxt:    cells[1] ? cells[1].textContent.replace(/\s+/g, ' ').trim() : '—',
+        countdown: cdEl ? cdEl.textContent.trim() : '',
+        cmdLink:   row.querySelector('a[href*="info_command"]')
+    };
+}
+
+// Versión ligera (sin peticiones); se completa al activar "Analizar notas"
+function irWidgetStub(row) {
+    var b = irWidgetBasics(row);
+    return {
+        id: b.id, unitStr: b.unitStr, destination: '—', origin: '—',
+        player: b.playerTxt, distance: '—', arrival: b.arrTxt,
+        countdown: b.countdown, note: irParseNote(''), troops: null,
+        noteTitle: '', currentLabel: b.labelTxt, villageUrl: null,
+        renamed: irIsRenamed(b.labelTxt), pending: true
+    };
+}
+
+async function irAnalyzeWidgetRow(row, destId, noteCache) {
+    var b = irWidgetBasics(row);
+
+    // Origen (petición al comando)
+    var origin = null;
+    if (b.cmdLink) {
+        try { origin = await irFetchOrigin(irAbsUrl(b.cmdLink.getAttribute('href')), destId); }
+        catch (e) { origin = null; }
+        await irSleep(250);
+    }
+
+    // Nota del pueblo de origen (cacheada)
+    var noteTitle = '';
+    if (origin) {
+        if (!(origin.url in noteCache)) {
+            try { noteCache[origin.url] = await irFetchNote(origin.url); }
+            catch (e) { noteCache[origin.url] = ''; }
+            await irSleep(250);
+        }
+        noteTitle = noteCache[origin.url];
+    }
+
+    var note   = irParseNote(noteTitle);
+    var troops = null;
+    if (note.hasNote && note.type && note.type.startsWith('off')) {
+        troops = irAnalyzeTroops(noteTitle, b.playerTxt, b.unitStr);
+    }
+
+    return {
+        id: b.id, unitStr: b.unitStr, destination: '—',
+        origin: origin ? origin.text : '—',
+        player: b.playerTxt, distance: '—', arrival: b.arrTxt,
+        countdown: b.countdown, note: note, troops: troops,
+        noteTitle: noteTitle, currentLabel: b.labelTxt,
+        villageUrl: origin ? origin.url : null,
+        renamed: irIsRenamed(b.labelTxt), pending: false
+    };
+}
+
+async function irParseIncomingsWidget() {
+    var box    = document.getElementById('commands_incomings');
+    var destId = box ? box.getAttribute('data-village') : null;
+
+    var rows = Array.prototype.filter.call(
+        document.querySelectorAll('#commands_incomings tr.command-row'),
+        function(r) {
+            return !r.classList.contains('ignored_command')
+                && !r.closest('#commands_outgoings')   // nunca las órdenes propias
+                && r.querySelector('.quickedit')       // (las propias usan .quickedit-out)
+                && r.querySelector('img[src*="attack"]');
+        });
+
+    window.irWidgetCtx = { destId: destId, noteCache: {} };
+    return rows.map(function(r){ return irWidgetStub(r); });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -435,7 +603,8 @@ function irDangerBadge(pct) {
 function irRenderCard(atk) {
     var note   = atk.note;
     var troops = atk.troops;
-    var meta   = IR_TYPES[note.type] || IR_TYPES.sin_nota;
+    var analyzed = !!window.irAnalyze && !atk.pending;
+    var meta   = analyzed ? (IR_TYPES[note.type] || IR_TYPES.sin_nota) : IR_TYPES.sin_nota;
 
     // Fecha y tiempo transcurrido
     var battleStr = '', agoStr = '';
@@ -458,7 +627,9 @@ function irRenderCard(atk) {
 
     // Bloque de OFF análisis
     var offBlock = '';
-    if (troops) {
+    if (!analyzed) {
+        if (window.irAnalyze && atk.pending) offBlock = '<div class="ir-off-block"><span class="ir-lbl">Analizando nota…</span></div>';
+    } else if (troops) {
         var isFake = troops.totalFarm < IR_CONFIG.fakeThreshold;
 
         if (isFake) {
@@ -520,7 +691,7 @@ function irRenderCard(atk) {
 
     // Info adicional
     var info = '';
-    if (note.hasNote) {
+    if (analyzed && note.hasNote) {
         if (battleStr) info += `<div class="ir-line"><span class="ir-lbl">Batalla:</span><span class="ir-val">${battleStr} <span class="ir-ago">${agoStr}</span></span></div>`;
         if (note.points) info += `<div class="ir-line"><span class="ir-lbl">Puntos:</span><span class="ir-val">${note.points}</span></div>`;
         if (note.blindajePop) info += `<div class="ir-line"><span class="ir-lbl">Blindaje:</span><span class="ir-val ir-blind">${note.blindajePop.toLocaleString()} pop</span></div>`;
@@ -528,43 +699,43 @@ function irRenderCard(atk) {
 
     var renameLabel = irGenerateLabel(atk);
     var lbl         = atk.currentLabel || '';
-    var hasAny      = lbl.startsWith('[❓]') || lbl.startsWith('[💥]') || lbl.startsWith('[✔️]');
-    var hasStamp    = lbl.startsWith('[💥]');
-    var hasPass     = lbl.startsWith('[✔️]');
+    var hasAny      = irIsRenamed(lbl);
+    var hasStamp    = /^\s*\[💥\]/.test(lbl);
+    var hasPass     = /^\s*\[✔\uFE0F?\]/.test(lbl);
 
-    var btnRename = `<button class="ir-btn-rename" ${hasAny ? 'disabled' : ''}
-        onclick="irRenameOne('${atk.id}','${renameLabel}').then(function(r){if(r!='already'){this.textContent='✔';this.disabled=true;}}.bind(this))"
+    var btnRename = `<button class="ir-btn-rename" data-k="rename" ${hasAny ? 'disabled' : ''}
+        onclick="irAct('${atk.id}','rename','${renameLabel}')"
         title="Etiquetar: ${renameLabel}">${hasAny ? '✔' : '✏'}</button>`;
 
-    var btnStamp = `<button class="ir-btn-mark" ${hasStamp ? 'disabled style="opacity:.4"' : ''}
-        onclick="irMarkAs('${atk.id}','[💥]');this.disabled=true;this.style.opacity='.4';"
+    var btnStamp = `<button class="ir-btn-mark" data-k="stamp" ${hasStamp ? 'disabled style="opacity:.4"' : ''}
+        onclick="irAct('${atk.id}','stamp','')"
         title="Revisado — estampado">💥</button>`;
 
-    var btnPass = `<button class="ir-btn-mark" ${hasPass ? 'disabled style="opacity:.4"' : ''}
-        onclick="irMarkAs('${atk.id}','[✔️]');this.disabled=true;this.style.opacity='.4';"
+    var btnPass = `<button class="ir-btn-mark" data-k="pass" ${hasPass ? 'disabled style="opacity:.4"' : ''}
+        onclick="irAct('${atk.id}','pass','')"
         title="Revisado — pasa de largo">✔️</button>`;
 
     return `
-    <div class="ir-card" style="border-left:3px solid ${meta.color};background:${meta.bg}">
+    <div class="ir-card${atk.renamed ? ' ir-done' : ''}" data-id="${atk.id}" style="border-left:3px solid ${meta.color};background:${meta.bg}">
         <div class="ir-card-head">
             <span class="ir-player">${atk.player}</span>
             <div style="display:flex;align-items:center;gap:5px">
-                <span class="ir-badge" style="background:${meta.color}">${meta.label}</span>
+                ${analyzed ? '<span class="ir-badge" style="background:' + meta.color + '">' + meta.label + '</span>' : ''}
                 ${btnRename}${btnStamp}${btnPass}
             </div>
         </div>
         <div class="ir-origin">${atk.origin}</div>
         <div class="ir-sub">
             <span class="ir-unit">${atk.unitStr}</span>
-            <span class="ir-dist">· ${atk.distance}u</span>
+            ${atk.distance && atk.distance !== '—' ? '<span class="ir-dist">· ' + atk.distance + 'u</span>' : ''}
             ${atk.countdown ? '<span class="ir-countdown" id="ir-cd-' + atk.id + '">⏱ ' + atk.countdown + '</span>' : ''}
             ${outBadge}
         </div>
         ${offBlock}
         ${info ? '<div class="ir-info">' + info + '</div>' : ''}
         <div class="ir-card-foot">
-            <span class="ir-rename-preview">${renameLabel}</span>
-            ${note.hasNote && atk.villageUrl ? '<button class="ir-btn-note" onclick="irShowNote(this)" data-url="' + atk.villageUrl + '" data-origin="' + atk.origin + '">📋 Nota</button>' : ''}
+            <span class="ir-rename-preview">${renameLabel || '[❓]'}</span>
+            ${analyzed && note.hasNote && atk.villageUrl ? '<button class="ir-btn-note" onclick="irShowNote(this)" data-url="' + atk.villageUrl + '" data-origin="' + atk.origin + '">📋 Nota</button>' : ''}
         </div>
     </div>`;
 }
@@ -629,10 +800,22 @@ function irShowModal(attacks) {
         .ir-ago    { font-weight:400; color:#aaa; font-size:9px; }
         .ir-regen  { color:#2e7d32; }
         .ir-blind  { color:#c45e00; }
-        #ir-foot   { background:#f0e8d8; border-top:1px solid #d8c9a8; padding:6px 13px; font-size:10px; color:#8b7355; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; gap:8px; }
+        .ir-empty  { text-align:center; color:#8b7355; font-size:11px; padding:18px 8px; }
+        #ir-foot   { background:#f0e8d8; border-top:1px solid #d8c9a8; padding:6px 13px; font-size:10px; color:#8b7355; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; gap:8px; flex-wrap:wrap; }
         #ir-btn-all { background:linear-gradient(135deg,#5a3a28,#1e0f06); color:#f5e6c8; border:none; border-radius:6px; padding:4px 10px; font-size:10px; font-weight:800; cursor:pointer; white-space:nowrap; }
         #ir-btn-all:hover { opacity:.85; }
         #ir-btn-all:disabled { opacity:.5; cursor:default; }
+        #ir-btn-toggle { background:rgba(90,58,40,.12); color:#5a3a28; border:1px solid rgba(90,58,40,.3); border-radius:6px; padding:4px 10px; font-size:10px; font-weight:800; cursor:pointer; white-space:nowrap; }
+        #ir-btn-toggle:hover { background:rgba(90,58,40,.25); }
+        #ir-btn-toggle:disabled { opacity:.6; cursor:default; }
+        .ir-done { opacity:.72; }
+        tr.ir-hl > td { background:rgba(255,204,0,.42) !important; box-shadow:inset 0 2px 0 #e6a800, inset 0 -2px 0 #e6a800; transition:background .1s; }
+        tr.ir-hl > td:first-child { box-shadow:inset 4px 0 0 #c62828, inset 0 2px 0 #e6a800, inset 0 -2px 0 #e6a800; }
+        .ir-card { transition: opacity .14s ease, transform .16s ease, max-height .2s ease, padding .2s ease, margin .2s ease, border-width .2s ease; }
+        .ir-card.ir-leaving { opacity:0; transform:translateX(26px); max-height:0 !important; padding-top:0; padding-bottom:0; margin-bottom:-7px; border-width:0; border-left-width:0 !important; overflow:hidden; }
+        #ir-opts { padding:5px 13px; background:#f6eedf; border-bottom:1px solid #e0d2b4; font-size:10px; color:#6b5540; display:flex; align-items:center; gap:6px; flex-shrink:0; }
+        #ir-opts label { cursor:pointer; display:flex; align-items:center; gap:5px; font-weight:700; }
+        #ir-opts .ir-opt-hint { color:#a08c70; font-weight:400; }
         .ir-btn-rename { background:rgba(90,58,40,.15); border:1px solid rgba(90,58,40,.25); border-radius:5px; padding:1px 6px; font-size:10px; cursor:pointer; color:#5a3a28; }
         .ir-btn-rename:hover { background:rgba(90,58,40,.28); }
         .ir-btn-rename:disabled { opacity:.5; cursor:default; }
@@ -649,29 +832,217 @@ function irShowModal(attacks) {
         #ir-note-popup-body{ overflow-y:auto; padding:10px 12px; font-size:10px; line-height:1.6; color:#3d2b1f; word-break:break-word; }
     </style>`);
 
-    var withNote = attacks.filter(function(a){ return a.note.hasNote; }).length;
-    var offCount = attacks.filter(function(a){ return a.note.type && a.note.type.startsWith('off'); }).length;
-    var deffCount= attacks.filter(function(a){ return a.note.type && a.note.type.startsWith('deff'); }).length;
-
     $('body').append(`
     <div id="ir-panel">
         <div id="ir-head">
             <div>
                 <div id="ir-head-title">⚔ InspectRaba</div>
-                <div id="ir-head-sub">${attacks.length} ataques · ${withNote} con nota · ${offCount} OFF · ${deffCount} DEFF</div>
+                <div id="ir-head-sub"></div>
             </div>
             <button id="ir-close" onclick="$('#ir-panel').remove()">✕</button>
         </div>
-        <div id="ir-body">${attacks.map(irRenderCard).join('')}</div>
+        <div id="ir-opts">
+            <label><input type="checkbox" id="ir-chk-analyze" onchange="irSetAnalyze(this.checked)"> Analizar notas</label>
+            <span class="ir-opt-hint">(desactivado: sin consultas, solo renombrar)</span>
+        </div>
+        <div id="ir-body"></div>
         <div id="ir-foot">
-            <span>InspectRaba v1.1 · Raba</span>
+            <span>InspectRaba v1.6 · Raba</span>
             <span id="ir-foot-status"></span>
+            <button id="ir-btn-toggle" onclick="irToggleAll()" style="display:none"></button>
             <button id="ir-btn-all" onclick="irRenameAll(irCurrentAttacks)">Renombrar todo</button>
         </div>
     </div>`);
 
+    irRefreshPanel();
+
+    $('#ir-body')
+        .on('mouseenter', '.ir-card', function(){ irHighlightRow(this.getAttribute('data-id')); })
+        .on('mouseleave', '.ir-card', irClearHighlight);
+
     irMakeDraggable(document.getElementById('ir-panel'), document.getElementById('ir-head'));
     irStartCountdownSync(attacks);
+}
+
+function irVisibleAttacks() {
+    var all = window.irCurrentAttacks || [];
+    return window.irShowAll ? all : all.filter(function(a){ return !a.renamed; });
+}
+
+var irHlTimer = null;
+
+function irClearHighlight() {
+    clearTimeout(irHlTimer);
+    document.querySelectorAll('tr.ir-hl').forEach(function(r){ r.classList.remove('ir-hl'); });
+}
+
+// Resalta en la tabla de la página la fila del ataque; si queda fuera de pantalla, la trae al centro
+function irHighlightRow(id) {
+    irClearHighlight();
+    var rows = [];
+    document.querySelectorAll('.quickedit[data-id="' + id + '"]').forEach(function(q) {
+        var tr = q.closest('tr');
+        if (tr) { tr.classList.add('ir-hl'); rows.push(tr); }
+    });
+    if (!rows.length) return;
+    var r = rows[0].getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) {
+        // pequeña espera para no hacer scroll al pasar el ratón rápido por encima
+        irHlTimer = setTimeout(function() {
+            rows[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 180);
+    }
+}
+
+function irUpdateHeader() {
+    var all          = window.irCurrentAttacks || [];
+    var vis          = irVisibleAttacks();
+    var renamedCount = all.filter(function(a){ return a.renamed; }).length;
+
+    var withNote  = vis.filter(function(a){ return a.note.hasNote; }).length;
+    var offCount  = vis.filter(function(a){ return a.note.type && a.note.type.startsWith('off'); }).length;
+    var deffCount = vis.filter(function(a){ return a.note.type && a.note.type.startsWith('deff'); }).length;
+    var hiddenTxt = (!window.irShowAll && renamedCount > 0) ? ' · ' + renamedCount + ' ocultos' : '';
+
+    $('#ir-head-sub').text(window.irAnalyze
+        ? vis.length + ' ataques · ' + withNote + ' con nota · ' + offCount + ' OFF · ' + deffCount + ' DEFF' + hiddenTxt
+        : vis.length + ' ataques' + hiddenTxt);
+    $('#ir-chk-analyze').prop('checked', !!window.irAnalyze);
+
+    var btn = document.getElementById('ir-btn-toggle');
+    if (btn && !btn.disabled) {
+        btn.style.display = renamedCount > 0 ? '' : 'none';
+        btn.textContent   = window.irShowAll ? 'Ocultar renombrados' : 'Mostrar todos (' + renamedCount + ')';
+    }
+}
+
+var IR_EMPTY_HTML = '<div class="ir-empty">Todos los ataques ya están renombrados.</div>';
+
+function irRefreshPanel() {
+    irClearHighlight();
+    var vis = irVisibleAttacks();
+    $('#ir-body').html(vis.length
+        ? vis.map(function(a){ return irRenderCard(a); }).join('')
+        : IR_EMPTY_HTML);
+    irUpdateHeader();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ACCIONES POR CARD: la card desaparece al momento y la orden se renombra en cola
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.irQueue = window.irQueue || Promise.resolve();
+
+function irFindAttack(id) {
+    return (window.irCurrentAttacks || []).find(function(a){ return String(a.id) === String(id); });
+}
+
+// Card fuera con animación corta (fade + colapso)
+function irLeaveCard(id) {
+    irClearHighlight();
+    var el = document.querySelector('#ir-body .ir-card[data-id="' + id + '"]');
+    if (!el) return;
+    el.style.maxHeight    = el.offsetHeight + 'px';
+    el.style.pointerEvents = 'none';
+    void el.offsetHeight; // fuerza el reflow para que anime
+    el.classList.add('ir-leaving');
+    setTimeout(function() {
+        if (el.parentNode) el.parentNode.removeChild(el);
+        if (!window.irShowAll && !document.querySelector('#ir-body .ir-card')) {
+            var body = document.getElementById('ir-body');
+            if (body) body.innerHTML = IR_EMPTY_HTML;
+        }
+    }, 220);
+}
+
+// Con "Mostrar todos" activo la card se queda, solo atenuada y con el botón usado desactivado
+function irDimCard(id, kind) {
+    var el = document.querySelector('#ir-body .ir-card[data-id="' + id + '"]');
+    if (!el) return;
+    el.classList.add('ir-done');
+    var r = el.querySelector('button[data-k="rename"]');
+    if (r) { r.disabled = true; r.textContent = '✔'; }
+    var k = el.querySelector('button[data-k="' + kind + '"]');
+    if (k) { k.disabled = true; k.style.opacity = '.4'; }
+}
+
+function irMarkDone(atk, prefix, kind) {
+    atk.currentLabel = prefix + ' ' + (atk.currentLabel || '');
+    atk.renamed = true;
+    if (window.irShowAll) irDimCard(atk.id, kind); else irLeaveCard(atk.id);
+    irUpdateHeader();
+}
+
+function irAct(id, kind, label) {
+    var atk = irFindAttack(id);
+    if (!atk) return;
+    if (kind === 'rename' && atk.renamed) return;
+
+    var prefix   = kind === 'rename' ? '[❓]' : kind === 'stamp' ? '[💥]' : '[✔️]';
+    var oldLabel = atk.currentLabel;
+    var oldFlag  = atk.renamed;
+
+    // Optimista: la card se va ya; la orden se renombra en segundo plano, de una en una
+    irMarkDone(atk, prefix, kind);
+
+    window.irQueue = window.irQueue.then(async function() {
+        var ok = kind === 'rename' ? await irRenameOne(id, label) : await irMarkAs(id, prefix);
+        if (ok === false) {
+            atk.currentLabel = oldLabel;
+            atk.renamed      = oldFlag;
+            UI.ErrorMessage('InspectRaba: no se pudo renombrar la orden de ' + atk.player, 2500);
+            irRefreshPanel();
+        }
+    });
+}
+
+async function irToggleAll() {
+    if (window.irShowAll) {
+        window.irShowAll = false;
+        irRefreshPanel();
+        return;
+    }
+    window.irShowAll = true;
+    irRefreshPanel();
+    if (window.irAnalyze) await irLoadPending();
+}
+
+// Carga origen + nota de los ataques visibles que aún no se han analizado (solo overview/info_village)
+async function irLoadPending() {
+    if (window.irLoading || !window.irWidgetCtx) return;
+    var list = (window.irCurrentAttacks || []).filter(function(a) {
+        return a.pending && (window.irShowAll || !a.renamed);
+    });
+    if (!list.length) return;
+
+    window.irLoading = true;
+    var btnAll = document.getElementById('ir-btn-all');
+    var chk    = document.getElementById('ir-chk-analyze');
+    var foot   = document.getElementById('ir-foot-status');
+    if (btnAll) btnAll.disabled = true;
+    if (chk)    chk.disabled = true;
+
+    for (var i = 0; i < list.length; i++) {
+        if (foot) foot.textContent = 'Analizando ' + (i + 1) + '/' + list.length;
+        var qe  = document.querySelector('.quickedit[data-id="' + list[i].id + '"]');
+        var row = qe ? qe.closest('tr') : null;
+        if (!row) { list[i].pending = false; continue; }
+        var full = await irAnalyzeWidgetRow(row, window.irWidgetCtx.destId, window.irWidgetCtx.noteCache);
+        Object.assign(list[i], full);
+    }
+
+    if (foot)   foot.textContent = '';
+    if (btnAll) btnAll.disabled = false;
+    if (chk)    chk.disabled = false;
+    window.irLoading = false;
+    irRefreshPanel();
+}
+
+async function irSetAnalyze(on) {
+    window.irAnalyze = !!on;
+    try { localStorage.setItem('ir_analyze_notes', on ? '1' : '0'); } catch (e) {}
+    irRefreshPanel();
+    if (on) await irLoadPending();
 }
 
 function irShowNote(btn) {
@@ -728,7 +1099,8 @@ function irStartCountdownSync(attacks) {
             var row = qe.closest('tr');
             if (!row) return;
             var cells = row.querySelectorAll('td');
-            var src   = cells[6] ? cells[6].querySelector('span') : null;
+            var src   = row.querySelector('span[data-endtime]')
+                     || (cells[6] ? cells[6].querySelector('span') : null);
             if (src) display.textContent = '⏱ ' + src.textContent.trim();
         });
     }, 1000);
@@ -751,16 +1123,22 @@ function irMakeDraggable(el, handle) {
 //  INIT
 // ─────────────────────────────────────────────────────────────────────────────
 
-(function() {
-    var params = new URL(window.location.href).searchParams;
-    if (params.get('screen') !== 'overview_villages' || params.get('mode') !== 'incomings') {
-        UI.ErrorMessage('InspectRaba: Ejecuta desde la pantalla de ataques entrantes.', 3000);
+(async function() {
+    var ctx = irGetContext();
+    if (!ctx) {
+        UI.ErrorMessage('InspectRaba: Ejecuta desde Entrantes, el resumen, la info del pueblo o la plaza.', 3500);
         return;
     }
-    if (!document.getElementById('incomings_table')) {
-        UI.ErrorMessage('InspectRaba: No se encontró la tabla de ataques.', 3000);
+    var attacks = ctx === 'table' ? irParseIncomings() : await irParseIncomingsWidget();
+    if (!attacks.length) {
+        UI.ErrorMessage('InspectRaba: No se encontraron ataques.', 3000);
         return;
     }
-    window.irCurrentAttacks = irParseIncomings();
-    irShowModal(window.irCurrentAttacks);
+    var stored = null;
+    try { stored = localStorage.getItem('ir_analyze_notes'); } catch (e) {}
+    window.irAnalyze = stored === null ? !!IR_CONFIG.analyzeNotes : stored === '1';
+    window.irShowAll = false;
+    window.irCurrentAttacks = attacks;
+    irShowModal(attacks);
+    if (window.irAnalyze && ctx === 'widget') irLoadPending();
 })();
